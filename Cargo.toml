@@ -1,0 +1,11 @@
+[package]
+name = "ndarray-stats"
+version = "0.1.0"
+authors = ["Jim Turner <rust@turner.link>"]
+
+[dependencies]
+ndarray = "0.12"
+noisy_float = "0.1"
+
+[dev-dependencies]
+quickcheck = "0.7"
