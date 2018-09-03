@@ -6,6 +6,8 @@ authors = ["Jim Turner <rust@turner.link>"]
 [dependencies]
 ndarray = "0.12"
 noisy_float = "0.1"
+num-traits = "0.2"
+rand = "0.5"
 
 [dev-dependencies]
 quickcheck = "0.7"
