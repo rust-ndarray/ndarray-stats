@@ -3,6 +3,7 @@ use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis};
 use sort::Sort1dExt;
 
+/// Interpolation strategies.
 pub mod interpolate {
     use ndarray::prelude::*;
     use num_traits::FromPrimitive;
@@ -12,20 +13,27 @@ pub mod interpolate {
     ///
     /// [`percentile_axis_mut`]: ../trait.PercentileExt.html#tymethod.percentile_axis_mut
     pub trait Interpolate<T> {
+        #[doc(hidden)]
         fn float_percentile_index(q: f64, len: usize) -> f64 {
             ((len - 1) as f64) * q
         }
+        #[doc(hidden)]
         fn lower_index(q: f64, len: usize) -> usize {
             Self::float_percentile_index(q, len).floor() as usize
         }
+        #[doc(hidden)]
         fn upper_index(q: f64, len: usize) -> usize {
             Self::float_percentile_index(q, len).ceil() as usize
         }
+        #[doc(hidden)]
         fn float_percentile_index_fraction(q: f64, len: usize) -> f64 {
             Self::float_percentile_index(q, len) - (Self::lower_index(q, len) as f64)
         }
+        #[doc(hidden)]
         fn needs_lower(q: f64, len: usize) -> bool;
+        #[doc(hidden)]
         fn needs_upper(q: f64, len: usize) -> bool;
+        #[doc(hidden)]
         fn interpolate<D>(
             lower: Option<Array<T, D>>,
             upper: Option<Array<T, D>>,
@@ -36,10 +44,15 @@ pub mod interpolate {
             D: Dimension;
     }
 
+    /// Select the upper value.
     pub struct Upper;
+    /// Select the lower value.
     pub struct Lower;
+    /// Select the nearest value.
     pub struct Nearest;
+    /// Select the midpoint of the two values.
     pub struct Midpoint;
+    /// Linearly interpolate between the two values.
     pub struct Linear;
 
     impl<T> Interpolate<T> for Upper {
@@ -153,6 +166,7 @@ pub mod interpolate {
     }
 }
 
+/// Percentile methods.
 pub trait PercentileExt<A, S, D>
 where
     S: Data<Elem = A>,

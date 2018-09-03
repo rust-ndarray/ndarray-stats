@@ -3,6 +3,7 @@ use ndarray::{Data, DataMut};
 use rand::prelude::*;
 use rand::thread_rng;
 
+/// Methods for sorting and partitioning 1-D arrays.
 pub trait Sort1dExt<A, S>
 where
     S: Data<Elem = A>,

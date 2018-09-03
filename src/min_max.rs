@@ -3,6 +3,7 @@ use ndarray::Data;
 use std::cmp::Ordering;
 use MaybeNan;
 
+/// Minimum and maximum methods.
 pub trait MinMaxExt<A, D: Dimension> {
     /// Finds the elementwise minimum of the array.
     ///
