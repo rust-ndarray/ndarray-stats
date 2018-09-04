@@ -1,5 +1,8 @@
 # ndarray-stats
 
+[![Build status](https://travis-ci.org/jturner314/ndarray-stats.svg?branch=master)](https://travis-ci.org/jturner314/ndarray-stats)
+[![Coverage](https://codecov.io/gh/jturner314/ndarray-stats/branch/master/graph/badge.svg)](https://codecov.io/gh/jturner314/ndarray-stats)
+
 This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type.
 
 [`ndarray`]: https://github.com/bluss/ndarray
