@@ -250,6 +250,24 @@ where
         A: 'a,
         F: FnMut(B, &'a A::NotNan) -> B;
 
+    /// Visit each non-NaN element in the array by calling `f` on each element.
+    ///
+    /// Elements are visited in arbitrary order.
+    fn visit_skipnan<'a, F>(&'a self, f: F)
+    where
+        A: 'a,
+        F: FnMut(&'a A::NotNan);
+
+    /// Fold non-NaN values along an axis.
+    ///
+    /// Combine the non-NaN elements of each subview with the previous using
+    /// the fold function and initial value init.
+    fn fold_axis_skipnan<B, F>(&self, axis: Axis, init: B, fold: F) -> Array<B, D::Smaller>
+    where
+        D: RemoveAxis,
+        F: FnMut(&B, &A::NotNan) -> B,
+        B: Clone;
+
     /// Reduce the values along an axis into just one value, producing a new
     /// array with one less dimension.
     ///
@@ -289,6 +307,33 @@ where
                 f(acc, not_nan)
             } else {
                 acc
+            }
+        })
+    }
+
+    fn visit_skipnan<'a, F>(&'a self, mut f: F)
+    where
+        A: 'a,
+        F: FnMut(&'a A::NotNan),
+    {
+        self.visit(|elem| {
+            if let Some(not_nan) = elem.try_as_not_nan() {
+                f(not_nan)
+            }
+        })
+    }
+
+    fn fold_axis_skipnan<B, F>(&self, axis: Axis, init: B, mut fold: F) -> Array<B, D::Smaller>
+    where
+        D: RemoveAxis,
+        F: FnMut(&B, &A::NotNan) -> B,
+        B: Clone,
+    {
+        self.fold_axis(axis, init, |acc, elem| {
+            if let Some(not_nan) = elem.try_as_not_nan() {
+                fold(acc, not_nan)
+            } else {
+                acc.clone()
             }
         })
     }
