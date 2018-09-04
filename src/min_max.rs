@@ -95,7 +95,7 @@ where
         A::NotNan: Ord,
     {
         let first = self.iter().next().and_then(|v| v.try_as_not_nan());
-        A::from_opt_not_nan(self.fold_skipnan(first, |acc, elem| {
+        A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
             Some(match acc {
                 Some(acc) => acc.min(elem),
                 None => elem,
@@ -131,7 +131,7 @@ where
         A::NotNan: Ord,
     {
         let first = self.iter().next().and_then(|v| v.try_as_not_nan());
-        A::from_opt_not_nan(self.fold_skipnan(first, |acc, elem| {
+        A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
             Some(match acc {
                 Some(acc) => acc.max(elem),
                 None => elem,

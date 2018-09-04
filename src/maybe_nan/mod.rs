@@ -18,13 +18,24 @@ pub trait MaybeNan: Sized {
     /// Converts the value.
     ///
     /// If the value is `None`, a NaN value is returned.
-    fn from_opt_not_nan(Option<&Self::NotNan>) -> &Self;
+    fn from_not_nan(Self::NotNan) -> Self;
+
+    /// Converts the value.
+    ///
+    /// If the value is `None`, a NaN value is returned.
+    fn from_not_nan_opt(Option<Self::NotNan>) -> Self;
+
+    /// Converts the value.
+    ///
+    /// If the value is `None`, a NaN value is returned.
+    fn from_not_nan_ref_opt(Option<&Self::NotNan>) -> &Self;
 
     /// Returns a view with the NaN values removed.
     ///
     /// This modifies the input view by moving elements as necessary. The final
-    /// order of the elements is unspecified, but the given the same input
-    /// data, the result is always ordered the same way.
+    /// order of the elements is unspecified. However, this method is
+    /// idempotent, and given the same input data, the result is always ordered
+    /// the same way.
     fn remove_nan_mut(ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan>;
 }
 
@@ -78,7 +89,18 @@ macro_rules! impl_maybenan_for_fxx {
                 }
             }
 
-            fn from_opt_not_nan(value: Option<&$Nxx>) -> &$fxx {
+            fn from_not_nan(value: $Nxx) -> $fxx {
+                value.raw()
+            }
+
+            fn from_not_nan_opt(value: Option<$Nxx>) -> $fxx {
+                match value {
+                    None => ::std::$fxx::NAN,
+                    Some(num) => num.raw(),
+                }
+            }
+
+            fn from_not_nan_ref_opt(value: Option<&$Nxx>) -> &$fxx {
                 match value {
                     None => &::std::$fxx::NAN,
                     // This is safe because `$Nxx` is a thin `repr(C)` wrapper
@@ -120,7 +142,15 @@ macro_rules! impl_maybenan_for_opt_never_nan {
                 }
             }
 
-            fn from_opt_not_nan(value: Option<&NotNone<$ty>>) -> &Option<$ty> {
+            fn from_not_nan(value: NotNone<$ty>) -> Option<$ty> {
+                value.into_inner()
+            }
+
+            fn from_not_nan_opt(value: Option<NotNone<$ty>>) -> Option<$ty> {
+                value.and_then(|v| v.into_inner())
+            }
+
+            fn from_not_nan_ref_opt(value: Option<&NotNone<$ty>>) -> &Option<$ty> {
                 match value {
                     None => &None,
                     // This is safe because `NotNone<$ty>` is a thin wrapper around
@@ -158,8 +188,26 @@ impl_maybenan_for_opt_never_nan!(N64);
 
 /// A thin wrapper around `Option` that guarantees that the value is not
 /// `None`.
+#[derive(Clone, Copy)]
 #[repr(transparent)]
 pub struct NotNone<T>(Option<T>);
+
+impl<T> NotNone<T> {
+    /// Returns the underling option.
+    pub fn into_inner(self) -> Option<T> {
+        self.0
+    }
+
+    /// Moves the value out of the inner option.
+    ///
+    /// This method is guaranteed not to panic.
+    pub fn unwrap(self) -> T {
+        match self.0 {
+            Some(inner) => inner,
+            None => unsafe { ::std::hint::unreachable_unchecked() },
+        }
+    }
+}
 
 /// Extension trait for `ArrayBase` providing NaN-related functionality.
 pub trait MaybeNanExt<A, S, D>
