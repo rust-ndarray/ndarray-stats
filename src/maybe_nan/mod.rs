@@ -1,5 +1,5 @@
 use ndarray::prelude::*;
-use ndarray::Data;
+use ndarray::{Data, DataMut, RemoveAxis};
 use noisy_float::types::{N32, N64};
 
 /// A number type that can have not-a-number values.
@@ -224,6 +224,28 @@ where
     where
         A: 'a,
         F: FnMut(B, &'a A::NotNan) -> B;
+
+    /// Reduce the values along an axis into just one value, producing a new
+    /// array with one less dimension.
+    ///
+    /// The NaN values are removed from the 1-dimensional lanes, then they are
+    /// passed as mutable views to the reducer, allowing for side-effects.
+    ///
+    /// **Warnings**:
+    ///
+    /// * The lanes are visited in arbitrary order.
+    ///
+    /// * The order of the elements within the lanes is unspecified. However,
+    ///   if `mapping` is idempotent, this method is idempotent. Additionally,
+    ///   given the same input data, the lane is always ordered the same way.
+    ///
+    /// **Panics** if `axis` is out of bounds.
+    fn map_axis_skipnan_mut<'a, B, F>(&'a mut self, axis: Axis, mapping: F) -> Array<B, D::Smaller>
+    where
+        A: 'a,
+        S: DataMut,
+        D: RemoveAxis,
+        F: FnMut(ArrayViewMut1<'a, A::NotNan>) -> B;
 }
 
 impl<A, S, D> MaybeNanExt<A, S, D> for ArrayBase<S, D>
@@ -244,6 +266,20 @@ where
                 acc
             }
         })
+    }
+
+    fn map_axis_skipnan_mut<'a, B, F>(
+        &'a mut self,
+        axis: Axis,
+        mut mapping: F,
+    ) -> Array<B, D::Smaller>
+    where
+        A: 'a,
+        S: DataMut,
+        D: RemoveAxis,
+        F: FnMut(ArrayViewMut1<'a, A::NotNan>) -> B,
+    {
+        self.map_axis_mut(axis, |lane| mapping(A::remove_nan_mut(lane)))
     }
 }
 
