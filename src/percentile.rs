@@ -270,7 +270,12 @@ where
             A::from_not_nan_opt(if not_nan.is_empty() {
                 None
             } else {
-                Some(not_nan.percentile_axis_mut::<I>(axis, q).into_raw_vec().remove(0))
+                Some(
+                    not_nan
+                        .percentile_axis_mut::<I>(Axis(0), q)
+                        .into_raw_vec()
+                        .remove(0),
+                )
             })
         })
     }
