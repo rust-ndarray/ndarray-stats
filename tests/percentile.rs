@@ -1,11 +1,72 @@
+#[macro_use(array)]
 extern crate ndarray;
 extern crate ndarray_stats;
 
 use ndarray::prelude::*;
 use ndarray_stats::{
-    interpolate::{Linear, Lower},
+    interpolate::{Higher, Linear, Lower, Midpoint, Nearest},
     PercentileExt,
 };
+
+#[test]
+fn test_min() {
+    let a = array![[1, 5, 3], [2, 0, 6]];
+    assert_eq!(a.min(), &0);
+}
+
+#[test]
+fn test_min_partialord() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.min_partialord(), Some(&0.));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.min_partialord(), None);
+}
+
+#[test]
+fn test_min_skipnan() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.min_skipnan(), &0.);
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.min_skipnan(), &1.);
+}
+
+#[test]
+fn test_min_skipnan_all_nan() {
+    let a = arr2(&[[::std::f64::NAN; 3]; 2]);
+    assert!(a.min_skipnan().is_nan());
+}
+
+#[test]
+fn test_max() {
+    let a = array![[1, 5, 7], [2, 0, 6]];
+    assert_eq!(a.max(), &7);
+}
+
+#[test]
+fn test_max_partialord() {
+    let a = array![[1., 5., 7.], [2., 0., 6.]];
+    assert_eq!(a.max_partialord(), Some(&7.));
+
+    let a = array![[1., 5., 7.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.max_partialord(), None);
+}
+
+#[test]
+fn test_max_skipnan() {
+    let a = array![[1., 5., 7.], [2., 0., 6.]];
+    assert_eq!(a.max_skipnan(), &7.);
+
+    let a = array![[1., 5., 7.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.max_skipnan(), &7.);
+}
+
+#[test]
+fn test_max_skipnan_all_nan() {
+    let a = arr2(&[[::std::f64::NAN; 3]; 2]);
+    assert!(a.max_skipnan().is_nan());
+}
 
 #[test]
 fn test_percentile_axis_mut_with_odd_axis_length() {
@@ -35,9 +96,36 @@ fn test_percentile_axis_mut_to_get_maximum() {
     assert!(q == arr0(22));
 }
 
+#[test]
+fn test_percentile_axis_skipnan_mut_higher_opt_i32() {
+    let mut a = arr2(&[[Some(4), Some(2), None, Some(1), Some(5)], [None; 5]]);
+    let q = a.percentile_axis_skipnan_mut::<Higher>(Axis(1), 0.6);
+    assert_eq!(q.shape(), &[2]);
+    assert_eq!(q[0], Some(4));
+    assert!(q[1].is_none());
+}
+
+#[test]
+fn test_percentile_axis_skipnan_mut_nearest_opt_i32() {
+    let mut a = arr2(&[[Some(4), Some(2), None, Some(1), Some(5)], [None; 5]]);
+    let q = a.percentile_axis_skipnan_mut::<Nearest>(Axis(1), 0.6);
+    assert_eq!(q.shape(), &[2]);
+    assert_eq!(q[0], Some(4));
+    assert!(q[1].is_none());
+}
+
+#[test]
+fn test_percentile_axis_skipnan_mut_midpoint_opt_i32() {
+    let mut a = arr2(&[[Some(4), Some(2), None, Some(1), Some(5)], [None; 5]]);
+    let q = a.percentile_axis_skipnan_mut::<Midpoint>(Axis(1), 0.6);
+    assert_eq!(q.shape(), &[2]);
+    assert_eq!(q[0], Some(3));
+    assert!(q[1].is_none());
+}
+
 // TODO: See https://github.com/SergiusIW/noisy_float-rs/pull/19
 // #[test]
-// fn test_percentile_axis_skipnan_mut_f64() {
+// fn test_percentile_axis_skipnan_mut_linear_f64() {
 //     let mut a = arr2(&[[1., 2., ::std::f64::NAN, 3.], [::std::f64::NAN; 4]]);
 //     let q = a.percentile_axis_skipnan_mut::<Linear>(Axis(1), 0.75);
 //     assert_eq!(q.shape(), &[2]);
@@ -46,8 +134,8 @@ fn test_percentile_axis_mut_to_get_maximum() {
 // }
 
 #[test]
-fn test_percentile_axis_skipnan_mut_opt_i32() {
-    let mut a = arr2(&[[Some(1), Some(2), None, Some(4)], [None; 4]]);
+fn test_percentile_axis_skipnan_mut_linear_opt_i32() {
+    let mut a = arr2(&[[Some(2), Some(4), None, Some(1)], [None; 4]]);
     let q = a.percentile_axis_skipnan_mut::<Linear>(Axis(1), 0.75);
     assert_eq!(q.shape(), &[2]);
     assert_eq!(q[0], Some(3));
