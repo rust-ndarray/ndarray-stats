@@ -1,7 +1,8 @@
 use interpolate::Interpolate;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis};
-use {MaybeNan, Sort1dExt};
+use std::cmp;
+use {MaybeNan, MaybeNanExt, Sort1dExt};
 
 /// Interpolation strategies.
 pub mod interpolate {
@@ -173,6 +174,62 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    /// Finds the elementwise minimum of the array.
+    ///
+    /// **Panics** if the array is empty.
+    fn min(&self) -> &A
+    where
+        A: Ord;
+
+    /// Finds the elementwise minimum of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
+    ///
+    /// Additionally, returns `None` if the array is empty.
+    fn min_partialord(&self) -> Option<&A>
+    where
+        A: PartialOrd;
+
+    /// Finds the elementwise minimum of the array, skipping NaN values.
+    ///
+    /// **Warning** This method will return a NaN value if none of the values
+    /// in the array are non-NaN values. Note that the NaN value might not be
+    /// in the array.
+    fn min_skipnan(&self) -> &A
+    where
+        A: MaybeNan,
+        A::NotNan: Ord;
+
+    /// Finds the elementwise maximum of the array.
+    ///
+    /// **Panics** if the array is empty.
+    fn max(&self) -> &A
+    where
+        A: Ord;
+
+    /// Finds the elementwise maximum of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
+    ///
+    /// Additionally, returns `None` if the array is empty.
+    fn max_partialord(&self) -> Option<&A>
+    where
+        A: PartialOrd;
+
+    /// Finds the elementwise maximum of the array, skipping NaN values.
+    ///
+    /// **Warning** This method will return a NaN value if none of the values
+    /// in the array are non-NaN values. Note that the NaN value might not be
+    /// in the array.
+    fn max_skipnan(&self) -> &A
+    where
+        A: MaybeNan,
+        A::NotNan: Ord;
+
     /// Return the qth percentile of the data along the specified axis.
     ///
     /// `q` needs to be a float between 0 and 1, bounds included.
@@ -227,6 +284,78 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    fn min(&self) -> &A
+    where
+        A: Ord,
+    {
+        let first = self
+            .iter()
+            .next()
+            .expect("Attempted to find min of empty array.");
+        self.fold(first, |acc, elem| if elem < acc { elem } else { acc })
+    }
+
+    fn min_partialord(&self) -> Option<&A>
+    where
+        A: PartialOrd,
+    {
+        let first = self.iter().next()?;
+        self.fold(Some(first), |acc, elem| match elem.partial_cmp(acc?)? {
+            cmp::Ordering::Less => Some(elem),
+            _ => acc,
+        })
+    }
+
+    fn min_skipnan(&self) -> &A
+    where
+        A: MaybeNan,
+        A::NotNan: Ord,
+    {
+        let first = self.iter().next().and_then(|v| v.try_as_not_nan());
+        A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
+            Some(match acc {
+                Some(acc) => acc.min(elem),
+                None => elem,
+            })
+        }))
+    }
+
+    fn max(&self) -> &A
+    where
+        A: Ord,
+    {
+        let first = self
+            .iter()
+            .next()
+            .expect("Attempted to find max of empty array.");
+        self.fold(first, |acc, elem| if elem > acc { elem } else { acc })
+    }
+
+    fn max_partialord(&self) -> Option<&A>
+    where
+        A: PartialOrd,
+    {
+        let first = self.iter().next()?;
+        self.fold(Some(first), |acc, elem| match elem.partial_cmp(acc?)? {
+            cmp::Ordering::Greater => Some(elem),
+            _ => acc,
+        })
+    }
+
+    fn max_skipnan(&self) -> &A
+    where
+        A: MaybeNan,
+        A::NotNan: Ord,
+    {
+        let first = self.iter().next().and_then(|v| v.try_as_not_nan());
+        A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
+            Some(match acc {
+                Some(acc) => acc.max(elem),
+                None => elem,
+            })
+        }))
+    }
+
     fn percentile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
     where
         D: RemoveAxis,
