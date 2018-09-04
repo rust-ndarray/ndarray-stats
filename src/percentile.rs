@@ -1,7 +1,7 @@
 use interpolate::Interpolate;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis};
-use sort::Sort1dExt;
+use {MaybeNan, Sort1dExt};
 
 /// Interpolation strategies.
 pub mod interpolate {
@@ -208,6 +208,17 @@ where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>;
+
+    /// Return the `q`th percentile of the data along the specified axis, skipping NaN values.
+    ///
+    /// See [`percentile_axis_mut`](##tymethod.percentile_axis_mut) for details.
+    fn percentile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    where
+        D: RemoveAxis,
+        A: MaybeNan,
+        A::NotNan: Clone + Ord,
+        S: DataMut,
+        I: Interpolate<A::NotNan>;
 }
 
 impl<A, S, D> PercentileExt<A, S, D> for ArrayBase<S, D>
@@ -243,5 +254,23 @@ where
             );
         };
         I::interpolate(lower, upper, q, axis_len)
+    }
+
+    fn percentile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    where
+        D: RemoveAxis,
+        A: MaybeNan,
+        A::NotNan: Clone + Ord,
+        S: DataMut,
+        I: Interpolate<A::NotNan>,
+    {
+        self.map_axis_mut(axis, |lane| {
+            let mut not_nan = A::remove_nan_mut(lane);
+            A::from_not_nan_opt(if not_nan.is_empty() {
+                None
+            } else {
+                Some(not_nan.percentile_axis_mut::<I>(axis, q).into_raw_vec().remove(0))
+            })
+        })
     }
 }
