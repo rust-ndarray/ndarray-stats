@@ -23,7 +23,7 @@ pub mod interpolate {
             Self::float_percentile_index(q, len).floor() as usize
         }
         #[doc(hidden)]
-        fn upper_index(q: f64, len: usize) -> usize {
+        fn higher_index(q: f64, len: usize) -> usize {
             Self::float_percentile_index(q, len).ceil() as usize
         }
         #[doc(hidden)]
@@ -33,11 +33,11 @@ pub mod interpolate {
         #[doc(hidden)]
         fn needs_lower(q: f64, len: usize) -> bool;
         #[doc(hidden)]
-        fn needs_upper(q: f64, len: usize) -> bool;
+        fn needs_higher(q: f64, len: usize) -> bool;
         #[doc(hidden)]
         fn interpolate<D>(
             lower: Option<Array<T, D>>,
-            upper: Option<Array<T, D>>,
+            higher: Option<Array<T, D>>,
             q: f64,
             len: usize,
         ) -> Array<T, D>
@@ -45,31 +45,33 @@ pub mod interpolate {
             D: Dimension;
     }
 
-    /// Select the upper value.
-    pub struct Upper;
+    /// Select the higher value.
+    pub struct Higher;
     /// Select the lower value.
     pub struct Lower;
     /// Select the nearest value.
     pub struct Nearest;
-    /// Select the midpoint of the two values.
+    /// Select the midpoint of the two values (`(lower + higher) / 2`).
     pub struct Midpoint;
-    /// Linearly interpolate between the two values.
+    /// Linearly interpolate between the two values
+    /// (`lower + (higher - lower) * fraction`, where `fraction` is the
+    /// fractional part of the index surrounded by `lower` and `higher`).
     pub struct Linear;
 
-    impl<T> Interpolate<T> for Upper {
+    impl<T> Interpolate<T> for Higher {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             false
         }
-        fn needs_upper(_q: f64, _len: usize) -> bool {
+        fn needs_higher(_q: f64, _len: usize) -> bool {
             true
         }
         fn interpolate<D>(
             _lower: Option<Array<T, D>>,
-            upper: Option<Array<T, D>>,
+            higher: Option<Array<T, D>>,
             _q: f64,
             _len: usize,
         ) -> Array<T, D> {
-            upper.unwrap()
+            higher.unwrap()
         }
     }
 
@@ -77,12 +79,12 @@ pub mod interpolate {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
         }
-        fn needs_upper(_q: f64, _len: usize) -> bool {
+        fn needs_higher(_q: f64, _len: usize) -> bool {
             false
         }
         fn interpolate<D>(
             lower: Option<Array<T, D>>,
-            _upper: Option<Array<T, D>>,
+            _higher: Option<Array<T, D>>,
             _q: f64,
             _len: usize,
         ) -> Array<T, D> {
@@ -94,19 +96,19 @@ pub mod interpolate {
         fn needs_lower(q: f64, len: usize) -> bool {
             <Self as Interpolate<T>>::float_percentile_index_fraction(q, len) < 0.5
         }
-        fn needs_upper(q: f64, len: usize) -> bool {
+        fn needs_higher(q: f64, len: usize) -> bool {
             !<Self as Interpolate<T>>::needs_lower(q, len)
         }
         fn interpolate<D>(
             lower: Option<Array<T, D>>,
-            upper: Option<Array<T, D>>,
+            higher: Option<Array<T, D>>,
             q: f64,
             len: usize,
         ) -> Array<T, D> {
             if <Self as Interpolate<T>>::needs_lower(q, len) {
                 lower.unwrap()
             } else {
-                upper.unwrap()
+                higher.unwrap()
             }
         }
     }
@@ -118,12 +120,12 @@ pub mod interpolate {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
         }
-        fn needs_upper(_q: f64, _len: usize) -> bool {
+        fn needs_higher(_q: f64, _len: usize) -> bool {
             true
         }
         fn interpolate<D>(
             lower: Option<Array<T, D>>,
-            upper: Option<Array<T, D>>,
+            higher: Option<Array<T, D>>,
             _q: f64,
             _len: usize,
         ) -> Array<T, D>
@@ -131,7 +133,7 @@ pub mod interpolate {
             D: Dimension,
         {
             let denom = T::from_u8(2).unwrap();
-            (lower.unwrap() + upper.unwrap()).mapv_into(|x| x / denom.clone())
+            (lower.unwrap() + higher.unwrap()).mapv_into(|x| x / denom.clone())
         }
     }
 
@@ -142,12 +144,12 @@ pub mod interpolate {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
         }
-        fn needs_upper(_q: f64, _len: usize) -> bool {
+        fn needs_higher(_q: f64, _len: usize) -> bool {
             true
         }
         fn interpolate<D>(
             lower: Option<Array<T, D>>,
-            upper: Option<Array<T, D>>,
+            higher: Option<Array<T, D>>,
             q: f64,
             len: usize,
         ) -> Array<T, D>
@@ -156,7 +158,7 @@ pub mod interpolate {
         {
             let fraction = <Self as Interpolate<T>>::float_percentile_index_fraction(q, len);
             let mut a = lower.unwrap();
-            let b = upper.unwrap();
+            let b = higher.unwrap();
             azip!(mut a, ref b in {
                 let a_f64 = a.to_f64().unwrap();
                 let b_f64 = b.to_f64().unwrap();
@@ -364,25 +366,25 @@ where
     {
         assert!((0. <= q) && (q <= 1.));
         let mut lower = None;
-        let mut upper = None;
+        let mut higher = None;
         let axis_len = self.len_of(axis);
         if I::needs_lower(q, axis_len) {
             let lower_index = I::lower_index(q, axis_len);
             lower = Some(self.map_axis_mut(axis, |mut x| x.sorted_get_mut(lower_index)));
-            if I::needs_upper(q, axis_len) {
-                let upper_index = I::upper_index(q, axis_len);
-                let relative_upper_index = upper_index - lower_index;
-                upper = Some(self.map_axis_mut(axis, |mut x| {
+            if I::needs_higher(q, axis_len) {
+                let higher_index = I::higher_index(q, axis_len);
+                let relative_higher_index = higher_index - lower_index;
+                higher = Some(self.map_axis_mut(axis, |mut x| {
                     x.slice_mut(s![lower_index..])
-                        .sorted_get_mut(relative_upper_index)
+                        .sorted_get_mut(relative_higher_index)
                 }));
             };
         } else {
-            upper = Some(
-                self.map_axis_mut(axis, |mut x| x.sorted_get_mut(I::upper_index(q, axis_len))),
+            higher = Some(
+                self.map_axis_mut(axis, |mut x| x.sorted_get_mut(I::higher_index(q, axis_len))),
             );
         };
-        I::interpolate(lower, upper, q, axis_len)
+        I::interpolate(lower, higher, q, axis_len)
     }
 
     fn percentile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
