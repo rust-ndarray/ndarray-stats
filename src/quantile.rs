@@ -10,25 +10,25 @@ pub mod interpolate {
     use num_traits::{FromPrimitive, ToPrimitive};
     use std::ops::{Add, Div};
 
-    /// Used to provide an interpolation strategy to [`percentile_axis_mut`].
+    /// Used to provide an interpolation strategy to [`quantile_axis_mut`].
     ///
-    /// [`percentile_axis_mut`]: ../trait.PercentileExt.html#tymethod.percentile_axis_mut
+    /// [`quantile_axis_mut`]: ../trait.QuantileExt.html#tymethod.quantile_axis_mut
     pub trait Interpolate<T> {
         #[doc(hidden)]
-        fn float_percentile_index(q: f64, len: usize) -> f64 {
+        fn float_quantile_index(q: f64, len: usize) -> f64 {
             ((len - 1) as f64) * q
         }
         #[doc(hidden)]
         fn lower_index(q: f64, len: usize) -> usize {
-            Self::float_percentile_index(q, len).floor() as usize
+            Self::float_quantile_index(q, len).floor() as usize
         }
         #[doc(hidden)]
         fn higher_index(q: f64, len: usize) -> usize {
-            Self::float_percentile_index(q, len).ceil() as usize
+            Self::float_quantile_index(q, len).ceil() as usize
         }
         #[doc(hidden)]
-        fn float_percentile_index_fraction(q: f64, len: usize) -> f64 {
-            Self::float_percentile_index(q, len).fract()
+        fn float_quantile_index_fraction(q: f64, len: usize) -> f64 {
+            Self::float_quantile_index(q, len).fract()
         }
         #[doc(hidden)]
         fn needs_lower(q: f64, len: usize) -> bool;
@@ -94,7 +94,7 @@ pub mod interpolate {
 
     impl<T> Interpolate<T> for Nearest {
         fn needs_lower(q: f64, len: usize) -> bool {
-            <Self as Interpolate<T>>::float_percentile_index_fraction(q, len) < 0.5
+            <Self as Interpolate<T>>::float_quantile_index_fraction(q, len) < 0.5
         }
         fn needs_higher(q: f64, len: usize) -> bool {
             !<Self as Interpolate<T>>::needs_lower(q, len)
@@ -156,7 +156,7 @@ pub mod interpolate {
         where
             D: Dimension,
         {
-            let fraction = <Self as Interpolate<T>>::float_percentile_index_fraction(q, len);
+            let fraction = <Self as Interpolate<T>>::float_quantile_index_fraction(q, len);
             let mut a = lower.unwrap();
             let b = higher.unwrap();
             azip!(mut a, ref b in {
@@ -169,8 +169,8 @@ pub mod interpolate {
     }
 }
 
-/// Percentile methods.
-pub trait PercentileExt<A, S, D>
+/// Quantile methods.
+pub trait QuantileExt<A, S, D>
 where
     S: Data<Elem = A>,
     D: Dimension,
@@ -231,13 +231,13 @@ where
         A: MaybeNan,
         A::NotNan: Ord;
 
-    /// Return the qth percentile of the data along the specified axis.
+    /// Return the qth quantile of the data along the specified axis.
     ///
     /// `q` needs to be a float between 0 and 1, bounds included.
-    /// The qth percentile for a 1-dimensional lane of length `N` is defined
+    /// The qth quantile for a 1-dimensional lane of length `N` is defined
     /// as the element that would be indexed as `(N-1)q` if the lane were to be sorted
     /// in increasing order.
-    /// If `(N-1)q` is not an integer the desired percentile lies between
+    /// If `(N-1)q` is not an integer the desired quantile lies between
     /// two data points: we return the lower, nearest, higher or interpolated
     /// value depending on the type `Interpolate` bound `I`.
     ///
@@ -245,10 +245,10 @@ where
     /// - `q=0.` returns the minimum along each 1-dimensional lane;
     /// - `q=0.5` returns the median along each 1-dimensional lane;
     /// - `q=1.` returns the maximum along each 1-dimensional lane.
-    /// (`q=0` and `q=1` are considered improper percentiles)
+    /// (`q=0` and `q=1` are considered improper quantiles)
     ///
     /// The array is shuffled **in place** along each 1-dimensional lane in
-    /// order to produce the required percentile without allocating a copy
+    /// order to produce the required quantile without allocating a copy
     /// of the original array. Each 1-dimensional lane is shuffled independently
     /// from the others.
     /// No assumptions should be made on the ordering of the array elements
@@ -261,17 +261,17 @@ where
     ///
     /// **Panics** if `axis` is out of bounds or if `q` is not between
     /// `0.` and `1.` (inclusive).
-    fn percentile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
     where
         D: RemoveAxis,
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>;
 
-    /// Return the `q`th percentile of the data along the specified axis, skipping NaN values.
+    /// Return the `q`th quantile of the data along the specified axis, skipping NaN values.
     ///
-    /// See [`percentile_axis_mut`](##tymethod.percentile_axis_mut) for details.
-    fn percentile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    /// See [`quantile_axis_mut`](##tymethod.quantile_axis_mut) for details.
+    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -280,7 +280,7 @@ where
         I: Interpolate<A::NotNan>;
 }
 
-impl<A, S, D> PercentileExt<A, S, D> for ArrayBase<S, D>
+impl<A, S, D> QuantileExt<A, S, D> for ArrayBase<S, D>
 where
     S: Data<Elem = A>,
     D: Dimension,
@@ -357,7 +357,7 @@ where
         }))
     }
 
-    fn percentile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -387,7 +387,7 @@ where
         I::interpolate(lower, higher, q, axis_len)
     }
 
-    fn percentile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -402,7 +402,7 @@ where
             } else {
                 Some(
                     not_nan
-                        .percentile_axis_mut::<I>(Axis(0), q)
+                        .quantile_axis_mut::<I>(Axis(0), q)
                         .into_raw_vec()
                         .remove(0),
                 )

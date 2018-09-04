@@ -9,9 +9,9 @@ extern crate rand;
 extern crate quickcheck;
 
 pub use maybe_nan::{MaybeNan, MaybeNanExt};
-pub use percentile::{interpolate, PercentileExt};
+pub use quantile::{interpolate, QuantileExt};
 pub use sort::Sort1dExt;
 
 mod maybe_nan;
-mod percentile;
+mod quantile;
 mod sort;
