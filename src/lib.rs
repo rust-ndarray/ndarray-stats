@@ -1,4 +1,4 @@
-#[macro_use(s)]
+#[macro_use(azip, s)]
 extern crate ndarray;
 extern crate noisy_float;
 extern crate num_traits;

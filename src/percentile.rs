@@ -6,8 +6,8 @@ use {MaybeNan, Sort1dExt};
 /// Interpolation strategies.
 pub mod interpolate {
     use ndarray::prelude::*;
-    use num_traits::FromPrimitive;
-    use std::ops::{Add, Div, Mul, Sub};
+    use num_traits::{FromPrimitive, ToPrimitive};
+    use std::ops::{Add, Div};
 
     /// Used to provide an interpolation strategy to [`percentile_axis_mut`].
     ///
@@ -27,7 +27,7 @@ pub mod interpolate {
         }
         #[doc(hidden)]
         fn float_percentile_index_fraction(q: f64, len: usize) -> f64 {
-            Self::float_percentile_index(q, len) - (Self::lower_index(q, len) as f64)
+            Self::float_percentile_index(q, len).fract()
         }
         #[doc(hidden)]
         fn needs_lower(q: f64, len: usize) -> bool;
@@ -137,7 +137,7 @@ pub mod interpolate {
 
     impl<T> Interpolate<T> for Linear
     where
-        T: Add<T, Output = T> + Sub<T, Output = T> + Mul<T, Output = T> + Clone + FromPrimitive,
+        T: Add<T, Output = T> + Clone + FromPrimitive + ToPrimitive,
     {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
@@ -154,14 +154,15 @@ pub mod interpolate {
         where
             D: Dimension,
         {
-            let fraction = T::from_f64(<Self as Interpolate<T>>::float_percentile_index_fraction(
-                q, len,
-            )).unwrap();
-            let a = lower.unwrap().mapv_into(|x| x * fraction.clone());
-            let b = upper
-                .unwrap()
-                .mapv_into(|x| x * (T::from_u8(1).unwrap() - fraction.clone()));
-            a + b
+            let fraction = <Self as Interpolate<T>>::float_percentile_index_fraction(q, len);
+            let mut a = lower.unwrap();
+            let b = upper.unwrap();
+            azip!(mut a, ref b in {
+                let a_f64 = a.to_f64().unwrap();
+                let b_f64 = b.to_f64().unwrap();
+                *a = a.clone() + T::from_f64((b_f64 - a_f64) * fraction).unwrap();
+            });
+            a
         }
     }
 }
