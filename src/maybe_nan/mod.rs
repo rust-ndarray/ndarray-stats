@@ -188,11 +188,27 @@ impl_maybenan_for_opt_never_nan!(N64);
 
 /// A thin wrapper around `Option` that guarantees that the value is not
 /// `None`.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(transparent)]
 pub struct NotNone<T>(Option<T>);
 
 impl<T> NotNone<T> {
+    /// Creates a new `NotNone` containing the given value.
+    pub fn new(value: T) -> NotNone<T> {
+        NotNone(Some(value))
+    }
+
+    /// Creates a new `NotNone` containing the given value.
+    ///
+    /// Returns `None` if `value` is `None`.
+    pub fn try_new(value: Option<T>) -> Option<NotNone<T>> {
+        if value.is_some() {
+            Some(NotNone(value))
+        } else {
+            None
+        }
+    }
+
     /// Returns the underling option.
     pub fn into_inner(self) -> Option<T> {
         self.0
@@ -206,6 +222,15 @@ impl<T> NotNone<T> {
             Some(inner) => inner,
             None => unsafe { ::std::hint::unreachable_unchecked() },
         }
+    }
+
+    /// Maps an `NotNone<T>` to `NotNone<U>` by applying a function to the
+    /// contained value.
+    pub fn map<U, F>(self, f: F) -> NotNone<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        NotNone::new(f(self.unwrap()))
     }
 }
 
