@@ -8,7 +8,7 @@ extern crate rand;
 #[macro_use(quickcheck)]
 extern crate quickcheck;
 
-pub use maybe_nan::MaybeNan;
+pub use maybe_nan::{MaybeNan, MaybeNanExt};
 pub use min_max::MinMaxExt;
 pub use percentile::{interpolate, PercentileExt};
 pub use sort::Sort1dExt;

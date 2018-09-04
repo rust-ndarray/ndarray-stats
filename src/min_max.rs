@@ -1,7 +1,7 @@
 use ndarray::prelude::*;
 use ndarray::Data;
 use std::cmp::Ordering;
-use MaybeNan;
+use {MaybeNan, MaybeNanExt};
 
 /// Minimum and maximum methods.
 pub trait MinMaxExt<A, D: Dimension> {
@@ -25,11 +25,9 @@ pub trait MinMaxExt<A, D: Dimension> {
 
     /// Finds the elementwise minimum of the array, skipping NaN values.
     ///
-    /// **Warning** This method will return a NaN value if all values in the
-    /// array are NaN values. Note that the NaN value might not be in the
-    /// array.
-    ///
-    /// **Panics** if the array is empty.
+    /// **Warning** This method will return a NaN value if none of the values
+    /// in the array are non-NaN values. Note that the NaN value might not be
+    /// in the array.
     fn min_skipnan(&self) -> &A
     where
         A: MaybeNan,
@@ -55,11 +53,9 @@ pub trait MinMaxExt<A, D: Dimension> {
 
     /// Finds the elementwise maximum of the array, skipping NaN values.
     ///
-    /// **Warning** This method will return a NaN value if all values in the
-    /// array are NaN values. Note that the NaN value might not be in the
-    /// array.
-    ///
-    /// **Panics** if the array is empty.
+    /// **Warning** This method will return a NaN value if none of the values
+    /// in the array are non-NaN values. Note that the NaN value might not be
+    /// in the array.
     fn max_skipnan(&self) -> &A
     where
         A: MaybeNan,
@@ -98,7 +94,13 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        min_or_max_skipnan(self, PartialOrd::lt)
+        let first = self.iter().next().and_then(|v| v.try_as_not_nan());
+        A::from_opt_not_nan(self.fold_skipnan(first, |acc, elem| {
+            Some(match acc {
+                Some(acc) => acc.min(elem),
+                None => elem,
+            })
+        }))
     }
 
     fn max(&self) -> &A
@@ -128,50 +130,12 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        min_or_max_skipnan(self, PartialOrd::gt)
+        let first = self.iter().next().and_then(|v| v.try_as_not_nan());
+        A::from_opt_not_nan(self.fold_skipnan(first, |acc, elem| {
+            Some(match acc {
+                Some(acc) => acc.max(elem),
+                None => elem,
+            })
+        }))
     }
-}
-
-/// Finds the elementwise minimum/maximum of the array, skipping NaN values.
-///
-/// Use `PartialOrd::lt` for the minimum, or `PartialOrd::gt` for the maximum.
-///
-/// **Warning** This method will return a NaN value if all values in the array
-/// are NaN values. Note that the NaN value may not be one of the NaN values in
-/// the array.
-///
-/// **Panics** if the array is empty.
-fn min_or_max_skipnan<A, S, D>(
-    arr: &ArrayBase<S, D>,
-    lt_or_gt: impl Fn(&A::NotNan, &A::NotNan) -> bool,
-) -> &A
-where
-    A: MaybeNan,
-    A::NotNan: Ord,
-    S: Data<Elem = A>,
-    D: Dimension,
-{
-    let first = arr
-        .iter()
-        .next()
-        .expect("Attempted to find min/max of empty array.");
-    A::from_opt_not_nan(arr.fold(
-        first.try_as_not_nan(),
-        |acc: Option<&A::NotNan>, elem: &A| {
-            let elem = elem.try_as_not_nan();
-            if let Some(acc_not_nan) = acc {
-                if let Some(elem_not_nan) = elem {
-                    if lt_or_gt(elem_not_nan, acc_not_nan) {
-                        elem
-                    } else {
-                        acc
-                    }
-                } else {
-                    acc
-                }
-            } else {
-                elem
-            }
-        },
-    ))
 }

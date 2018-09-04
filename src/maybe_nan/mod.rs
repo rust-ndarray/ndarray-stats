@@ -1,4 +1,5 @@
 use ndarray::prelude::*;
+use ndarray::Data;
 use noisy_float::types::{N32, N64};
 
 /// A number type that can have not-a-number values.
@@ -157,6 +158,44 @@ impl_maybenan_for_opt_never_nan!(N64);
 /// `None`.
 #[repr(transparent)]
 pub struct NotNone<T>(Option<T>);
+
+/// Extension trait for `ArrayBase` providing NaN-related functionality.
+pub trait MaybeNanExt<A, S, D>
+where
+    A: MaybeNan,
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    /// Traverse the non-NaN array elements and apply a fold, returning the
+    /// resulting value.
+    ///
+    /// Elements are visited in arbitrary order.
+    fn fold_skipnan<'a, F, B>(&'a self, init: B, f: F) -> B
+    where
+        A: 'a,
+        F: FnMut(B, &'a A::NotNan) -> B;
+}
+
+impl<A, S, D> MaybeNanExt<A, S, D> for ArrayBase<S, D>
+where
+    A: MaybeNan,
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    fn fold_skipnan<'a, F, B>(&'a self, init: B, mut f: F) -> B
+    where
+        A: 'a,
+        F: FnMut(B, &'a A::NotNan) -> B,
+    {
+        self.fold(init, |acc, elem| {
+            if let Some(not_nan) = elem.try_as_not_nan() {
+                f(acc, not_nan)
+            } else {
+                acc
+            }
+        })
+    }
+}
 
 #[cfg(test)]
 mod tests {
