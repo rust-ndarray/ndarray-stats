@@ -22,14 +22,16 @@ pub trait MaybeNan: Sized {
 
     /// Returns a view with the NaN values removed.
     ///
-    /// This modifies the input view by moving elements as necessary.
-    fn remove_nan(ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan>;
+    /// This modifies the input view by moving elements as necessary. The final
+    /// order of the elements is unspecified, but the given the same input
+    /// data, the result is always ordered the same way.
+    fn remove_nan_mut(ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan>;
 }
 
 /// Returns a view with the NaN values removed.
 ///
 /// This modifies the input view by moving elements as necessary.
-fn remove_nan<A: MaybeNan>(mut view: ArrayViewMut1<A>) -> ArrayViewMut1<A> {
+fn remove_nan_mut<A: MaybeNan>(mut view: ArrayViewMut1<A>) -> ArrayViewMut1<A> {
     if view.len() == 0 {
         return view.slice_move(s![..0]);
     }
@@ -85,9 +87,9 @@ macro_rules! impl_maybenan_for_fxx {
                 }
             }
 
-            fn remove_nan(view: ArrayViewMut1<$fxx>) -> ArrayViewMut1<$Nxx> {
-                let not_nan = remove_nan(view);
-                // This is safe because `remove_nan` has removed the NaN
+            fn remove_nan_mut(view: ArrayViewMut1<$fxx>) -> ArrayViewMut1<$Nxx> {
+                let not_nan = remove_nan_mut(view);
+                // This is safe because `remove_nan_mut` has removed the NaN
                 // values, and `$Nxx` is a thin wrapper around `$fxx`.
                 unsafe {
                     ArrayViewMut1::from_shape_ptr(not_nan.dim(), not_nan.as_ptr() as *mut $Nxx)
@@ -127,9 +129,9 @@ macro_rules! impl_maybenan_for_opt_never_nan {
                 }
             }
 
-            fn remove_nan(view: ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan> {
-                let not_nan = remove_nan(view);
-                // This is safe because `remove_nan` has removed the `None`
+            fn remove_nan_mut(view: ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan> {
+                let not_nan = remove_nan_mut(view);
+                // This is safe because `remove_nan_mut` has removed the `None`
                 // values, and `NotNone<$ty>` is a thin wrapper around `Option<$ty>`.
                 unsafe {
                     ArrayViewMut1::from_shape_ptr(
@@ -202,33 +204,33 @@ mod tests {
     use super::*;
 
     quickcheck! {
-        fn remove_nan_idempotent(is_nan: Vec<bool>) -> bool {
+        fn remove_nan_mut_idempotent(is_nan: Vec<bool>) -> bool {
             let mut values: Vec<_> = is_nan
                 .into_iter()
                 .map(|is_nan| if is_nan { None } else { Some(1) })
                 .collect();
             let view = ArrayViewMut1::from_shape(values.len(), &mut values).unwrap();
-            let removed = remove_nan(view);
-            removed == remove_nan(removed.to_owned().view_mut())
+            let removed = remove_nan_mut(view);
+            removed == remove_nan_mut(removed.to_owned().view_mut())
         }
 
-        fn remove_nan_only_nan_remaining(is_nan: Vec<bool>) -> bool {
+        fn remove_nan_mut_only_nan_remaining(is_nan: Vec<bool>) -> bool {
             let mut values: Vec<_> = is_nan
                 .into_iter()
                 .map(|is_nan| if is_nan { None } else { Some(1) })
                 .collect();
             let view = ArrayViewMut1::from_shape(values.len(), &mut values).unwrap();
-            remove_nan(view).iter().all(|elem| !elem.is_nan())
+            remove_nan_mut(view).iter().all(|elem| !elem.is_nan())
         }
 
-        fn remove_nan_keep_all_non_nan(is_nan: Vec<bool>) -> bool {
+        fn remove_nan_mut_keep_all_non_nan(is_nan: Vec<bool>) -> bool {
             let non_nan_count = is_nan.iter().filter(|&&is_nan| !is_nan).count();
             let mut values: Vec<_> = is_nan
                 .into_iter()
                 .map(|is_nan| if is_nan { None } else { Some(1) })
                 .collect();
             let view = ArrayViewMut1::from_shape(values.len(), &mut values).unwrap();
-            remove_nan(view).len() == non_nan_count
+            remove_nan_mut(view).len() == non_nan_count
         }
     }
 }
