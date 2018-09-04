@@ -92,8 +92,7 @@ pub mod interpolate {
 
     impl<T> Interpolate<T> for Nearest {
         fn needs_lower(q: f64, len: usize) -> bool {
-            let lower = <Self as Interpolate<T>>::lower_index(q, len);
-            ((lower as f64) - <Self as Interpolate<T>>::float_percentile_index(q, len)) <= 0.
+            <Self as Interpolate<T>>::float_percentile_index_fraction(q, len) < 0.5
         }
         fn needs_upper(q: f64, len: usize) -> bool {
             !<Self as Interpolate<T>>::needs_lower(q, len)
