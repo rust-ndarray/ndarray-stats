@@ -11,3 +11,6 @@ rand = "0.5"
 
 [dev-dependencies]
 quickcheck = "0.7"
+
+[patch.crates-io]
+noisy_float = { git = "https://github.com/SergiusIW/noisy_float-rs.git", rev = "de01a40ceb1443110fe0b53f93c5164934e5c126" }

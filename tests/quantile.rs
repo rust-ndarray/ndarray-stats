@@ -123,15 +123,14 @@ fn test_quantile_axis_skipnan_mut_midpoint_opt_i32() {
     assert!(q[1].is_none());
 }
 
-// TODO: See https://github.com/SergiusIW/noisy_float-rs/pull/19
-// #[test]
-// fn test_quantile_axis_skipnan_mut_linear_f64() {
-//     let mut a = arr2(&[[1., 2., ::std::f64::NAN, 3.], [::std::f64::NAN; 4]]);
-//     let q = a.quantile_axis_skipnan_mut::<Linear>(Axis(1), 0.75);
-//     assert_eq!(q.shape(), &[2]);
-//     assert!((q[0] - 2.5).abs() < 1e-12);
-//     assert!(q[1].is_nan());
-// }
+#[test]
+fn test_quantile_axis_skipnan_mut_linear_f64() {
+    let mut a = arr2(&[[1., 2., ::std::f64::NAN, 3.], [::std::f64::NAN; 4]]);
+    let q = a.quantile_axis_skipnan_mut::<Linear>(Axis(1), 0.75);
+    assert_eq!(q.shape(), &[2]);
+    assert!((q[0] - 2.5).abs() < 1e-12);
+    assert!(q[1].is_nan());
+}
 
 #[test]
 fn test_quantile_axis_skipnan_mut_linear_opt_i32() {
