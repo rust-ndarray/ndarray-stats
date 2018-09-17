@@ -79,14 +79,7 @@ macro_rules! impl_maybenan_for_fxx {
             }
 
             fn try_as_not_nan(&self) -> Option<&$Nxx> {
-                if self.is_nan() {
-                    None
-                } else {
-                    // This is safe because `$Nxx` is a thin `repr(C)` wrapper
-                    // around `$fxx`, and we have just checked that `self` is
-                    // not a NaN value.
-                    Some(unsafe { &*(self as *const $fxx as *const $Nxx) })
-                }
+                $Nxx::try_borrowed(self)
             }
 
             fn from_not_nan(value: $Nxx) -> $fxx {
@@ -103,9 +96,7 @@ macro_rules! impl_maybenan_for_fxx {
             fn from_not_nan_ref_opt(value: Option<&$Nxx>) -> &$fxx {
                 match value {
                     None => &::std::$fxx::NAN,
-                    // This is safe because `$Nxx` is a thin `repr(C)` wrapper
-                    // around `$fxx`.
-                    Some(num) => unsafe { &*(num as *const $Nxx as *const $fxx) },
+                    Some(num) => num.as_ref(),
                 }
             }
 
