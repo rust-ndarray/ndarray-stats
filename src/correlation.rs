@@ -34,4 +34,11 @@ mod tests {
         let a = Array::from_elem((3, 4), 7.);
         assert_eq!(a.cov(1.), Array::zeros((3, 4)));
     }
+
+    #[test]
+    #[should_panic]
+    fn test_panic_for_1d_arrays() {
+        let a = array!([1., 2., 3.]);
+        a.cov(1.);
+    }
 }
