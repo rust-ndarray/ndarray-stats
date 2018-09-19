@@ -15,3 +15,4 @@ pub use sort::Sort1dExt;
 mod maybe_nan;
 mod quantile;
 mod sort;
+mod correlation;
