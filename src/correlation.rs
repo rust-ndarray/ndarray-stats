@@ -9,8 +9,29 @@ where
 {
     fn cov(&self, ddof: A) -> Array<A, D> 
     where
+        A: Float;
+}
+
+impl<A, S, D> CorrelationExt<A, S, D> for ArrayBase<S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    fn cov(&self, ddof: A) -> Array<A, D>
+    where
         A: Float,
     {
         unimplemented!();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_constant_case() {
+        let a = Array::from_elem((3, 4), 7.);
+        assert_eq!(a.cov(1.), Array::zeros((3, 4)));
     }
 }
