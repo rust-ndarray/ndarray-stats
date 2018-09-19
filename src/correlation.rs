@@ -21,7 +21,14 @@ where
     where
         A: Float,
     {
-        unimplemented!();
+        if self.ndim() < 2 {
+            panic!(
+                "We cannot compute the covariance of \
+                an array with less than 2 dimensions!"
+            );
+        } else {
+            unimplemented!();
+        }
     }
 }
 
