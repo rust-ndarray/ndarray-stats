@@ -39,6 +39,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand;
     use rand::distributions::Range;
     use ndarray_rand::RandomExt;
 
@@ -67,6 +68,19 @@ mod tests {
         assert!(
             covariance.all_close(&covariance.t(), 1e-8)
         )
+    }
+    
+    #[test]
+    #[should_panic]
+    fn test_invalid_ddof() {
+        let n_random_variables = 3;
+        let n_observations = 4;
+        let a = Array::random(
+            (n_random_variables, n_observations), 
+            Range::new(0., 10.)
+        );
+        let invalid_ddof = (n_observations as f64) + rand::random::<f64>().abs();
+        a.cov(invalid_ddof);
     }
 
     #[test]
