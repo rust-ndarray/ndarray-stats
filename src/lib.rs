@@ -14,6 +14,7 @@ extern crate quickcheck;
 pub use maybe_nan::{MaybeNan, MaybeNanExt};
 pub use quantile::{interpolate, QuantileExt};
 pub use sort::Sort1dExt;
+pub use correlation::CorrelationExt;
 
 mod maybe_nan;
 mod quantile;

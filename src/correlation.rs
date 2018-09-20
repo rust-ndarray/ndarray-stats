@@ -6,6 +6,57 @@ pub trait CorrelationExt<A, S>
 where
     S: Data<Elem = A>,
 {
+    /// Return the covariance matrix `C` for a 2-dimensional
+    /// array of observations `M`.
+    ///
+    /// Let `(r, o)` be the shape of `M`:
+    /// - `r` is the number of random variables;
+    /// - `o` is the number of observations we have collected 
+    /// for each random variable.
+    /// 
+    /// Every column in `M` is an experiment: a single observation for each 
+    /// random variable.
+    /// Each row in `M` contains all the observations for a certain random variable.
+    /// 
+    /// The parameter `ddof` specifies the "delta degrees of freedom". For
+    /// example, to calculate the population covariance, use `ddof = 0`, or to
+    /// calculate the sample covariance (unbiased estimate), use `ddof = 1`.
+    ///
+    /// The covariance of two random variables is defined as:
+    ///
+    /// ```text
+    ///                1       n
+    /// cov(X, Y) = ――――――――   ∑ (xᵢ - x̅)(yᵢ - y̅)
+    ///             n - ddof  i=1
+    /// ```
+    ///
+    /// where
+    ///
+    /// ```text
+    ///     1   n
+    /// x̅ = ―   ∑ xᵢ
+    ///     n  i=1
+    /// ```
+    /// and similarly for ̅y. 
+    ///
+    /// **Panics** if `ddof` is greater than or equal to the number of observations.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    /// use ndarray::{aview2, arr2};
+    /// use ndarray_stats::CorrelationExt;
+    ///
+    /// let a = arr2(&[[1., 3., 5.],
+    ///                [2., 4., 6.]]);
+    /// let covariance = a.cov(1.);
+    /// assert_eq!(
+    ///    covariance, 
+    ///    aview2(&[[4., 4.], [4., 4.]])
+    /// );
+    /// ```
     fn cov(&self, ddof: A) -> Array2<A> 
     where
         A: Float + FromPrimitive;
