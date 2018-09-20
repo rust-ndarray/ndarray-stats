@@ -56,18 +56,17 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_covariance_matrix_is_symmetric() {
-        let n_random_variables = 3;
-        let n_observations = 4;
-        let a = Array::random(
-            (n_random_variables, n_observations), 
-            Range::new(0., 10.)
-        );
-        let covariance = a.cov(1.);
-        assert!(
+    quickcheck! { 
+        fn covariance_matrix_is_symmetric(bound: f64) -> bool {
+            let n_random_variables = 3;
+            let n_observations = 4;
+            let a = Array::random(
+                (n_random_variables, n_observations), 
+                Range::new(-bound.abs(), bound.abs())
+            );
+            let covariance = a.cov(1.);
             covariance.all_close(&covariance.t(), 1e-8)
-        )
+        }
     }
     
     #[test]
