@@ -45,6 +45,11 @@ mod tests {
         let n_random_variables = 3;
         let n_observations = 4;
         let a = Array::from_elem((n_random_variables, n_observations), 7.);
-        assert_eq!(a.cov(1.), Array::zeros((n_random_variables, n_random_variables)));
+        assert!(
+            a.cov(1.).all_close(
+                &Array::zeros((n_random_variables, n_random_variables)),
+                1e-8
+            )
+        );
     }
 }
