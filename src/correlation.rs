@@ -43,20 +43,17 @@ mod tests {
     use rand::distributions::Range;
     use ndarray_rand::RandomExt;
 
-    #[test]
-    fn test_constant_case() {
-        let n_random_variables = 3;
-        let n_observations = 4;
-        let a = Array::from_elem((n_random_variables, n_observations), 7.);
-        assert!(
+    quickcheck! { 
+        fn constant_random_variables_have_zero_covariance_matrix(value: f64) -> bool {
+            let n_random_variables = 3;
+            let n_observations = 4;
+            let a = Array::from_elem((n_random_variables, n_observations), value);
             a.cov(1.).all_close(
                 &Array::zeros((n_random_variables, n_random_variables)),
                 1e-8
             )
-        );
-    }
+        }
 
-    quickcheck! { 
         fn covariance_matrix_is_symmetric(bound: f64) -> bool {
             let n_random_variables = 3;
             let n_observations = 4;
