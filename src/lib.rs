@@ -1,4 +1,5 @@
 #[macro_use(azip, s)]
+#[cfg_attr(test, macro_use(array))]
 extern crate ndarray;
 extern crate noisy_float;
 extern crate num_traits;
