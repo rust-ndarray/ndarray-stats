@@ -1,34 +1,38 @@
 use ndarray::prelude::*;
 use ndarray::Data;
-use num_traits::Float;
+use num_traits::{Float, FromPrimitive};
 
-pub trait CorrelationExt<A, S, D>
+pub trait CorrelationExt<A, S>
 where
     S: Data<Elem = A>,
-    D: Dimension,
 {
-    fn cov(&self, ddof: A) -> Array<A, D> 
+    fn cov(&self, ddof: A) -> Array2<A> 
     where
-        A: Float;
+        A: Float + FromPrimitive;
 }
 
-impl<A, S, D> CorrelationExt<A, S, D> for ArrayBase<S, D>
+impl<A: 'static, S> CorrelationExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
-    D: Dimension,
 {
-    fn cov(&self, ddof: A) -> Array<A, D>
+    fn cov(&self, ddof: A) -> Array2<A>
     where
-        A: Float,
+        A: Float + FromPrimitive,
     {
-        if self.ndim() < 2 {
-            panic!(
-                "We cannot compute the covariance of \
-                an array with less than 2 dimensions!"
-            );
-        } else {
-            unimplemented!();
-        }
+        let observation_axis = Axis(1);
+        let n_observations = A::from_usize(self.len_of(observation_axis)).unwrap();
+        let dof = 
+            if ddof >= n_observations {
+                panic!("`ddof` needs to be strictly smaller than the \
+                        number of observations provided for each \
+                        random variable!")
+            } else {
+                n_observations - ddof
+            };
+        let mean = self.mean_axis(observation_axis);
+        let denoised = self - &mean.insert_axis(observation_axis);
+        let covariance = denoised.dot(&denoised.t());
+        covariance.mapv_into(|x| x / dof)
     }
 }
 
@@ -38,14 +42,9 @@ mod tests {
 
     #[test]
     fn test_constant_case() {
-        let a = Array::from_elem((3, 4), 7.);
-        assert_eq!(a.cov(1.), Array::zeros((3, 4)));
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_panic_for_1d_arrays() {
-        let a = array!([1., 2., 3.]);
-        a.cov(1.);
+        let n_random_variables = 3;
+        let n_observations = 4;
+        let a = Array::from_elem((n_random_variables, n_observations), 7.);
+        assert_eq!(a.cov(1.), Array::zeros((n_random_variables, n_random_variables)));
     }
 }
