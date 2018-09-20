@@ -39,6 +39,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rand::distributions::Range;
+    use ndarray_rand::RandomExt;
 
     #[test]
     fn test_constant_case() {
@@ -51,6 +53,20 @@ mod tests {
                 1e-8
             )
         );
+    }
+
+    #[test]
+    fn test_covariance_matrix_is_symmetric() {
+        let n_random_variables = 3;
+        let n_observations = 4;
+        let a = Array::random(
+            (n_random_variables, n_observations), 
+            Range::new(0., 10.)
+        );
+        let covariance = a.cov(1.);
+        assert!(
+            covariance.all_close(&covariance.t(), 1e-8)
+        )
     }
 
     #[test]

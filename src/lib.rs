@@ -6,6 +6,8 @@ extern crate num_traits;
 extern crate rand;
 
 #[cfg(test)]
+extern crate ndarray_rand;
+#[cfg(test)]
 #[macro_use(quickcheck)]
 extern crate quickcheck;
 
