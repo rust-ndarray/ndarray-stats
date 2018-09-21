@@ -39,7 +39,9 @@ where
     /// ```
     /// and similarly for ̅y. 
     ///
-    /// **Panics** if `ddof` is greater than or equal to the number of observations.
+    /// **Panics** if `ddof` is greater than or equal to the number of 
+    /// observations or if the type cast of `n_observations` from `usize` to 
+    /// `A` fails.
     ///
     /// # Example
     ///
