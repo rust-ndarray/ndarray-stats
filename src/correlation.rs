@@ -164,4 +164,23 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    #[should_panic]
+    // We lose precision, hence the failing assert
+    fn test_covariance_for_badly_conditioned_array() {
+        let a: Array2<f64> = array![
+            [ 1e12 + 1.,  1e12 - 1.],
+            [ 1e-6 + 1e-12,  1e-6 - 1e-12],
+        ];
+        let expected_covariance = array![
+            [2., 2e-12], [2e-12, 2e-24]
+        ];
+        assert!(
+            a.cov(1.).all_close(
+                &expected_covariance,
+                1e-24
+            )
+        );
+    }
 }
