@@ -40,8 +40,8 @@ where
     /// and similarly for ̅y. 
     ///
     /// **Panics** if `ddof` is greater than or equal to the number of 
-    /// observations or if the type cast of `n_observations` from `usize` to 
-    /// `A` fails.
+    /// observations, if `M` is emtpy or if the type cast of `n_observations` 
+    /// from `usize` to `A` fails.
     ///
     /// # Example
     ///
@@ -130,6 +130,14 @@ mod tests {
         );
         let invalid_ddof = (n_observations as f64) + rand::random::<f64>().abs();
         a.cov(invalid_ddof);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_empty_matrix() {
+        let a: Array2<f32> = array![[], []];
+        // Negative ddof (-1 < 0) to avoid invalid-ddof panic 
+        a.cov(-1.);
     }
 
     #[test]
