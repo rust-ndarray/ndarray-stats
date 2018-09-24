@@ -82,6 +82,11 @@ where
     /// rho(X, Y) = ―――――――――――― 
     ///             std(X)std(Y)
     /// ```
+    /// 
+    /// Let `R` be the matrix returned by this function. Then
+    /// ```text
+    /// R_ij = rho(X_i, X_j)
+    /// ```
     ///
     /// **Panics** if `M` is empty, if the type cast of `n_observations` 
     /// from `usize` to `A` fails or if the standard deviation of one of the random 
