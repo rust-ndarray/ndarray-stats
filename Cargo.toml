@@ -15,3 +15,4 @@ ndarray-rand = "0.8"
 
 [patch.crates-io]
 noisy_float = { git = "https://github.com/SergiusIW/noisy_float-rs.git", rev = "c33a94803987475bbd205c9ff5a697af533f9a17" }
+ndarray = { git = "https://github.com/bluss/ndarray.git", branch = "master" } 
