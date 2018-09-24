@@ -62,6 +62,34 @@ where
     fn cov(&self, ddof: A) -> Array2<A> 
     where
         A: Float + FromPrimitive;
+
+    /// Return the (Pearson correlation coefficients)[https://en.wikipedia.org/wiki/Pearson_correlation_coefficient] 
+    /// for a 2-dimensional array of observations `M`.
+    ///
+    /// Let `(r, o)` be the shape of `M`:
+    /// - `r` is the number of random variables;
+    /// - `o` is the number of observations we have collected 
+    /// for each random variable.
+    /// 
+    /// Every column in `M` is an experiment: a single observation for each 
+    /// random variable.
+    /// Each row in `M` contains all the observations for a certain random variable.
+    /// 
+    /// The Pearson correlation coefficient of two random variables is defined as:
+    ///
+    /// ```text
+    ///              cov(X, Y)  
+    /// rho(X, Y) = ―――――――――――― 
+    ///             std(X)std(Y)
+    /// ```
+    ///
+    /// **Panics** if `M` is empty, if the type cast of `n_observations` 
+    /// from `usize` to `A` fails or if the standard deviation of one of the random 
+    /// variables is zero.
+    /// ```
+    fn pearson_correlation(&self) -> Array2<A> 
+    where
+        A: Float + FromPrimitive;
 }
 
 impl<A: 'static, S> CorrelationExt<A, S> for ArrayBase<S, Ix2>
