@@ -120,7 +120,15 @@ where
     where
         A: Float + FromPrimitive,
     {
-        unimplemented!()
+        let observation_axis = Axis(1);
+        // The ddof value doesn't matter, as long as we use the same one
+        // for computing covariance and standard deviation
+        let ddof = A::one();
+        let cov = self.cov(ddof);
+        let std = self.std_axis(observation_axis, ddof).insert_axis(observation_axis);
+        let std_matrix = std.dot(&std.t());
+        // element-wise division
+        cov / std_matrix
     }
 }
 
