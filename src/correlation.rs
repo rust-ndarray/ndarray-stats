@@ -115,6 +115,13 @@ where
         let covariance = denoised.dot(&denoised.t());
         covariance.mapv_into(|x| x / dof)
     }
+
+    fn pearson_correlation(&self) -> Array2<A> 
+    where
+        A: Float + FromPrimitive,
+    {
+        unimplemented!()
+    }
 }
 
 #[cfg(test)]
