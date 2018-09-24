@@ -125,7 +125,7 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+mod cov_tests {
     use super::*;
     use rand;
     use rand::distributions::Range;
