@@ -219,3 +219,23 @@ mod cov_tests {
         );
     }
 }
+
+#[cfg(test)]
+mod pearson_correlation_tests {
+    use super::*;
+    use rand::distributions::Range;
+    use ndarray_rand::RandomExt;
+
+    quickcheck! { 
+        fn pearson_correlation_matrix_is_symmetric(bound: f64) -> bool {
+            let n_random_variables = 3;
+            let n_observations = 4;
+            let a = Array::random(
+                (n_random_variables, n_observations), 
+                Range::new(-bound.abs(), bound.abs())
+            );
+            let pearson_correlation = a.pearson_correlation();
+            pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
+        }
+    }
+}
