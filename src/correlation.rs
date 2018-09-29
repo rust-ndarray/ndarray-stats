@@ -129,7 +129,9 @@ where
         let observation_axis = Axis(1);
         // The ddof value doesn't matter, as long as we use the same one
         // for computing covariance and standard deviation
-        let ddof = A::one();
+        // We choose -1 to avoid panicking when we only have one
+        // observation per random variable (or no observations at all) 
+        let ddof = -A::one();
         let cov = self.cov(ddof);
         let std = self.std_axis(observation_axis, ddof).insert_axis(observation_axis);
         let std_matrix = std.dot(&std.t());
@@ -275,5 +277,28 @@ mod pearson_correlation_tests {
             let pearson_correlation = a.pearson_correlation();
             pearson_correlation.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag)
         }
+    }
+
+    #[test]
+    fn test_zero_variables() {
+        let a = Array2::<f32>::zeros((0, 2));
+        let pearson_correlation = a.pearson_correlation();
+        assert_eq!(pearson_correlation.shape(), &[0, 0]);
+    }
+
+    #[test]
+    fn test_zero_observations() {
+        let a = Array2::<f32>::zeros((2, 0));
+        let pearson = a.pearson_correlation();
+        assert_eq!(pearson.shape(), &[2, 2]);
+        let all_nan_flag = pearson.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag);
+        assert_eq!(all_nan_flag, true);
+    }
+
+    #[test]
+    fn test_zero_variables_zero_observations() {
+        let a = Array2::<f32>::zeros((0, 0));
+        let pearson = a.pearson_correlation();
+        assert_eq!(pearson.shape(), &[0, 0]);
     }
 }
