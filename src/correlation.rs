@@ -257,7 +257,7 @@ mod pearson_correlation_tests {
     use ndarray_rand::RandomExt;
 
     quickcheck! { 
-        fn pearson_correlation_matrix_is_symmetric(bound: f64) -> bool {
+        fn output_matrix_is_symmetric(bound: f64) -> bool {
             let n_random_variables = 3;
             let n_observations = 4;
             let a = Array::random(
