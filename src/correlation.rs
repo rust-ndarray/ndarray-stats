@@ -318,7 +318,6 @@ mod pearson_correlation_tests {
             [-0.59931623, -0.52615195,  0.07134906,  1.        , -0.8743213 ],
             [ 0.1365648 ,  0.38954398, -0.17324776, -0.8743213 ,  1.        ]
         ];
-        println!("{:?}", a.pearson_correlation());
         assert_eq!(a.ndim(), 2);
         assert!(
             a.pearson_correlation().all_close(
