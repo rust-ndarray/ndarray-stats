@@ -196,7 +196,7 @@ mod cov_tests {
         // Negative ddof (-1 < 0) to avoid invalid-ddof panic
         let cov = a.cov(-1.);
         assert_eq!(cov.shape(), &[2, 2]);
-        cov.mapv(|x| x.is_nan());
+        assert!(cov.all_close(&Array2::<f32>::zeros((2, 2)), 1e-8));
     }
 
     #[test]
@@ -290,8 +290,6 @@ mod pearson_correlation_tests {
     fn test_zero_observations() {
         let a = Array2::<f32>::zeros((2, 0));
         let pearson = a.pearson_correlation();
-        assert_eq!(pearson.shape(), &[2, 2]);
-        println!("{:?}", pearson);
         let all_nan_flag = pearson.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag);
         assert_eq!(all_nan_flag, true);
     }
