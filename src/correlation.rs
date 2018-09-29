@@ -267,5 +267,13 @@ mod pearson_correlation_tests {
             let pearson_correlation = a.pearson_correlation();
             pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
         }
+
+        fn constant_random_variables_have_nan_correlation(value: f64) -> bool {
+            let n_random_variables = 3;
+            let n_observations = 4;
+            let a = Array::from_elem((n_random_variables, n_observations), value);
+            let pearson_correlation = a.pearson_correlation();
+            pearson_correlation.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag)
+        }
     }
 }
