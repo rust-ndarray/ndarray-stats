@@ -91,7 +91,7 @@ where
     ///
     /// **Panics** if `M` is empty, if the type cast of `n_observations` 
     /// from `usize` to `A` fails or if the standard deviation of one of the random 
-    /// variables is zero.
+    /// variables is zero and division by zero panics for type A.
     /// ```
     fn pearson_correlation(&self) -> Array2<A> 
     where
