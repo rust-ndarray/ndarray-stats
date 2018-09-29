@@ -39,9 +39,10 @@ where
     /// ```
     /// and similarly for ̅y. 
     ///
-    /// **Panics** if `ddof` is greater than or equal to the number of 
-    /// observations, if `M` is emtpy or if the type cast of `n_observations` 
-    /// from `usize` to `A` fails.
+    /// **Panics** if `ddof` is greater than or equal to the number of
+    /// observations, if the number of observations is zero and division by
+    /// zero panics for type `A`, or if the type cast of `n_observations` from
+    /// `usize` to `A` fails.
     ///
     /// # Example
     ///
@@ -181,11 +182,27 @@ mod cov_tests {
     }
 
     #[test]
-    #[should_panic]
-    fn test_empty_matrix() {
-        let a: Array2<f32> = array![[], []];
-        // Negative ddof (-1 < 0) to avoid invalid-ddof panic 
-        a.cov(-1.);
+    fn test_covariance_zero_variables() {
+        let a = Array2::<f32>::zeros((0, 2));
+        let cov = a.cov(1.);
+        assert_eq!(cov.shape(), &[0, 0]);
+    }
+
+    #[test]
+    fn test_covariance_zero_observations() {
+        let a = Array2::<f32>::zeros((2, 0));
+        // Negative ddof (-1 < 0) to avoid invalid-ddof panic
+        let cov = a.cov(-1.);
+        assert_eq!(cov.shape(), &[2, 2]);
+        cov.mapv(|x| x.is_nan());
+    }
+
+    #[test]
+    fn test_covariance_zero_variables_zero_observations() {
+        let a = Array2::<f32>::zeros((0, 0));
+        // Negative ddof (-1 < 0) to avoid invalid-ddof panic
+        let cov = a.cov(-1.);
+        assert_eq!(cov.shape(), &[0, 0]);
     }
 
     #[test]
