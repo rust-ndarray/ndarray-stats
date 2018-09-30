@@ -146,7 +146,7 @@ mod tests {
         // Negative ddof (-1 < 0) to avoid invalid-ddof panic
         let cov = a.cov(-1.);
         assert_eq!(cov.shape(), &[2, 2]);
-        cov.mapv(|x| x.is_nan());
+        cov.mapv(|x| assert_eq!(x, 0.));
     }
 
     #[test]
