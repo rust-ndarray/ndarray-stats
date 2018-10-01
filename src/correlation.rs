@@ -64,7 +64,7 @@ where
     where
         A: Float + FromPrimitive;
 
-    /// Return the (Pearson correlation coefficients)[https://en.wikipedia.org/wiki/Pearson_correlation_coefficient]
+    /// Return the [Pearson correlation coefficients](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient)
     /// for a 2-dimensional array of observations `M`.
     ///
     /// Let `(r, o)` be the shape of `M`:
