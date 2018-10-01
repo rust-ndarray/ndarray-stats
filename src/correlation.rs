@@ -290,8 +290,7 @@ mod pearson_correlation_tests {
     fn test_zero_observations() {
         let a = Array2::<f32>::zeros((2, 0));
         let pearson = a.pearson_correlation();
-        let all_nan_flag = pearson.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag);
-        assert_eq!(all_nan_flag, true);
+        pearson.mapv(|x| x.is_nan())
     }
 
     #[test]
