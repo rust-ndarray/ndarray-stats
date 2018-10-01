@@ -2,6 +2,8 @@ use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{Float, FromPrimitive};
 
+/// Extension trait for ArrayBase providing functions
+/// to compute different correlation measures.
 pub trait CorrelationExt<A, S>
 where
     S: Data<Elem = A>,
@@ -11,13 +13,13 @@ where
     ///
     /// Let `(r, o)` be the shape of `M`:
     /// - `r` is the number of random variables;
-    /// - `o` is the number of observations we have collected 
+    /// - `o` is the number of observations we have collected
     /// for each random variable.
-    /// 
-    /// Every column in `M` is an experiment: a single observation for each 
+    ///
+    /// Every column in `M` is an experiment: a single observation for each
     /// random variable.
     /// Each row in `M` contains all the observations for a certain random variable.
-    /// 
+    ///
     /// The parameter `ddof` specifies the "delta degrees of freedom". For
     /// example, to calculate the population covariance, use `ddof = 0`, or to
     /// calculate the sample covariance (unbiased estimate), use `ddof = 1`.
@@ -37,7 +39,7 @@ where
     /// x̅ = ―   ∑ xᵢ
     ///     n  i=1
     /// ```
-    /// and similarly for ̅y. 
+    /// and similarly for ̅y.
     ///
     /// **Panics** if `ddof` is greater than or equal to the number of
     /// observations, if the number of observations is zero and division by
@@ -56,11 +58,65 @@ where
     ///                [2., 4., 6.]]);
     /// let covariance = a.cov(1.);
     /// assert_eq!(
-    ///    covariance, 
+    ///    covariance,
     ///    aview2(&[[4., 4.], [4., 4.]])
     /// );
     /// ```
-    fn cov(&self, ddof: A) -> Array2<A> 
+    fn cov(&self, ddof: A) -> Array2<A>
+    where
+        A: Float + FromPrimitive;
+
+    /// Return the [Pearson correlation coefficients](https://en.wikipedia.org/wiki/Pearson_correlation_coefficient)
+    /// for a 2-dimensional array of observations `M`.
+    ///
+    /// Let `(r, o)` be the shape of `M`:
+    /// - `r` is the number of random variables;
+    /// - `o` is the number of observations we have collected
+    /// for each random variable.
+    ///
+    /// Every column in `M` is an experiment: a single observation for each
+    /// random variable.
+    /// Each row in `M` contains all the observations for a certain random variable.
+    ///
+    /// The Pearson correlation coefficient of two random variables is defined as:
+    ///
+    /// ```text
+    ///              cov(X, Y)
+    /// rho(X, Y) = ――――――――――――
+    ///             std(X)std(Y)
+    /// ```
+    ///
+    /// Let `R` be the matrix returned by this function. Then
+    /// ```text
+    /// R_ij = rho(X_i, X_j)
+    /// ```
+    ///
+    /// **Panics** if `M` is empty, if the type cast of `n_observations`
+    /// from `usize` to `A` fails or if the standard deviation of one of the random
+    ///
+    /// # Example
+    ///
+    /// variables is zero and division by zero panics for type A.
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    /// use ndarray::arr2;
+    /// use ndarray_stats::CorrelationExt;
+    ///
+    /// let a = arr2(&[[1., 3., 5.],
+    ///                [2., 4., 6.]]);
+    /// let corr = a.pearson_correlation();
+    /// assert!(
+    ///     corr.all_close(
+    ///         &arr2(&[
+    ///             [1., 1.],
+    ///             [1., 1.],
+    ///         ]),
+    ///         1e-7
+    ///     )
+    /// );
+    /// ```
+    fn pearson_correlation(&self) -> Array2<A>
     where
         A: Float + FromPrimitive;
 }
@@ -75,7 +131,7 @@ where
     {
         let observation_axis = Axis(1);
         let n_observations = A::from_usize(self.len_of(observation_axis)).unwrap();
-        let dof = 
+        let dof =
             if ddof >= n_observations {
                 panic!("`ddof` needs to be strictly smaller than the \
                         number of observations provided for each \
@@ -88,16 +144,33 @@ where
         let covariance = denoised.dot(&denoised.t());
         covariance.mapv_into(|x| x / dof)
     }
+
+    fn pearson_correlation(&self) -> Array2<A>
+    where
+        A: Float + FromPrimitive,
+    {
+        let observation_axis = Axis(1);
+        // The ddof value doesn't matter, as long as we use the same one
+        // for computing covariance and standard deviation
+        // We choose -1 to avoid panicking when we only have one
+        // observation per random variable (or no observations at all)
+        let ddof = -A::one();
+        let cov = self.cov(ddof);
+        let std = self.std_axis(observation_axis, ddof).insert_axis(observation_axis);
+        let std_matrix = std.dot(&std.t());
+        // element-wise division
+        cov / std_matrix
+    }
 }
 
 #[cfg(test)]
-mod tests {
+mod cov_tests {
     use super::*;
     use rand;
     use rand::distributions::Range;
     use ndarray_rand::RandomExt;
 
-    quickcheck! { 
+    quickcheck! {
         fn constant_random_variables_have_zero_covariance_matrix(value: f64) -> bool {
             let n_random_variables = 3;
             let n_observations = 4;
@@ -112,21 +185,21 @@ mod tests {
             let n_random_variables = 3;
             let n_observations = 4;
             let a = Array::random(
-                (n_random_variables, n_observations), 
+                (n_random_variables, n_observations),
                 Range::new(-bound.abs(), bound.abs())
             );
             let covariance = a.cov(1.);
             covariance.all_close(&covariance.t(), 1e-8)
         }
     }
-    
+
     #[test]
     #[should_panic]
     fn test_invalid_ddof() {
         let n_random_variables = 3;
         let n_observations = 4;
         let a = Array::random(
-            (n_random_variables, n_observations), 
+            (n_random_variables, n_observations),
             Range::new(0., 10.)
         );
         let invalid_ddof = (n_observations as f64) + rand::random::<f64>().abs();
@@ -200,4 +273,79 @@ mod tests {
             )
         );
     }
+}
+
+#[cfg(test)]
+mod pearson_correlation_tests {
+    use super::*;
+    use rand::distributions::Range;
+    use ndarray_rand::RandomExt;
+
+    quickcheck! {
+        fn output_matrix_is_symmetric(bound: f64) -> bool {
+            let n_random_variables = 3;
+            let n_observations = 4;
+            let a = Array::random(
+                (n_random_variables, n_observations),
+                Range::new(-bound.abs(), bound.abs())
+            );
+            let pearson_correlation = a.pearson_correlation();
+            pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
+        }
+
+        fn constant_random_variables_have_nan_correlation(value: f64) -> bool {
+            let n_random_variables = 3;
+            let n_observations = 4;
+            let a = Array::from_elem((n_random_variables, n_observations), value);
+            let pearson_correlation = a.pearson_correlation();
+            pearson_correlation.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag)
+        }
+    }
+
+    #[test]
+    fn test_zero_variables() {
+        let a = Array2::<f32>::zeros((0, 2));
+        let pearson_correlation = a.pearson_correlation();
+        assert_eq!(pearson_correlation.shape(), &[0, 0]);
+    }
+
+    #[test]
+    fn test_zero_observations() {
+        let a = Array2::<f32>::zeros((2, 0));
+        let pearson = a.pearson_correlation();
+        pearson.mapv(|x| x.is_nan());
+    }
+
+    #[test]
+    fn test_zero_variables_zero_observations() {
+        let a = Array2::<f32>::zeros((0, 0));
+        let pearson = a.pearson_correlation();
+        assert_eq!(pearson.shape(), &[0, 0]);
+    }
+
+    #[test]
+    fn test_for_random_array() {
+        let a = array![
+            [0.16351516, 0.56863268, 0.16924196, 0.72579120],
+            [0.44342453, 0.19834387, 0.25411802, 0.62462382],
+            [0.97162731, 0.29958849, 0.17338142, 0.80198342],
+            [0.91727132, 0.79817799, 0.62237124, 0.38970998],
+            [0.26979716, 0.20887228, 0.95454999, 0.96290785]
+        ];
+        let numpy_corrcoeff = array![
+            [ 1.        ,  0.38089376,  0.08122504, -0.59931623,  0.1365648 ],
+            [ 0.38089376,  1.        ,  0.80918429, -0.52615195,  0.38954398],
+            [ 0.08122504,  0.80918429,  1.        ,  0.07134906, -0.17324776],
+            [-0.59931623, -0.52615195,  0.07134906,  1.        , -0.8743213 ],
+            [ 0.1365648 ,  0.38954398, -0.17324776, -0.8743213 ,  1.        ]
+        ];
+        assert_eq!(a.ndim(), 2);
+        assert!(
+            a.pearson_correlation().all_close(
+                &numpy_corrcoeff,
+                1e-7
+            )
+        );
+    }
+
 }
