@@ -71,6 +71,53 @@ mod bins {
     impl<T> Bin for BinNd<T> {}
 }
 
-pub trait HistogramExt {
+use std::collections::HashMap;
+use self::bins::{Bin, Bins};
+use ndarray::prelude::*;
+use ndarray::Data;
 
+type Histogram = HashMap<Box<Bin>, usize>;
+
+pub trait HistogramNdExt<A, S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    fn histogram<B>(&self, bins: B) -> Histogram
+    where
+        B: Bins<A>;
+}
+
+impl<A, S, D> HistogramNdExt<A, S, D> for ArrayBase<S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    fn histogram<B>(&self, _bins: B) -> Histogram
+    where
+        B: Bins<A>,
+    {
+        unimplemented!()
+    }
+}
+
+pub trait Histogram1dExt<A, S>
+where
+    S: Data<Elem = A>,
+{
+    fn histogram<B>(&self, bins: B) -> Histogram
+    where
+        B: Bins<A>;
+}
+
+impl<A, S> Histogram1dExt<A, S> for ArrayBase<S, Ix1>
+where
+    S: Data<Elem = A>,
+{
+    fn histogram<B>(&self, _bins: B) -> Histogram
+    where
+        B: Bins<A>,
+    {
+        unimplemented!()
+    }
 }
