@@ -9,8 +9,7 @@ mod bins {
         bins: Vec<BinNd<T>>,
     }
 
-    /// `Bins` is a collection of non-overlapping
-    /// sub-regions (`Bin`) in a `n` dimensional space.
+    /// `Bins` is a collection of non-overlapping /// sub-regions (`Bin`) in a `n` dimensional space.
     pub trait Bins<T> {
         /// Return `n`, the number of dimensions.
         fn ndim(&self) -> usize;
@@ -78,26 +77,41 @@ use ndarray::Data;
 
 type Histogram = HashMap<Box<Bin>, usize>;
 
-pub trait HistogramNdExt<A, S, D>
+pub trait HistogramNdExt<A, S>
 where
     S: Data<Elem = A>,
-    D: Dimension,
 {
+    /// Return the [histogram](https://en.wikipedia.org/wiki/Histogram)
+    /// for a 2-dimensional array of points `M`.
+    ///
+    /// Let `(n, d)` be the shape of `M`:
+    /// - `n` is the number of points;
+    /// - `d` is the number of dimensions of the space those points belong to.
+    /// It follows that every column in `M` is a `d`-dimensional point.
+    /// 
+    /// For example: a (3, 4) matrix `M` is a collection of 3 points in a 
+    /// 4-dimensional space.
     fn histogram<B>(&self, bins: B) -> Histogram
     where
         B: Bins<A>;
 }
 
-impl<A, S, D> HistogramNdExt<A, S, D> for ArrayBase<S, D>
+impl<A, S> HistogramNdExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
-    D: Dimension,
 {
-    fn histogram<B>(&self, _bins: B) -> Histogram
+    fn histogram<B>(&self, bins: B) -> Histogram
     where
         B: Bins<A>,
     {
-        unimplemented!()
+        let mut histogram = HashMap::new();
+        for point in self.axis_iter(Axis(0)) {
+            let bin = bins.find(point);
+            if let Some(b) = bin {
+                histogram.insert(b, 1);
+            };
+        }
+        histogram
     }
 }
 
