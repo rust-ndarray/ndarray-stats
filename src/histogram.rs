@@ -128,6 +128,13 @@ where
 {
     fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>
     {
-        unimplemented!()
+        let mut histogram = HashMap::new();
+        for point in self.axis_iter(Axis(0)) {
+            let bin = bins.find(point);
+            if let Some(b) = bin {
+                histogram.insert(b, 1);
+            };
+        }
+        histogram
     }
 }
