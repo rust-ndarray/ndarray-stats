@@ -1,19 +1,23 @@
 mod bins {
     use ndarray::prelude::*;
     use ndarray::Data;
+    use std::hash::Hash;
 
     /// `Bins` is a collection of non-overlapping 
     /// intervals (`Bin1d`) in a 1-dimensional space.
-    pub struct Bins1d<T> {
+    pub struct Bins1d<T: Hash + Eq> {
         bins: Vec<Bin1d<T>>,
     }
     /// `Bins` is a collection of non-overlapping 
     /// sub-regions (`BinNd`) in a `n`-dimensional space.
-    pub struct BinsNd<T> {
+    pub struct BinsNd<T: Hash + Eq> {
         bins: Vec<BinNd<T>>,
     }
 
-    impl<T> Bins1d<T> {
+    impl<T> Bins1d<T> 
+    where 
+        T: Hash + Eq 
+    {
         /// Given a point `P`, it returns an `Option`:
         /// - `Some(B)`, if `P` belongs to the `Bin` `B`;
         /// - `None`, if `P` does not belong to any `Bin` in `Bins`.
@@ -28,7 +32,10 @@ mod bins {
         }
     }
 
-    impl<T> BinsNd<T> {
+    impl<T> BinsNd<T> 
+    where 
+        T: Hash + Eq 
+    {
         /// Return `n`, the number of dimensions.
         fn ndim(&self) -> usize {
             unimplemented!() 
@@ -48,16 +55,20 @@ mod bins {
         }
     }
 
-    pub struct Bin1d<T> {
+    #[derive(Hash, PartialEq, Eq)]
+    pub struct Bin1d<T: Hash + Eq> {
         left: T,
         right: T,
     }
-    pub struct BinNd<T> {
+
+    #[derive(Hash, PartialEq, Eq)]
+    pub struct BinNd<T: Hash + Eq> {
         projections: Vec<Bin1d<T>>,
     }
 }
 
 use std::collections::HashMap;
+use std::hash::Hash;
 use self::bins::{Bin1d, BinNd, BinsNd, Bins1d};
 use ndarray::prelude::*;
 use ndarray::Data;
@@ -67,6 +78,7 @@ type HistogramNd<T> = HashMap<BinNd<T>, usize>;
 pub trait HistogramNdExt<A, S>
 where
     S: Data<Elem = A>,
+    A: Hash + Eq,
 {
     /// Return the [histogram](https://en.wikipedia.org/wiki/Histogram)
     /// for a 2-dimensional array of points `M`.
@@ -84,6 +96,7 @@ where
 impl<A, S> HistogramNdExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
+    A: Hash + Eq,
 {
     fn histogram<B>(&self, bins: BinsNd<A>) -> HistogramNd<A>
     {
@@ -103,6 +116,7 @@ type Histogram1d<T> = HashMap<Bin1d<T>, usize>;
 pub trait Histogram1dExt<A, S>
 where
     S: Data<Elem = A>,
+    A: Hash + Eq,
 {
     fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>;
 }
@@ -110,6 +124,7 @@ where
 impl<A, S> Histogram1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
+    A: Hash + Eq,
 {
     fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>
     {
