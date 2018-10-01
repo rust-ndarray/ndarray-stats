@@ -3,7 +3,7 @@ use ndarray::Data;
 use std::fmt;
 use std::hash::Hash;
 
-#[derive(Hash, PartialEq, Eq)]
+#[derive(Hash, PartialEq, Eq, Clone)]
 pub struct Bin1d<T: Hash + Eq> {
     left: T,
     right: T,
