@@ -13,7 +13,7 @@ impl<T> Bin1d<T>
 where
     T: Hash + Eq + fmt::Debug + Clone
 {
-    pub fn contains(&self, point: T) -> bool
+    pub fn contains(&self, point: &T) -> bool
     {
         unimplemented!()
     }
