@@ -24,7 +24,7 @@ where
 
 impl<T> BinNd<T>
 where
-    T: Hash + Eq + fmt::Debug + Clone
+    T: Hash + Eq + fmt::Debug + Clone + PartialOrd
 {
     /// Creates a new instance of BinNd from a vector
     /// of its 1-dimensional projections.
@@ -61,7 +61,7 @@ pub struct BinsNd<T: Hash + Eq + fmt::Debug + Clone> {
 
 impl<T> BinsNd<T>
 where
-    T: Hash + Eq + fmt::Debug + Clone
+    T: Hash + Eq + fmt::Debug + Clone + PartialOrd
 {
     /// Creates a new instance of BinNd from a vector
     /// of its 1-dimensional projections.

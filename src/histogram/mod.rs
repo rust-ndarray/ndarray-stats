@@ -20,8 +20,8 @@ where
     /// - `n` is the number of points;
     /// - `d` is the number of dimensions of the space those points belong to.
     /// It follows that every column in `M` is a `d`-dimensional point.
-    /// 
-    /// For example: a (3, 4) matrix `M` is a collection of 3 points in a 
+    ///
+    /// For example: a (3, 4) matrix `M` is a collection of 3 points in a
     /// 4-dimensional space.
     fn histogram<B>(&self, bins: BinsNd<A>) -> HistogramNd<A>;
 }
@@ -29,7 +29,7 @@ where
 impl<A, S> HistogramNdExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
-    A: Hash + Eq + fmt::Debug + Clone,
+    A: Hash + Eq + fmt::Debug + Clone + PartialOrd,
 {
     fn histogram<B>(&self, bins: BinsNd<A>) -> HistogramNd<A>
     {
@@ -57,7 +57,7 @@ where
 impl<A, S> Histogram1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
-    A: Hash + Eq + fmt::Debug + Clone,
+    A: Hash + Eq + fmt::Debug + Clone + PartialOrd,
 {
     fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>
     {

@@ -2,6 +2,7 @@ use ndarray::prelude::*;
 use ndarray::Data;
 use std::fmt;
 use std::hash::Hash;
+use std::cmp::Ordering;
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub struct Bin1d<T: Hash + Eq> {
@@ -11,11 +12,19 @@ pub struct Bin1d<T: Hash + Eq> {
 
 impl<T> Bin1d<T>
 where
-    T: Hash + Eq + fmt::Debug + Clone
+    T: Hash + Eq + fmt::Debug + Clone + PartialOrd
 {
     pub fn contains(&self, point: &T) -> bool
     {
-        unimplemented!()
+        match point.partial_cmp(&self.left) {
+            Some(Ordering::Greater) => {
+                match point.partial_cmp(&self.right) {
+                    Some(Ordering::Less) => true,
+                    _ => false
+                }
+            },
+            _ => false
+        }
     }
 }
 
