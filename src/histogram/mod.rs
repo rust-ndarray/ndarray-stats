@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::fmt;
 mod bins;
 use self::bins::{Bin1d, BinNd, BinsNd, Bins1d};
 use ndarray::prelude::*;
@@ -10,7 +11,7 @@ type HistogramNd<T> = HashMap<BinNd<T>, usize>;
 pub trait HistogramNdExt<A, S>
 where
     S: Data<Elem = A>,
-    A: Hash + Eq,
+    A: Hash + Eq + fmt::Debug,
 {
     /// Return the [histogram](https://en.wikipedia.org/wiki/Histogram)
     /// for a 2-dimensional array of points `M`.
@@ -28,7 +29,7 @@ where
 impl<A, S> HistogramNdExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
-    A: Hash + Eq,
+    A: Hash + Eq + fmt::Debug,
 {
     fn histogram<B>(&self, bins: BinsNd<A>) -> HistogramNd<A>
     {
@@ -48,7 +49,7 @@ type Histogram1d<T> = HashMap<Bin1d<T>, usize>;
 pub trait Histogram1dExt<A, S>
 where
     S: Data<Elem = A>,
-    A: Hash + Eq,
+    A: Hash + Eq + fmt::Debug,
 {
     fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>;
 }
@@ -56,7 +57,7 @@ where
 impl<A, S> Histogram1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
-    A: Hash + Eq,
+    A: Hash + Eq + fmt::Debug,
 {
     fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>
     {

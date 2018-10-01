@@ -1,11 +1,21 @@
 use ndarray::prelude::*;
 use ndarray::Data;
+use std::fmt;
 use std::hash::Hash;
 
 #[derive(Hash, PartialEq, Eq)]
 pub struct Bin1d<T: Hash + Eq> {
     left: T,
     right: T,
+}
+
+impl<T> fmt::Display for Bin1d<T>
+where
+    T: Hash + Eq + fmt::Debug
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "({0:?}, {1:?})", self.left, self.right)
+    }
 }
 
 /// `Bins` is a collection of non-overlapping 
