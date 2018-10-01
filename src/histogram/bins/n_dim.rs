@@ -77,7 +77,7 @@ where
     /// Return `n`, the number of dimensions.
     /// 
     /// **Panics** if `bins` is empty.
-    fn ndim(&self) -> usize {
+    pub fn ndim(&self) -> usize {
         self.ndim
     }
 
