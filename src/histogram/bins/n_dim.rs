@@ -5,14 +5,14 @@ use std::ops::Index;
 use std::fmt;
 use histogram::bins::Bin1d;
 
-#[derive(Hash, PartialEq, Eq)]
-pub struct BinNd<T: Hash + Eq + fmt::Debug> {
+#[derive(Hash, PartialEq, Eq, Clone)]
+pub struct BinNd<T: Hash + Eq + fmt::Debug + Clone> {
     projections: Vec<Bin1d<T>>,
 }
 
 impl<T> fmt::Display for BinNd<T>
 where
-    T: Hash + Eq + fmt::Debug
+    T: Hash + Eq + fmt::Debug + Clone
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let repr = self.projections.iter().map(
@@ -24,7 +24,7 @@ where
 
 impl<T> BinNd<T>
 where
-    T: Hash + Eq + fmt::Debug
+    T: Hash + Eq + fmt::Debug + Clone
 {
     /// Creates a new instance of BinNd from a vector
     /// of its 1-dimensional projections. 
@@ -42,18 +42,23 @@ where
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
+
+    pub fn contains(&self, _point: ArrayView1<T>) -> bool
+    {
+        unimplemented!()
+    }
 }
 
 /// `Bins` is a collection of non-overlapping 
 /// sub-regions (`BinNd`) in a `n`-dimensional space.
-pub struct BinsNd<T: Hash + Eq + fmt::Debug> {
+pub struct BinsNd<T: Hash + Eq + fmt::Debug + Clone> {
     bins: Vec<BinNd<T>>,
     ndim: usize,
 }
 
 impl<T> BinsNd<T> 
 where 
-    T: Hash + Eq + fmt::Debug
+    T: Hash + Eq + fmt::Debug + Clone
 {
     /// Creates a new instance of BinNd from a vector
     /// of its 1-dimensional projections. 
@@ -86,11 +91,15 @@ where
     /// - `None`, if `P` does not belong to any `Bin` in `Bins`.
     /// 
     /// **Panics** if `P.ndim()` is different from `Bins.ndim()`. 
-    pub fn find<S, D>(&self, _point: ArrayBase<S, D>) -> Option<BinNd<T>>
+    pub fn find<S>(&self, point: ArrayBase<S, Ix1>) -> Option<BinNd<T>>
     where
         S: Data<Elem = T>,
-        D: Dimension,
     {
-        unimplemented!()
+        for bin in self.bins.iter() {
+            if bin.contains(point.view()) {
+                return Some((*bin).clone())
+            }
+        }
+        None
     }
 }
