@@ -95,6 +95,24 @@ where
     /// from `usize` to `A` fails or if the standard deviation of one of the random
     /// variables is zero and division by zero panics for type A.
     /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    /// use ndarray::arr2;
+    /// use ndarray_stats::CorrelationExt;
+    ///
+    /// let a = arr2(&[[1., 3., 5.],
+    ///                [2., 4., 6.]]);
+    /// let corr = a.pearson_correlation();
+    /// assert!(
+    ///     corr.all_close(
+    ///         &arr2(&[
+    ///             [1., 1.],
+    ///             [1., 1.],
+    ///         ]),
+    ///         1e-7
+    ///     )
+    /// );
+    /// ```
     fn pearson_correlation(&self) -> Array2<A>
     where
         A: Float + FromPrimitive;
