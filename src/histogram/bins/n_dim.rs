@@ -147,8 +147,6 @@ where
 impl<T> BinsNd<T>
 {
     /// Return `n`, the number of dimensions.
-    ///
-    /// **Panics** if `bins` is empty.
     pub fn ndim(&self) -> usize {
         self.ndim
     }
