@@ -51,7 +51,7 @@ impl<T> BinNd<T>
 where
     T: fmt::Debug
 {
-    /// Creates a new instance of BinNd from the ordered sequence
+    /// Creates a new instance of `BinNd` from the ordered sequence
     /// of its 1-dimensional projections on the coordinate axes.
     pub fn new(projections: Vec<Bin1d<T>>) -> Self {
         if projections.is_empty() {
