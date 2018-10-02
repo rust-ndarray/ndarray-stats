@@ -48,6 +48,7 @@ impl<T> Bin1d<T>
 where
     T: Hash + Eq + Clone + PartialOrd
 {
+    /// Return `true` if `point` belongs to the interval, `false` otherwise.
     pub fn contains(&self, point: &T) -> bool
     {
         match self {
