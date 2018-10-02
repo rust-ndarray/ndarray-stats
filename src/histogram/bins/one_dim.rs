@@ -82,8 +82,8 @@ where
     })
 }
 
-/// `Bins` is a collection of non-overlapping
-/// intervals (`Bin1d`) in a 1-dimensional space.
+/// `Bins` is a collection of intervals (`Bin1d`)
+/// in a 1-dimensional space.
 #[derive(Debug, Clone)]
 pub struct Bins1d<T> {
     bins: Vec<Bin1d<T>>,
@@ -94,8 +94,11 @@ where
     T: PartialOrd + Clone
 {
     /// Given a point `P`, it returns an `Option`:
-    /// - `Some(B)`, if `P` belongs to the `Bin1d` `B`;
-    /// - `None`, if `P` does not belong to any `Bin1d` in `Bins1d`.
+    /// - `Some(B)`, if `P` belongs to the bin `B`;
+    /// - `None`, if `P` does not belong to any bin in `self`.
+    ///
+    /// If more than one bin in `self` contains `P`, no assumptions
+    /// can be made on which bin will be returned by `find`.
     pub fn find(&self, point: &T) -> Option<Bin1d<T>>
     {
         for bin in self.bins.iter() {
