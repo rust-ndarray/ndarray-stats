@@ -62,6 +62,9 @@ where
     }
 }
 
+// Reimplemented here given that [RFC 1434](https://github.com/nox/rust-rfcs/blob/master/text/1434-contains-method-for-ranges.md)
+// has not being stabilized yet and we don't want to force nightly
+// for the whole library because of it
 fn contains<R, T>(range: &R, item: &T) -> bool
 where
     R: RangeBounds<T>,
@@ -92,7 +95,7 @@ where
 {
     /// Given a point `P`, it returns an `Option`:
     /// - `Some(B)`, if `P` belongs to the `Bin1d` `B`;
-    /// - `None`, if `P` does not belong to any `Bin1d` in `Bins`.
+    /// - `None`, if `P` does not belong to any `Bin1d` in `Bins1d`.
     pub fn find(&self, point: &T) -> Option<Bin1d<T>>
     {
         for bin in self.bins.iter() {
@@ -102,4 +105,9 @@ where
         }
         None
     }
+}
+
+#[cfg(test)]
+mod tests {
+
 }
