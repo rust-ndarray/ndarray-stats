@@ -15,7 +15,8 @@ pub use maybe_nan::{MaybeNan, MaybeNanExt};
 pub use quantile::{interpolate, QuantileExt};
 pub use sort::Sort1dExt;
 pub use correlation::CorrelationExt;
-pub use histogram::{Histogram1dExt, HistogramNdExt};
+pub use histogram::{Histogram1dExt, HistogramNdExt,
+                    Bin1d, Bins1d, BinNd, BinsNd};
 
 mod maybe_nan;
 mod quantile;
