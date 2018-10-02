@@ -7,8 +7,8 @@ use histogram::bins::Bin1d;
 /// `n`-dimensional bin: `I_1xI_2x..xI_n` where
 /// `I_k` is a one-dimensional interval (`Bin1d`).
 ///
-/// It is instantiated by specifiying the ordered sequence
-/// of its 1-dimensional projections on the axes.
+/// It is instantiated by specifying the ordered sequence
+/// of its 1-dimensional projections on the coordinate axes.
 ///
 /// # Example
 ///
