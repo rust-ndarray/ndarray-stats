@@ -1,5 +1,4 @@
 use std::fmt;
-use std::hash::Hash;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull,
                RangeInclusive, RangeTo, RangeToInclusive};
 
@@ -19,7 +18,7 @@ use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull,
 /// assert!(unit_interval.contains(&n64(0.5)));
 /// ```
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
-pub enum Bin1d<T: Hash + Eq + Clone> {
+pub enum Bin1d<T> {
     Range(Range<T>),
     RangeFrom(RangeFrom<T>),
     RangeFull(RangeFull),
@@ -30,7 +29,7 @@ pub enum Bin1d<T: Hash + Eq + Clone> {
 
 impl<T> fmt::Display for Bin1d<T>
 where
-    T: Hash + Eq + Clone + fmt::Debug
+    T: fmt::Debug
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -46,7 +45,7 @@ where
 
 impl<T> Bin1d<T>
 where
-    T: Hash + Eq + Clone + PartialOrd
+    T: PartialOrd
 {
     /// Return `true` if `point` belongs to the interval, `false` otherwise.
     pub fn contains(&self, point: &T) -> bool
@@ -86,13 +85,13 @@ where
 /// `Bins` is a collection of non-overlapping
 /// intervals (`Bin1d`) in a 1-dimensional space.
 #[derive(Debug, Clone)]
-pub struct Bins1d<T: Hash + Eq + Clone> {
+pub struct Bins1d<T> {
     bins: Vec<Bin1d<T>>,
 }
 
 impl<T> Bins1d<T>
 where
-    T: Hash + Eq + Clone + PartialOrd
+    T: PartialOrd + Clone
 {
     /// Given a point `P`, it returns an `Option`:
     /// - `Some(B)`, if `P` belongs to the `Bin1d` `B`;

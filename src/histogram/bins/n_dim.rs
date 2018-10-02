@@ -1,18 +1,17 @@
 use ndarray::prelude::*;
 use ndarray::Data;
-use std::hash::Hash;
 use std::ops::Index;
 use std::fmt;
 use histogram::bins::Bin1d;
 
-#[derive(Hash, PartialEq, Eq, Clone)]
-pub struct BinNd<T: Hash + Eq + fmt::Debug + Clone> {
+#[derive(Hash, PartialEq, Eq, Clone, Debug)]
+pub struct BinNd<T> {
     projections: Vec<Bin1d<T>>,
 }
 
 impl<T> fmt::Display for BinNd<T>
 where
-    T: Hash + Eq + fmt::Debug + Clone
+    T: fmt::Debug
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let repr = self.projections.iter().map(
@@ -24,7 +23,7 @@ where
 
 impl<T> BinNd<T>
 where
-    T: Hash + Eq + fmt::Debug + Clone + PartialOrd
+    T: fmt::Debug + PartialOrd
 {
     /// Creates a new instance of BinNd from a vector
     /// of its 1-dimensional projections.
@@ -38,11 +37,19 @@ where
             Self { projections }
         }
     }
+}
 
+impl<T> BinNd<T>
+{
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
+}
 
+impl<T> BinNd<T>
+where
+    T: PartialOrd
+{
     pub fn contains(&self, point: ArrayView1<T>) -> bool
     {
         point.iter().
@@ -54,14 +61,15 @@ where
 
 /// `Bins` is a collection of non-overlapping
 /// sub-regions (`BinNd`) in a `n`-dimensional space.
-pub struct BinsNd<T: Hash + Eq + fmt::Debug + Clone> {
+#[derive(Clone, Debug)]
+pub struct BinsNd<T> {
     bins: Vec<BinNd<T>>,
     ndim: usize,
 }
 
 impl<T> BinsNd<T>
 where
-    T: Hash + Eq + fmt::Debug + Clone + PartialOrd
+    T: fmt::Debug
 {
     /// Creates a new instance of BinNd from a vector
     /// of its 1-dimensional projections.
@@ -81,14 +89,22 @@ where
         };
         Self { bins, ndim }
     }
+}
 
+impl<T> BinsNd<T>
+{
     /// Return `n`, the number of dimensions.
     ///
     /// **Panics** if `bins` is empty.
     pub fn ndim(&self) -> usize {
         self.ndim
     }
+}
 
+impl<T> BinsNd<T>
+where
+    T: PartialOrd + Clone
+{
     /// Given a point `P`, it returns an `Option`:
     /// - `Some(B)`, if `P` belongs to the `Bin` `B`;
     /// - `None`, if `P` does not belong to any `Bin` in `Bins`.
