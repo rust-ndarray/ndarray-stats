@@ -1,6 +1,7 @@
 use std::fmt;
 use std::hash::Hash;
-use std::ops::*;
+use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull,
+               RangeInclusive, RangeTo, RangeToInclusive};
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub enum Bin1d<T: Hash + Eq + Clone> {
