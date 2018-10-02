@@ -2,12 +2,32 @@ use ndarray::prelude::*;
 use ndarray::Data;
 use std::fmt;
 use std::hash::Hash;
-use std::cmp::Ordering;
+use std::ops::*;
 
 #[derive(Hash, PartialEq, Eq, Clone)]
-pub struct Bin1d<T: Hash + Eq> {
-    left: T,
-    right: T,
+pub enum Bin1d<T: Hash + Eq> {
+    Range(Range<T>),
+    RangeFrom(RangeFrom<T>),
+    RangeFull(RangeFull),
+    RangeInclusive(RangeInclusive<T>),
+    RangeTo(RangeTo<T>),
+    RangeToInclusive(RangeToInclusive<T>),
+}
+
+impl<T> fmt::Display for Bin1d<T>
+where
+    T: Hash + Eq + fmt::Debug
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Bin1d::Range(x) => write!(f, "{:?}", x),
+            Bin1d::RangeFrom(x) => write!(f, "{:?}", x),
+            Bin1d::RangeFull(x) => write!(f, "{:?}", x),
+            Bin1d::RangeInclusive(x) => write!(f, "{:?}", x),
+            Bin1d::RangeTo(x) => write!(f, "{:?}", x),
+            Bin1d::RangeToInclusive(x) => write!(f, "{:?}", x),
+        }
+    }
 }
 
 impl<T> Bin1d<T>
@@ -16,25 +36,33 @@ where
 {
     pub fn contains(&self, point: &T) -> bool
     {
-        match point.partial_cmp(&self.left) {
-            Some(Ordering::Greater) => {
-                match point.partial_cmp(&self.right) {
-                    Some(Ordering::Less) => true,
-                    _ => false
-                }
-            },
-            _ => false
+        match self {
+            Bin1d::Range(x) => contains::<Range<T>, T>(x, point),
+            Bin1d::RangeFrom(x) => contains::<RangeFrom<T>, T>(x, point),
+            Bin1d::RangeFull(_) => true,
+            Bin1d::RangeInclusive(x) => contains::<RangeInclusive<T>, T>(x, point),
+            Bin1d::RangeTo(x) => contains::<RangeTo<T>, T>(x, point),
+            Bin1d::RangeToInclusive(x) => contains::<RangeToInclusive<T>, T>(x, point),
         }
     }
 }
 
-impl<T> fmt::Display for Bin1d<T>
+fn contains<R, T>(range: &R, item: &T) -> bool
 where
-    T: Hash + Eq + fmt::Debug
+    R: RangeBounds<T>,
+    T: PartialOrd,
 {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({0:?}, {1:?})", self.left, self.right)
-    }
+    (match range.start_bound() {
+        Bound::Included(ref start) => *start <= item,
+        Bound::Excluded(ref start) => *start < item,
+        Bound::Unbounded => true,
+    })
+    &&
+    (match range.end_bound() {
+        Bound::Included(ref end) => item <= *end,
+        Bound::Excluded(ref end) => item < *end,
+        Bound::Unbounded => true,
+    })
 }
 
 /// `Bins` is a collection of non-overlapping
