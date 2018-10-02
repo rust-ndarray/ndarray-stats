@@ -27,7 +27,7 @@ use histogram::bins::Bin1d;
 /// ];
 /// let unit_square = BinNd::new(projections);
 /// let point = array![n64(0.5), n64(0.5)];
-/// assert!(unit_square.contains(point));
+/// assert!(unit_square.contains(point.view()));
 /// # }
 /// ```
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
@@ -72,15 +72,16 @@ impl<T> BinNd<T>
     }
 }
 
-impl<T> BinNd<T>
+impl<'a, T: 'a> BinNd<T>
 where
     T: PartialOrd
 {
-    pub fn contains<S>(&self, point: ArrayBase<S, Ix1>) -> bool
+    pub fn contains<S, I>(&self, point: S) -> bool
     where
-        S: Data<Elem = T>
+        S: IntoIterator<Item=&'a T, IntoIter=I>,
+        I: Iterator<Item=&'a T> + ExactSizeIterator,
     {
-        point.iter().
+        point.into_iter().
             zip(self.projections.iter()).
             map(|(element, projection)| projection.contains(element)).
             fold(true, |acc, v| acc & v)
@@ -143,7 +144,7 @@ where
         S: Data<Elem = T>,
     {
         for bin in self.bins.iter() {
-            if bin.contains(point.view()) {
+            if bin.contains(point.view()){
                 return Some((*bin).clone())
             }
         }
