@@ -3,6 +3,21 @@ use std::hash::Hash;
 use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull,
                RangeInclusive, RangeTo, RangeToInclusive};
 
+/// One-dimensional intervals.
+///
+/// # Example
+///
+/// ```
+/// extern crate ndarray_stats;
+/// extern crate noisy_float;
+/// use ndarray_stats::Bin1d;
+/// use noisy_float::types::n64;
+///
+/// let unit_interval = Bin1d::RangeInclusive(n64(0.)..=n64(1.));
+/// assert!(unit_interval.contains(&n64(1.)));
+/// assert!(unit_interval.contains(&n64(0.)));
+/// assert!(unit_interval.contains(&n64(0.5)));
+/// ```
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub enum Bin1d<T: Hash + Eq + Clone> {
     Range(Range<T>),
