@@ -20,15 +20,15 @@ use histogram::bins::Bin1d;
 /// use noisy_float::types::n64;
 /// use ndarray_stats::{BinNd, Bin1d};
 ///
-/// fn main() {
-///     let projections = vec![
-///         Bin1d::RangeInclusive(n64(0.)..=n64(1.)),
-///         Bin1d::RangeInclusive(n64(0.)..=n64(1.)),
-///     ];
-///     let unit_square = BinNd::new(projections);
-///     let point = array![n64(0.5), n64(0.5)];
-///     assert!(unit_square.contains(point));
-/// }
+/// # fn main() {
+/// let projections = vec![
+///     Bin1d::RangeInclusive(n64(0.)..=n64(1.)),
+///     Bin1d::RangeInclusive(n64(0.)..=n64(1.)),
+/// ];
+/// let unit_square = BinNd::new(projections);
+/// let point = array![n64(0.5), n64(0.5)];
+/// assert!(unit_square.contains(point));
+/// # }
 /// ```
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct BinNd<T> {
