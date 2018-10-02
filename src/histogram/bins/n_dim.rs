@@ -125,8 +125,10 @@ impl<T> BinsNd<T>
 where
     T: fmt::Debug
 {
-    /// Creates a new instance of BinNd from a vector
-    /// of its 1-dimensional projections.
+    /// Creates a new instance of `BinsNd` from a vector
+    /// of `BinNd`.
+    ///
+    /// **Panics** if `bins` is empty.
     pub fn new(bins: Vec<BinNd<T>>) -> Self {
         assert!(!bins.is_empty(), "The bins collection cannot be empty!");
         // All bins must have the same number of dimensions!
