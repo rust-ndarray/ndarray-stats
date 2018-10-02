@@ -18,7 +18,7 @@ use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull,
 /// assert!(unit_interval.contains(&n64(0.)));
 /// assert!(unit_interval.contains(&n64(0.5)));
 /// ```
-#[derive(Hash, PartialEq, Eq, Clone)]
+#[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub enum Bin1d<T: Hash + Eq + Clone> {
     Range(Range<T>),
     RangeFrom(RangeFrom<T>),
@@ -85,6 +85,7 @@ where
 
 /// `Bins` is a collection of non-overlapping
 /// intervals (`Bin1d`) in a 1-dimensional space.
+#[derive(Debug, Clone)]
 pub struct Bins1d<T: Hash + Eq + Clone> {
     bins: Vec<Bin1d<T>>,
 }
@@ -109,5 +110,38 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    extern crate noisy_float;
 
+    #[test]
+    fn find() {
+        let bins = vec![
+            Bin1d::RangeTo(..0),
+            Bin1d::Range(0..5),
+            Bin1d::Range(5..9),
+            Bin1d::Range(10..15),
+            Bin1d::RangeFrom(15..),
+        ];
+        let b = Bins1d { bins };
+        assert_eq!(b.find(&9), None);
+        assert_eq!(b.find(&15), Some(Bin1d::RangeFrom(15..)));
+    }
+
+    #[test]
+    fn find_with_overlapping_bins() {
+        let bins = vec![
+            Bin1d::RangeToInclusive(..=0),
+            Bin1d::Range(0..5),
+        ];
+        let b = Bins1d { bins };
+        // The first one is matched and returned
+        assert_eq!(b.find(&0), Some(Bin1d::RangeToInclusive(..=0)));
+    }
+
+    quickcheck! {
+        fn find_with_empty_bins(point: i64) -> bool {
+            let b = Bins1d { bins: vec![] };
+            b.find(&point).is_none()
+        }
+    }
 }
