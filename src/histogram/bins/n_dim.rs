@@ -67,6 +67,7 @@ where
 
 impl<T> BinNd<T>
 {
+    /// Return `n`, the number of dimensions.
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
