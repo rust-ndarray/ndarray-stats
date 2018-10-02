@@ -76,7 +76,7 @@ impl<'a, T: 'a> BinNd<T>
 where
     T: PartialOrd
 {
-    /// Return `true` if `point` is in the bin, false otherwise.
+    /// Return `true` if `point` is in the bin, `false` otherwise.
     ///
     /// **Panics** if `point`'s dimensionality
     /// (`point.into_iter().len()`) is different from `self.ndim()`.
