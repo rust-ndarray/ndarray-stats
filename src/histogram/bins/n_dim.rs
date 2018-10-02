@@ -80,6 +80,25 @@ where
     ///
     /// **Panics** if `point`'s dimensionality
     /// (`point.into_iter().len()`) is different from `self.ndim()`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray_stats;
+    /// extern crate noisy_float;
+    /// use noisy_float::types::n64;
+    /// use ndarray_stats::{BinNd, Bin1d};
+    ///
+    /// let projections = vec![
+    ///     Bin1d::RangeFrom(n64(0.)..),
+    ///     Bin1d::RangeFrom(n64(0.)..),
+    /// ];
+    /// let first_quadrant = BinNd::new(projections);
+    /// let good_point = vec![n64(1e6), n64(1e8)];
+    /// let bad_point = vec![n64(-1.), n64(0.)];
+    /// assert!(first_quadrant.contains(&good_point));
+    /// assert!(!first_quadrant.contains(&bad_point));
+    /// ```
     pub fn contains<S, I>(&self, point: S) -> bool
     where
         S: IntoIterator<Item=&'a T, IntoIter=I>,
