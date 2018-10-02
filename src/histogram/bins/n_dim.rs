@@ -128,7 +128,8 @@ where
     /// Creates a new instance of `BinsNd` from a vector
     /// of `BinNd`.
     ///
-    /// **Panics** if `bins` is empty.
+    /// **Panics** if `bins` is empty or if there are two bins in `bins`
+    /// with different dimensionality.
     pub fn new(bins: Vec<BinNd<T>>) -> Self {
         assert!(!bins.is_empty(), "The bins collection cannot be empty!");
         // All bins must have the same number of dimensions!
