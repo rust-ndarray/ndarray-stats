@@ -76,13 +76,18 @@ impl<'a, T: 'a> BinNd<T>
 where
     T: PartialOrd
 {
+    /// Return `true` if `point` is in the bin, false otherwise.
+    ///
+    /// **Panics** if `point`'s dimensionality
+    /// (`point.into_iter().len()`) is different from `self.ndim()`.
     pub fn contains<S, I>(&self, point: S) -> bool
     where
         S: IntoIterator<Item=&'a T, IntoIter=I>,
         I: Iterator<Item=&'a T> + ExactSizeIterator,
     {
-        point.into_iter().
-            zip(self.projections.iter()).
+        let point_iter = point.into_iter();
+        assert_eq!(point_iter.len(), self.ndim());
+        point_iter.zip(self.projections.iter()).
             map(|(element, projection)| projection.contains(element)).
             fold(true, |acc, v| acc & v)
     }
