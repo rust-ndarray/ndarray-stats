@@ -23,7 +23,7 @@ where
 
 impl<T> BinNd<T>
 where
-    T: fmt::Debug + PartialOrd
+    T: fmt::Debug
 {
     /// Creates a new instance of BinNd from a vector
     /// of its 1-dimensional projections.
