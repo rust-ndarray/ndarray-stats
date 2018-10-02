@@ -113,8 +113,11 @@ where
     }
 }
 
-/// `Bins` is a collection of non-overlapping
-/// sub-regions (`BinNd`) in an `n`-dimensional space.
+/// `BinsNd` is a collection of sub-regions (`BinNd`)
+/// in an `n`-dimensional space.
+///
+/// It is not required (or enforced) that the sub-regions
+/// in `self` must be not-overlapping.
 #[derive(Clone, Debug)]
 pub struct BinsNd<T> {
     bins: Vec<BinNd<T>>,
@@ -162,7 +165,10 @@ where
 {
     /// Given a point `P`, it returns an `Option`:
     /// - `Some(B)`, if `P` belongs to the `Bin` `B`;
-    /// - `None`, if `P` does not belong to any `Bin` in `Bins`.
+    /// - `None`, if `P` does not belong to any `Bin` in `self`.
+    ///
+    /// If more than one bin in `self` contains `P`, no assumptions
+    /// can be made on which bin will be returned by `find`.
     ///
     /// **Panics** if `P.ndim()` is different from `Bins.ndim()`.
     pub fn find<S>(&self, point: ArrayBase<S, Ix1>) -> Option<BinNd<T>>
