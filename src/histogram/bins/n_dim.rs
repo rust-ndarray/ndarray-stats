@@ -4,6 +4,32 @@ use std::ops::Index;
 use std::fmt;
 use histogram::bins::Bin1d;
 
+/// `n`-dimensional bin: `I_1xI_2x..xI_n` where
+/// `I_k` is a one-dimensional interval (`Bin1d`).
+///
+/// It is instantiated by specifiying the ordered sequence
+/// of its 1-dimensional projections on the axes.
+///
+/// # Example
+///
+/// ```
+/// #[macro_use(array)]
+/// extern crate ndarray;
+/// extern crate ndarray_stats;
+/// extern crate noisy_float;
+/// use noisy_float::types::n64;
+/// use ndarray_stats::{BinNd, Bin1d};
+///
+/// fn main() {
+///     let projections = vec![
+///         Bin1d::RangeInclusive(n64(0.)..=n64(1.)),
+///         Bin1d::RangeInclusive(n64(0.)..=n64(1.)),
+///     ];
+///     let unit_square = BinNd::new(projections);
+///     let point = array![n64(0.5), n64(0.5)];
+///     assert!(unit_square.contains(point));
+/// }
+/// ```
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct BinNd<T> {
     projections: Vec<Bin1d<T>>,
@@ -50,7 +76,9 @@ impl<T> BinNd<T>
 where
     T: PartialOrd
 {
-    pub fn contains(&self, point: ArrayView1<T>) -> bool
+    pub fn contains<S>(&self, point: ArrayBase<S, Ix1>) -> bool
+    where
+        S: Data<Elem = T>
     {
         point.iter().
             zip(self.projections.iter()).
