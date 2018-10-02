@@ -74,10 +74,8 @@ where
     T: Hash + Eq + Clone + PartialOrd
 {
     /// Given a point `P`, it returns an `Option`:
-    /// - `Some(B)`, if `P` belongs to the `Bin` `B`;
-    /// - `None`, if `P` does not belong to any `Bin` in `Bins`.
-    ///
-    /// **Panics** if `P.ndim()` is different from `Bins.ndim()`.
+    /// - `Some(B)`, if `P` belongs to the `Bin1d` `B`;
+    /// - `None`, if `P` does not belong to any `Bin1d` in `Bins`.
     pub fn find(&self, point: &T) -> Option<Bin1d<T>>
     {
         for bin in self.bins.iter() {
