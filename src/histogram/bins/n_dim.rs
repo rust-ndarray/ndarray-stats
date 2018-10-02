@@ -88,7 +88,7 @@ where
 }
 
 /// `Bins` is a collection of non-overlapping
-/// sub-regions (`BinNd`) in a `n`-dimensional space.
+/// sub-regions (`BinNd`) in an `n`-dimensional space.
 #[derive(Clone, Debug)]
 pub struct BinsNd<T> {
     bins: Vec<BinNd<T>>,
