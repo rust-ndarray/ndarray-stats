@@ -1,3 +1,4 @@
+/// Bins for histogram computation.
 pub mod bins;
 use self::bins::{BinNd, BinsNd, Bin1d, Bins1d};
 
