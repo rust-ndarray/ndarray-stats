@@ -247,4 +247,15 @@ mod bins_nd_tests {
         let bins = BinsNd::new(vec![bin2d]);
         bins.find(point3d);
     }
+
+    #[test]
+    fn find_w_matching_dimensions() {
+        let bin = BinNd::new(vec![Bin1d::Range(0..5),
+                                  Bin1d::RangeFrom(2..)]);
+        let bins = BinsNd::new(vec![bin.clone()]);
+        let p = array![1, 2];
+        let q = array![1, 1];
+        assert_eq!(bins.find(p), Some(bin));
+        assert_eq!(bins.find(q), None);
+    }
 }
