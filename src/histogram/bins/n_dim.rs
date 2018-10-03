@@ -80,7 +80,7 @@ where
     /// Return `true` if `point` is in the bin, `false` otherwise.
     ///
     /// **Panics** if `point`'s dimensionality
-    /// (`point.into_iter().len()`) is different from `self.ndim()`.
+    /// (`point.len()`) is different from `self.ndim()`.
     ///
     /// # Example
     ///
