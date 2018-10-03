@@ -143,14 +143,13 @@ where
         assert!(!bins.is_empty(), "The bins collection cannot be empty!");
         // All bins must have the same number of dimensions!
         let ndim = {
-            let first_bin = bins.index(0);
-            let ndim = first_bin.ndim();
-            &bins.iter().map(
-                |b| assert_eq!(
-                    b.ndim(), ndim,
-                    "There at least two bins with different \
-                    number of dimensions: {0} and {1}.", b, first_bin)
-            );
+            let ndim = bins.index(0).ndim();
+            let flag = &bins.iter().
+                map(|b| b.ndim() == ndim).
+                fold(true, |acc, new| acc & new);
+            // It would be better to print the bad bins as well!
+            assert!(flag, "There at least two bins with different \
+                           number of dimensions");
             ndim
         };
         Self { bins, ndim }
@@ -227,5 +226,18 @@ mod bins_nd_tests {
     #[should_panic]
     fn new_w_empty_vec() {
         let _: BinsNd<i32> = BinsNd::new(vec![]);
+    }
+
+    #[test]
+    #[should_panic]
+    fn new_w_bins_of_different_dimensions() {
+        let bin1d = BinNd::new(vec![Bin1d::Range(0..5)]);
+        let bin2d = BinNd::new(vec![Bin1d::Range(0..5),
+                                    Bin1d::RangeFrom(2..)]);
+        assert_eq!(bin1d.ndim(), 1);
+        assert_eq!(bin2d.ndim(), 2);
+        let _: BinsNd<i32> = BinsNd::new(
+            vec![bin1d, bin2d],
+        );
     }
 }
