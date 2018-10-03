@@ -219,3 +219,13 @@ mod bin_nd_tests {
         bin2d.contains(point2d.view());
     }
 }
+
+mod bins_nd_tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn new_w_empty_vec() {
+        let _: BinsNd<i32> = BinsNd::new(vec![]);
+    }
+}
