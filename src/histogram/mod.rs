@@ -36,7 +36,7 @@ where
     {
         let mut histogram = HashMap::new();
         for point in self.axis_iter(Axis(0)) {
-            let bin = bins.find(point);
+            let bin = bins.find(point.view());
             if let Some(b) = bin {
                 histogram.insert(b, 1);
             };

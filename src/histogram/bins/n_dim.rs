@@ -100,14 +100,12 @@ where
     /// assert!(first_quadrant.contains(&good_point));
     /// assert!(!first_quadrant.contains(&bad_point));
     /// ```
-    pub fn contains<S, I>(&self, point: S) -> bool
+    pub fn contains<S>(&self, point: ArrayBase<S, Ix1>) -> bool
     where
-        S: IntoIterator<Item=&'a T, IntoIter=I>,
-        I: Iterator<Item=&'a T> + ExactSizeIterator,
+        S: Data<Elem=T>,
     {
-        let point_iter = point.into_iter();
-        assert_eq!(point_iter.len(), self.ndim());
-        point_iter.zip(self.projections.iter()).
+        assert_eq!(point.len(), self.ndim());
+        point.iter().zip(self.projections.iter()).
             map(|(element, projection)| projection.contains(element)).
             fold(true, |acc, v| acc & v)
     }
@@ -159,7 +157,7 @@ impl<T> BinsNd<T>
     }
 }
 
-impl<T> BinsNd<T>
+impl<'a, T: 'a> BinsNd<T>
 where
     T: PartialOrd + Clone
 {
@@ -173,7 +171,7 @@ where
     /// **Panics** if `P.ndim()` is different from `Bins.ndim()`.
     pub fn find<S>(&self, point: ArrayBase<S, Ix1>) -> Option<BinNd<T>>
     where
-        S: Data<Elem = T>,
+        S: Data<Elem=T>,
     {
         for bin in self.bins.iter() {
             if bin.contains(point.view()){
