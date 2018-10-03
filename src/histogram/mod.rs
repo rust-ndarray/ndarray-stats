@@ -24,7 +24,7 @@ where
     ///
     /// For example: a (3, 4) matrix `M` is a collection of 3 points in a
     /// 4-dimensional space.
-    fn histogram<B>(&self, bins: BinsNd<A>) -> HistogramNd<A>;
+    fn histogram(&self, bins: BinsNd<A>) -> HistogramNd<A>;
 }
 
 impl<A, S> HistogramNdExt<A, S> for ArrayBase<S, Ix2>
@@ -32,7 +32,7 @@ where
     S: Data<Elem = A>,
     A: Hash + Eq + fmt::Debug + Clone + PartialOrd,
 {
-    fn histogram<B>(&self, bins: BinsNd<A>) -> HistogramNd<A>
+    fn histogram(&self, bins: BinsNd<A>) -> HistogramNd<A>
     {
         let mut histogram = HashMap::new();
         for point in self.axis_iter(Axis(0)) {
@@ -53,7 +53,7 @@ where
     S: Data<Elem = A>,
     A: Hash + Eq + fmt::Debug + Clone,
 {
-    fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>;
+    fn histogram(&self, bins: Bins1d<A>) -> Histogram1d<A>;
 }
 
 impl<A, S> Histogram1dExt<A, S> for ArrayBase<S, Ix1>
@@ -61,7 +61,7 @@ where
     S: Data<Elem = A>,
     A: Hash + Eq + fmt::Debug + Clone + PartialOrd,
 {
-    fn histogram<B>(&self, bins: Bins1d<A>) -> Histogram1d<A>
+    fn histogram(&self, bins: Bins1d<A>) -> Histogram1d<A>
     {
         let mut histogram = HashMap::new();
         for point in self.iter() {
@@ -72,5 +72,41 @@ where
             };
         }
         histogram
+    }
+}
+
+#[cfg(test)]
+mod histogram_nd_tests {
+    use super::*;
+
+    #[test]
+    fn histogram() {
+        let first_quadrant = BinNd::new(
+            vec![Bin1d::RangeFrom(0..),
+                 Bin1d::RangeFrom(0..)
+            ]
+        );
+        let second_quadrant = BinNd::new(
+            vec![Bin1d::RangeTo(..0),
+                 Bin1d::RangeFrom(0..)
+            ]
+        );
+        let bins = BinsNd::new(vec![first_quadrant.clone(),
+                                    second_quadrant.clone()]);
+        let points = array![
+            [1, 1],
+            [1, 2],
+            [0, 1],
+            [-1, 2],
+            [-1, -1], // a point that doesn't belong to any bin in bins
+        ];
+        assert_eq!(points.shape(), &[5, 2]);
+        let histogram = points.histogram(bins);
+
+        let mut expected = HashMap::new();
+        expected.insert(first_quadrant, 3);
+        expected.insert(second_quadrant, 1);
+
+        assert_eq!(expected, histogram);
     }
 }
