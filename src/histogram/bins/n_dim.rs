@@ -75,7 +75,7 @@ impl<T> BinNd<T>
 
 impl<'a, T: 'a> BinNd<T>
 where
-    T: PartialOrd
+    T: PartialOrd + fmt::Debug,
 {
     /// Return `true` if `point` is in the bin, `false` otherwise.
     ///
@@ -104,7 +104,9 @@ where
     where
         S: Data<Elem=T>,
     {
-        assert_eq!(point.len(), self.ndim());
+        assert_eq!(point.len(), self.ndim(),
+            "Dimensionalities do not match. Point {0:?} has {1} dimensions. \
+             Bin {2:?} has {3} dimensions", point, point.len(), self, self.ndim());
         point.iter().zip(self.projections.iter()).
             map(|(element, projection)| projection.contains(element)).
             fold(true, |acc, v| acc & v)
@@ -159,7 +161,7 @@ impl<T> BinsNd<T>
 
 impl<'a, T: 'a> BinsNd<T>
 where
-    T: PartialOrd + Clone
+    T: PartialOrd + Clone + fmt::Debug,
 {
     /// Given a point `P`, it returns an `Option`:
     /// - `Some(B)`, if `P` belongs to the `Bin` `B`;
