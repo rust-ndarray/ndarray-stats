@@ -235,4 +235,14 @@ mod bins_nd_tests {
             vec![bin1d, bin2d],
         );
     }
+
+    #[test]
+    #[should_panic]
+    fn find_w_mismatched_dimensions() {
+        let bin2d = BinNd::new(vec![Bin1d::Range(0..5),
+                                    Bin1d::RangeFrom(2..)]);
+        let point3d = array![1, 2, 3];
+        let bins = BinsNd::new(vec![bin2d]);
+        bins.find(point3d);
+    }
 }
