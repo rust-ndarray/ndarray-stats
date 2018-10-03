@@ -9,6 +9,7 @@ use ndarray::Data;
 
 type HistogramNd<T> = HashMap<BinNd<T>, usize>;
 
+// Extension trait for ArrayBase providing methods to compute n-dimensional histograms.
 pub trait HistogramNdExt<A, S>
 where
     S: Data<Elem = A>,
@@ -50,6 +51,7 @@ where
 
 type Histogram1d<T> = HashMap<Bin1d<T>, usize>;
 
+// Extension trait for one-dimensional ArrayBase providing methods to compute histograms.
 pub trait Histogram1dExt<A, S>
 where
     S: Data<Elem = A>,
