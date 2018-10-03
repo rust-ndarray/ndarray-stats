@@ -200,4 +200,13 @@ mod tests {
         let _: BinNd<i32> = BinNd::new(vec![]);
     }
 
+    #[test]
+    #[should_panic]
+    fn contains_w_dimensions_mismatch() {
+        let bin2d = BinNd::new(
+            vec![Bin1d::Range(0..1), Bin1d::Range(2..4)]
+        );
+        let point1d = array![1];
+        bin2d.contains(point1d.view());
+    }
 }
