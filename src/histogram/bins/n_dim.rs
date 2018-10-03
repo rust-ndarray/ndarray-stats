@@ -5,7 +5,7 @@ use std::fmt;
 use histogram::bins::Bin1d;
 
 /// `n`-dimensional bin: `I_1xI_2x..xI_n` where
-/// `I_k` is a one-dimensional interval (`Bin1d`).
+/// `I_k` is a one-dimensional interval ([`Bin1d`]).
 ///
 /// It is instantiated by specifying the ordered sequence
 /// of its 1-dimensional projections on the coordinate axes.
@@ -30,6 +30,8 @@ use histogram::bins::Bin1d;
 /// assert!(unit_square.contains(point.view()));
 /// # }
 /// ```
+///
+/// [`Bin1d`]: enum.Bin1d.html
 #[derive(Hash, PartialEq, Eq, Clone, Debug)]
 pub struct BinNd<T> {
     projections: Vec<Bin1d<T>>,
@@ -119,11 +121,13 @@ where
     }
 }
 
-/// `BinsNd` is a collection of sub-regions (`BinNd`)
+/// `BinsNd` is a collection of sub-regions ([`BinNd`])
 /// in an `n`-dimensional space.
 ///
 /// It is not required (or enforced) that the sub-regions
 /// in `self` must be not-overlapping.
+///
+/// [`BinNd`]: struct.BinNd.html
 #[derive(Clone, Debug)]
 pub struct BinsNd<T> {
     bins: Vec<BinNd<T>>,
