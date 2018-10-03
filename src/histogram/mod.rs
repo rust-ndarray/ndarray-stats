@@ -55,6 +55,8 @@ where
     S: Data<Elem = A>,
     A: Hash + Eq + fmt::Debug + Clone,
 {
+    /// Return the [histogram](https://en.wikipedia.org/wiki/Histogram)
+    /// for a 1-dimensional array of points `M`.
     fn histogram(&self, bins: Bins1d<A>) -> Histogram1d<A>;
 }
 
