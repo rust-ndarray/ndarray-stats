@@ -209,4 +209,13 @@ mod tests {
         let point1d = array![1];
         bin2d.contains(point1d.view());
     }
+
+    #[test]
+    fn contains_w_matching_dimensions() {
+        let bin2d = BinNd::new(
+            vec![Bin1d::Range(0..1), Bin1d::Range(2..4)]
+        );
+        let point2d = array![0, 3];
+        bin2d.contains(point2d.view());
+    }
 }
