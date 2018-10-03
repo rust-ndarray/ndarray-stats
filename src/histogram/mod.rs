@@ -1,5 +1,5 @@
-mod bins;
-pub use self::bins::{Bin1d, BinNd, BinsNd, Bins1d};
+pub mod bins;
+use self::bins::{BinNd, BinsNd, Bin1d, Bins1d};
 
 use std::collections::HashMap;
 use std::hash::Hash;
