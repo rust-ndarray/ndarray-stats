@@ -191,7 +191,7 @@ where
 }
 
 #[cfg(test)]
-mod tests {
+mod bin_nd_tests {
     use super::*;
 
     #[test]
