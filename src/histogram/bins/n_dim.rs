@@ -53,6 +53,8 @@ where
 {
     /// Creates a new instance of `BinNd` from the ordered sequence
     /// of its 1-dimensional projections on the coordinate axes.
+    ///
+    /// **Panics** if `projections` is empty.
     pub fn new(projections: Vec<Bin1d<T>>) -> Self {
         if projections.is_empty() {
             panic!(
@@ -85,20 +87,24 @@ where
     /// # Example
     ///
     /// ```
+    /// #[macro_use(array)]
+    /// extern crate ndarray;
     /// extern crate ndarray_stats;
     /// extern crate noisy_float;
     /// use noisy_float::types::n64;
     /// use ndarray_stats::{BinNd, Bin1d};
     ///
+    /// # fn main() {
     /// let projections = vec![
     ///     Bin1d::RangeFrom(n64(0.)..),
     ///     Bin1d::RangeFrom(n64(0.)..),
     /// ];
     /// let first_quadrant = BinNd::new(projections);
-    /// let good_point = vec![n64(1e6), n64(1e8)];
-    /// let bad_point = vec![n64(-1.), n64(0.)];
-    /// assert!(first_quadrant.contains(&good_point));
-    /// assert!(!first_quadrant.contains(&bad_point));
+    /// let good_point = array![n64(1e6), n64(1e8)];
+    /// let bad_point = array![n64(-1.), n64(0.)];
+    /// assert!(first_quadrant.contains(good_point.view()));
+    /// assert!(!first_quadrant.contains(bad_point.view()));
+    /// # }
     /// ```
     pub fn contains<S>(&self, point: ArrayBase<S, Ix1>) -> bool
     where
@@ -182,4 +188,16 @@ where
         }
         None
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn new_w_empty_vec() {
+        let _: BinNd<i32> = BinNd::new(vec![]);
+    }
+
 }
