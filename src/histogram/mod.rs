@@ -38,7 +38,8 @@ where
         for point in self.axis_iter(Axis(0)) {
             let bin = bins.find(point.view());
             if let Some(b) = bin {
-                histogram.insert(b, 1);
+                let counter = histogram.entry(b).or_insert(0);
+                *counter += 1;
             };
         }
         histogram
@@ -66,7 +67,8 @@ where
         for point in self.iter() {
             let bin = bins.find(point);
             if let Some(b) = bin {
-                histogram.insert(b, 1);
+                let counter = histogram.entry(b).or_insert(0);
+                *counter += 1;
             };
         }
         histogram
