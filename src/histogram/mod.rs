@@ -24,6 +24,8 @@ where
     ///
     /// For example: a (3, 4) matrix `M` is a collection of 3 points in a
     /// 4-dimensional space.
+    ///
+    /// **Panics** if `d` is different from `bins.ndim()`.
     fn histogram(&self, bins: BinsNd<A>) -> HistogramNd<A>;
 }
 
@@ -108,5 +110,18 @@ mod histogram_nd_tests {
         expected.insert(second_quadrant, 1);
 
         assert_eq!(expected, histogram);
+    }
+
+    #[test]
+    #[should_panic]
+    fn histogram_w_mismatched_dimensions() {
+        let bin = BinNd::new(vec![Bin1d::RangeFrom(0..)]);
+        let bins = BinsNd::new(vec![bin.clone()]);
+        let points = array![
+            [1, 1],
+            [1, 2],
+        ];
+        assert_eq!(points.shape(), &[2, 2]);
+        points.histogram(bins);
     }
 }
