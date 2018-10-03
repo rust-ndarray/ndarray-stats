@@ -131,8 +131,6 @@ pub struct BinsNd<T> {
 }
 
 impl<T> BinsNd<T>
-where
-    T: fmt::Debug
 {
     /// Creates a new instance of `BinsNd` from a vector
     /// of `BinNd`.
@@ -154,10 +152,7 @@ where
         };
         Self { bins, ndim }
     }
-}
 
-impl<T> BinsNd<T>
-{
     /// Return `n`, the number of dimensions.
     pub fn ndim(&self) -> usize {
         self.ndim
