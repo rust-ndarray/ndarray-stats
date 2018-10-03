@@ -241,7 +241,9 @@ mod bins_nd_tests {
     fn find_w_mismatched_dimensions() {
         let bin2d = BinNd::new(vec![Bin1d::Range(0..5),
                                     Bin1d::RangeFrom(2..)]);
+        assert_eq!(bin2d.ndim(), 2);
         let point3d = array![1, 2, 3];
+        assert_eq!(point3d.len(), 3);
         let bins = BinsNd::new(vec![bin2d]);
         bins.find(point3d);
     }
