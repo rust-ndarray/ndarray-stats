@@ -18,7 +18,7 @@ use histogram::bins::Bin1d;
 /// extern crate ndarray_stats;
 /// extern crate noisy_float;
 /// use noisy_float::types::n64;
-/// use ndarray_stats::{BinNd, Bin1d};
+/// use ndarray_stats::bins::{BinNd, Bin1d};
 ///
 /// # fn main() {
 /// let projections = vec![
@@ -94,7 +94,7 @@ where
     /// extern crate ndarray_stats;
     /// extern crate noisy_float;
     /// use noisy_float::types::n64;
-    /// use ndarray_stats::{BinNd, Bin1d};
+    /// use ndarray_stats::bins::{BinNd, Bin1d};
     ///
     /// # fn main() {
     /// let projections = vec![

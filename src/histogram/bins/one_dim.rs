@@ -9,7 +9,7 @@ use std::ops::{Bound, Range, RangeBounds, RangeFrom, RangeFull,
 /// ```
 /// extern crate ndarray_stats;
 /// extern crate noisy_float;
-/// use ndarray_stats::Bin1d;
+/// use ndarray_stats::bins::Bin1d;
 /// use noisy_float::types::n64;
 ///
 /// let unit_interval = Bin1d::RangeInclusive(n64(0.)..=n64(1.));
