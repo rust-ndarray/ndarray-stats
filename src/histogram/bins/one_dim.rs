@@ -82,8 +82,10 @@ where
     })
 }
 
-/// `Bins` is a collection of intervals (`Bin1d`)
+/// `Bins1d` is a collection of intervals ([`Bin1d`])
 /// in a 1-dimensional space.
+///
+/// [`Bin1d`]: enum.Bin1d.html
 #[derive(Debug, Clone)]
 pub struct Bins1d<T> {
     bins: Vec<Bin1d<T>>,
