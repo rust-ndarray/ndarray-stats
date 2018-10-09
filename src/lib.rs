@@ -20,3 +20,4 @@ mod maybe_nan;
 mod quantile;
 mod sort;
 mod correlation;
+mod histogram;
