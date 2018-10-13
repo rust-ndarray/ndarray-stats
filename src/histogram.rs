@@ -28,20 +28,18 @@ struct Edges<A: Ord> {
     edges: Vec<A>,
 }
 
-impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
-    fn from(edges: Array1<A>) -> Self {
-        let mut edges = edges.to_vec();
+impl<A: Ord> From<Vec<A>> for Edges<A> {
+    fn from(mut edges: Vec<A>) -> Self {
         // sort the array in-place
         edges.sort_unstable();
         Edges { edges }
     }
 }
 
-impl<A: Ord> From<Vec<A>> for Edges<A> {
-    fn from(mut edges: Vec<A>) -> Self {
-        // sort the array in-place
-        edges.sort_unstable();
-        Edges { edges }
+impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
+    fn from(edges: Array1<A>) -> Self {
+        let mut edges = edges.to_vec();
+        Self::from(edges)
     }
 }
 
