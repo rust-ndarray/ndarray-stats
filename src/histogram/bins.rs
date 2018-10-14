@@ -116,3 +116,12 @@ impl<A: Ord> Bins<A> {
         )
     }
 }
+
+impl<A: Ord + Clone> Bins<A> {
+    pub fn get(&self, index: usize) -> Range<A> {
+        Range {
+            start: self.edges[index].clone(),
+            end: self.edges[index+1].clone(),
+        }
+    }
+}
