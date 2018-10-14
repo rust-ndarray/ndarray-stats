@@ -119,7 +119,7 @@ impl<A: Ord> IntoIterator for Edges<A> {
 }
 
 impl<A: Ord> Edges<A> {
-    /// Number of edges in `Self`.
+    /// Number of edges in `self`.
     ///
     /// # Example:
     ///
@@ -160,7 +160,7 @@ impl<A: Ord> Edges<A> {
 
     /// Given `value`, it returns an option:
     /// - `Some((left, right))`, where `right=left+1`, if there are two consecutive edges in
-    /// Self such that `self[left] <= value < self[right]`;
+    /// `self` such that `self[left] <= value < self[right]`;
     /// - `None`, otherwise.
     ///
     /// # Example:
