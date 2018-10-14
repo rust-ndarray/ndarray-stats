@@ -214,7 +214,7 @@ impl<A: Ord> Edges<A> {
 /// // first bin
 /// assert_eq!(
 ///     bins.get(0),
-///     n64(0.)..n64(1.) // n63(1.) is not included!
+///     n64(0.)..n64(1.) // n64(1.) is not included in the bin!
 /// );
 /// // second bin
 /// assert_eq!(
