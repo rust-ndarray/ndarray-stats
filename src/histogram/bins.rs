@@ -48,8 +48,17 @@ impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
 impl<A: Ord> Index<usize> for Edges<A>{
     type Output = A;
 
-    fn index(&self, i: usize) -> &A {
+    fn index(&self, i: usize) -> &Self::Output {
         &self.edges[i]
+    }
+}
+
+impl<A: Ord> IntoIterator for Edges<A> {
+    type Item = A;
+    type IntoIter = ::std::vec::IntoIter<A>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.edges.into_iter()
     }
 }
 
