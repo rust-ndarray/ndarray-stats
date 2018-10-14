@@ -255,7 +255,7 @@ impl<A: Ord> Bins<A> {
         }
     }
 
-    /// Given `value`, it returns an option:
+    /// Given `value`, it returns:
     /// - `Some(i)`, if the `i`-th bin in `self` contains `value`;
     /// - `None`, if `value` does not belong to any of the bins in `self`.
     ///
