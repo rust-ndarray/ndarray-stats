@@ -196,6 +196,32 @@ impl<A: Ord> Edges<A> {
     }
 }
 
+/// `Bins` is a sorted collection of non-overlapping
+/// 1-dimensional intervals.
+///
+/// All intervals are left-inclusive and right-exclusive.
+///
+/// # Example:
+///
+/// ```
+/// extern crate ndarray_stats;
+/// extern crate noisy_float;
+/// use ndarray_stats::histogram::{Edges, Bins};
+/// use noisy_float::types::n64;
+///
+/// let edges = Edges::from(vec![n64(0.), n64(1.), n64(2.)]);
+/// let bins = Bins::new(edges);
+/// // first bin
+/// assert_eq!(
+///     bins.get(0),
+///     n64(0.)..n64(1.) // n63(1.) is not included!
+/// );
+/// // second bin
+/// assert_eq!(
+///     bins.get(1),
+///     n64(1.)..n64(2.)
+/// );
+/// ```
 pub struct Bins<A: Ord> {
     edges: Edges<A>,
 }
@@ -205,6 +231,23 @@ impl<A: Ord> Bins<A> {
         Bins { edges }
     }
 
+    /// Returns the number of bins.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// extern crate ndarray_stats;
+    /// extern crate noisy_float;
+    /// use ndarray_stats::histogram::{Edges, Bins};
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(0.), n64(1.), n64(2.)]);
+    /// let bins = Bins::new(edges);
+    /// assert_eq!(
+    ///     bins.len(),
+    ///     2
+    /// );
+    /// ```
     pub fn len(&self) -> usize {
         match self.edges.len() {
             0 => 0,
@@ -212,11 +255,54 @@ impl<A: Ord> Bins<A> {
         }
     }
 
+    /// Given `value`, it returns an option:
+    /// - `Some(i)`, if the `i`-th bin in `self` contains `value`;
+    /// - `None`, if `value` does not belong to any of the bins in `self`.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// extern crate ndarray_stats;
+    /// use ndarray_stats::histogram::{Edges, Bins};
+    ///
+    /// let edges = Edges::from(vec![0, 2, 4, 6]);
+    /// let bins = Bins::new(edges);
+    /// let value = 1;
+    /// assert_eq!(
+    ///     bins.index(&1),
+    ///     Some(0)
+    /// );
+    /// assert_eq!(
+    ///     bins.get(bins.index(&1).unwrap()),
+    ///     0..2
+    /// );
+    /// ```
     pub fn index(&self, value: &A) -> Option<usize> {
         self.edges.indexes(value).map(|t| t.0)
     }
 
-    /// Returns the range of the bin containing the given value.
+    /// Given `value`, it returns an option:
+    /// - `Some(left_edge..right_edge))`, if there exists a bin in `self` such that
+    ///  `left_edge <= value < right_edge`;
+    /// - `None`, otherwise.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// extern crate ndarray_stats;
+    /// use ndarray_stats::histogram::{Edges, Bins};
+    ///
+    /// let edges = Edges::from(vec![0, 2, 4, 6]);
+    /// let bins = Bins::new(edges);
+    /// assert_eq!(
+    ///     bins.range(&1),
+    ///     Some(0..2)
+    /// );
+    /// assert_eq!(
+    ///     bins.range(&10),
+    ///     None
+    /// );
+    /// ```
     pub fn range(&self, value: &A) -> Option<Range<A>>
         where
             A: Clone,
@@ -235,6 +321,23 @@ impl<A: Ord> Bins<A> {
 }
 
 impl<A: Ord + Clone> Bins<A> {
+    /// Get the `i`-th bin.
+    ///
+    /// **Panics** if the index `i` is out of bounds.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// extern crate ndarray_stats;
+    /// use ndarray_stats::histogram::{Edges, Bins};
+    ///
+    /// let edges = Edges::from(vec![1, 5, 10, 20]);
+    /// let bins = Bins::new(edges);
+    /// assert_eq!(
+    ///     bins.get(1),
+    ///     5..10
+    /// );
+    /// ```
     pub fn get(&self, index: usize) -> Range<A> {
         Range {
             start: self.edges[index].clone(),
