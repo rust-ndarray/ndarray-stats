@@ -281,8 +281,8 @@ impl<A: Ord> Bins<A> {
         self.edges.indexes(value).map(|t| t.0)
     }
 
-    /// Given `value`, it returns an option:
-    /// - `Some(left_edge..right_edge))`, if there exists a bin in `self` such that
+    /// Given `value`, it returns:
+    /// - `Some(left_edge..right_edge)`, if there exists a bin in `self` such that
     ///  `left_edge <= value < right_edge`;
     /// - `None`, otherwise.
     ///
