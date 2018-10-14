@@ -1,27 +1,6 @@
 use ndarray::prelude::*;
 use std::ops::Range;
-use std::error;
-use std::fmt;
-
-#[derive(Debug, Clone)]
-pub struct BinNotFound;
-
-impl fmt::Display for BinNotFound {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "No bin has been found.")
-    }
-}
-
-impl error::Error for BinNotFound {
-    fn description(&self) -> &str {
-        "No bin has been found."
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        // Generic error, underlying cause isn't tracked.
-        None
-    }
-}
+use super::errors::BinNotFound;
 
 /// `Edges` is a sorted collection of `A` elements used
 /// to represent the boundaries of intervals on
@@ -88,13 +67,13 @@ impl<A: Ord> Edges<A> {
         // binary search for the correct bin
         let n_edges = self.n_edges();
         match self.edges.binary_search(value) {
-            Ok(i) if i == n_edges-1 => None,
-            Ok(i) => Some((i, i+1)),
+            Ok(i) if i == n_edges - 1 => None,
+            Ok(i) => Some((i, i + 1)),
             Err(i) => {
                 match i {
                     0 => None,
                     j if j == n_edges => None,
-                    j => Some((j-1, j)),
+                    j => Some((j - 1, j)),
                 }
             }
         }
@@ -102,51 +81,24 @@ impl<A: Ord> Edges<A> {
 
     /// Returns the index of the bin containing the given value,
     /// or `None` if none of the bins contain the value.
-    fn bin_index(&self, value: &A) -> Option<usize> {
+    pub (crate) fn bin_index(&self, value: &A) -> Option<usize> {
         self.edges_indexes(value).map(|t| t.0)
     }
 
     /// Returns the range of the bin containing the given value.
     pub fn bin_range(&self, value: &A) -> Option<Range<A>>
-    where
-        A: Clone,
+        where
+            A: Clone,
     {
-        let edges_indexes= self.edges_indexes(value);
+        let edges_indexes = self.edges_indexes(value);
         edges_indexes.map(
             |t| {
                 let (left, right) = t;
                 Range {
                     start: self.edges[left].clone(),
-                    end: self.edges[right].clone()
+                    end: self.edges[right].clone(),
                 }
             }
         )
-    }
-}
-
-pub struct HistogramCounts<A: Ord> {
-    counts: ArrayD<usize>,
-    edges: Vec<Edges<A>>,
-}
-
-struct HistogramDensity<A: Ord> {
-    density: ArrayD<A>,
-    edges: Vec<Edges<A>>,
-}
-
-impl<A: Ord> HistogramCounts<A> {
-    pub fn new(edges: Vec<Edges<A>>) -> Self {
-        let counts = ArrayD::zeros(edges.iter().map(|e| e.n_intervals()).collect::<Vec<_>>());
-        HistogramCounts { counts, edges }
-    }
-
-    pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
-        let bin = observation
-            .iter()
-            .zip(&self.edges)
-            .map(|(v, e)| e.bin_index(v).ok_or(BinNotFound))
-            .collect::<Result<Vec<_>, _>>()?;
-        self.counts[IxDyn(&bin)] += 1;
-        Ok(())
     }
 }
