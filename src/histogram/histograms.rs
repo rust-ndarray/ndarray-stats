@@ -6,17 +6,25 @@ use super::errors::BinNotFound;
 pub struct HistogramCounts<A: Ord> {
     counts: ArrayD<usize>,
     bins: Vec<Bins<A>>,
+    ndim: usize,
 }
 
 impl<A: Ord> HistogramCounts<A> {
     pub fn new(bins: Vec<Bins<A>>) -> Self {
+        let ndim = bins.len();
         let counts = ArrayD::zeros(
             bins.iter().map(|e| e.len()
             ).collect::<Vec<_>>());
-        HistogramCounts { counts, bins }
+        HistogramCounts { counts, bins, ndim }
     }
 
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
+        assert_eq!(
+            self.ndim,
+            observation.len(),
+            "Dimensions do not match: observation has {0} dimensions, \
+             while the histogram has {1}.", observation.len(), self.ndim
+        );
         let bin = observation
             .iter()
             .zip(&self.bins)
