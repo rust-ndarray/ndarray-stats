@@ -372,5 +372,27 @@ mod edges_tests {
             }
             true
         }
+
+        fn edges_are_right_exclusive(v: Vec<i32>) -> bool {
+            let edges = Edges::from(v);
+            let last = edges.as_slice().last();
+            match last {
+                None => true,
+                Some(x) => {
+                    edges.indexes(x).is_none()
+                }
+            }
+        }
+
+        fn edges_are_left_inclusive(v: Vec<i32>) -> bool {
+            let edges = Edges::from(v);
+            let first = edges.as_slice().first();
+            match first {
+                None => true,
+                Some(x) => {
+                    edges.indexes(x).is_some()
+                }
+            }
+        }
     }
 }
