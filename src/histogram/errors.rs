@@ -1,6 +1,7 @@
 use std::error;
 use std::fmt;
 
+/// Error to denote that no bin has been found for a certain observation.
 #[derive(Debug, Clone)]
 pub struct BinNotFound;
 
