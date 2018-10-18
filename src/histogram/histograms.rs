@@ -1,14 +1,10 @@
 use ndarray::prelude::*;
+use ndarray::Data;
 use super::bins::Bins;
 use super::errors::BinNotFound;
 
 pub struct HistogramCounts<A: Ord> {
     counts: ArrayD<usize>,
-    bins: Vec<Bins<A>>,
-}
-
-struct HistogramDensity<A: Ord> {
-    density: ArrayD<A>,
     bins: Vec<Bins<A>>,
 }
 
@@ -29,4 +25,15 @@ impl<A: Ord> HistogramCounts<A> {
         self.counts[IxDyn(&bin)] += 1;
         Ok(())
     }
+}
+
+/// Histogram methods.
+pub trait HistogramExt<A, S, D>
+    where
+        S: Data<Elem = A>,
+        D: Dimension,
+{
+    fn histogram(&self, bins: Vec<Bins<A>>) -> HistogramCounts<A>
+        where
+            A: Ord;
 }
