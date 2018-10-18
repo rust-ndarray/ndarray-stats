@@ -323,7 +323,7 @@ impl<A: Ord> Bins<A> {
 impl<A: Ord + Clone> Bins<A> {
     /// Get the `i`-th bin.
     ///
-    /// **Panics** if the index `i` is out of bounds.
+    /// **Panics** if `index` is out of bounds.
     ///
     /// # Example:
     ///
