@@ -227,6 +227,9 @@ pub struct Bins<A: Ord> {
 }
 
 impl<A: Ord> Bins<A> {
+    /// Given a collection of [`Edges`], it returns the corresponding `Bins` instance.
+    ///
+    /// [`Edges`]: struct.Edges.html
     pub fn new(edges: Edges<A>) -> Self {
         Bins { edges }
     }
