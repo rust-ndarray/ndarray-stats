@@ -9,11 +9,11 @@ pub struct HistogramCounts<A: Ord> {
 }
 
 impl<A: Ord> HistogramCounts<A> {
-    pub fn new(edges: Vec<Bins<A>>) -> Self {
+    pub fn new(bins: Vec<Bins<A>>) -> Self {
         let counts = ArrayD::zeros(
-            edges.iter().map(|e| e.len()
+            bins.iter().map(|e| e.len()
             ).collect::<Vec<_>>());
-        HistogramCounts { counts, bins: edges }
+        HistogramCounts { counts, bins }
     }
 
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
@@ -47,4 +47,19 @@ pub trait HistogramExt<A, S>
     fn histogram(&self, bins: Vec<Bins<A>>) -> HistogramCounts<A>
         where
             A: Ord;
+}
+
+impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
+    where
+        S: Data<Elem = A>,
+        A: Ord,
+{
+    fn histogram(&self, bins: Vec<Bins<A>>) -> HistogramCounts<A>
+    {
+        let mut histogram = HistogramCounts::new(bins);
+        for point in self.axis_iter(Axis(0)) {
+            histogram.add_observation(point);
+        }
+        histogram
+    }
 }
