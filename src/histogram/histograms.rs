@@ -28,11 +28,11 @@ impl<A: Ord> HistogramCounts<A> {
 }
 
 /// Histogram methods.
-pub trait HistogramExt<A, S, D>
+pub trait HistogramExt<A, S>
     where
         S: Data<Elem = A>,
-        D: Dimension,
 {
+
     fn histogram(&self, bins: Vec<Bins<A>>) -> HistogramCounts<A>
         where
             A: Ord;
