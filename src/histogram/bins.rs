@@ -348,3 +348,29 @@ impl<A: Ord + Clone> Bins<A> {
         }
     }
 }
+
+#[cfg(test)]
+mod edges_tests {
+    use super::*;
+
+    quickcheck! {
+        fn check_sorted_from_vec(v: Vec<i32>) -> bool {
+            let edges = Edges::from(v);
+            let n = edges.len();
+            for i in 1..n {
+                assert!(edges[i-1] <= edges[i]);
+            }
+            true
+        }
+
+        fn check_sorted_from_array(v: Vec<i32>) -> bool {
+            let a = Array1::from_vec(v);
+            let edges = Edges::from(a);
+            let n = edges.len();
+            for i in 1..n {
+                assert!(edges[i-1] <= edges[i]);
+            }
+            true
+        }
+    }
+}
