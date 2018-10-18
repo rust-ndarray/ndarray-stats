@@ -10,6 +10,13 @@ pub struct HistogramCounts<A: Ord> {
 }
 
 impl<A: Ord> HistogramCounts<A> {
+    /// Return a new instance of HistogramCounts given
+    /// a vector of [`Bins`].
+    ///
+    /// The `i`-th element in `Vec<Bins<A>>` represents the 1-dimensional
+    /// projection of the bin grid on the `i`-th axis.
+    ///
+    /// [`Bins`]: struct.Bins.html
     pub fn new(bins: Vec<Bins<A>>) -> Self {
         let ndim = bins.len();
         let counts = ArrayD::zeros(
@@ -18,6 +25,9 @@ impl<A: Ord> HistogramCounts<A> {
         HistogramCounts { counts, bins, ndim }
     }
 
+    /// Add a single observation to the histogram.
+    ///
+    /// **Panics** if dimensions do not match: `self.ndim != observation.len()`.
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
         assert_eq!(
             self.ndim,
