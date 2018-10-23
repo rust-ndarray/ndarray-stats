@@ -417,3 +417,17 @@ mod edges_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod bins_tests {
+    use super::*;
+
+    #[test]
+    #[should_panic]
+    fn get_panics_for_out_of_bound_indexes() {
+        let edges = Edges::from(vec![0]);
+        let bins = Bins::new(edges);
+        // we need at least two edges to make a valid bin!
+        bins.get(0);
+    }
+}
