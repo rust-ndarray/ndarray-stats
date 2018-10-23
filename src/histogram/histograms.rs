@@ -50,7 +50,7 @@ impl<A: Ord> Histogram<A> {
     }
 }
 
-/// Histogram methods.
+/// Extension trait for `ArrayBase` providing methods to compute histograms.
 pub trait HistogramExt<A, S>
     where
         S: Data<Elem = A>,
