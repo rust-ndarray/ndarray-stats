@@ -27,6 +27,30 @@ impl<A: Ord> Histogram<A> {
     /// Add a single observation to the histogram.
     ///
     /// **Panics** if dimensions do not match: `self.ndim() != observation.len()`.
+    ///
+    /// # Example:
+    /// ```
+    /// extern crate ndarray_stats;
+    /// #[macro_use(array)]
+    /// extern crate ndarray;
+    /// extern crate noisy_float;
+    /// use ndarray_stats::histogram::{Edges, Bins, Histogram};
+    /// use noisy_float::types::n64;
+    ///
+    /// # fn main() {
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = vec![bins.clone(), bins.clone()];
+    /// let histogram = Histogram::new(square_grid);
+    ///
+    /// let observation = array![n64(0.5), n64(0.6)];
+    ///
+    /// histogram.add_observation(observation.view());
+    ///
+    /// let histogram_matrix = histogram.as_view();
+    /// assert_eq!(histogram_matrix[[1, 1]], 1);
+    /// # }
+    /// ```
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
         assert_eq!(
             self.ndim(),
