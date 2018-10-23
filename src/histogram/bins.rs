@@ -35,7 +35,8 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
 
     /// Get an `Edges` instance from a `Vec<A>`:
     /// the vector will be sorted in increasing order
-    /// using an unstable sorting algorithm.
+    /// using an unstable sorting algorithm and duplicates
+    /// will be removed.
     ///
     /// # Example:
     ///
@@ -46,7 +47,7 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
     /// use ndarray_stats::histogram::Edges;
     ///
     /// # fn main() {
-    /// let edges = Edges::from(array![1, 15, 10, 20]);
+    /// let edges = Edges::from(array![1, 15, 10, 10, 20]);
     /// // The array gets sorted!
     /// assert_eq!(
     ///     edges[2],
@@ -57,6 +58,8 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
     fn from(mut edges: Vec<A>) -> Self {
         // sort the array in-place
         edges.sort_unstable();
+        // remove duplicates
+        edges.dedup();
         Edges { edges }
     }
 }
@@ -386,13 +389,25 @@ mod edges_tests {
 
         fn edges_are_left_inclusive(v: Vec<i32>) -> bool {
             let edges = Edges::from(v);
-            let first = edges.as_slice().first();
-            match first {
-                None => true,
-                Some(x) => {
-                    edges.indexes(x).is_some()
+            match edges.len() {
+                1 => true,
+                _ => {
+                    let first = edges.as_slice().first();
+                    match first {
+                        None => true,
+                        Some(x) => {
+                            edges.indexes(x).is_some()
+                        }
+                    }
                 }
             }
         }
+    }
+
+    #[test]
+    fn check_degenerate_bins() {
+        let v = vec![2, 4, 4, 5, 6];
+        let edges = Edges::from(v);
+        assert_eq!(edges.indexes(&4), Some((1, 2)));
     }
 }
