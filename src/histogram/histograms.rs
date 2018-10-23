@@ -48,6 +48,11 @@ impl<A: Ord> Histogram<A> {
         debug_assert_eq!(self.counts.ndim(), self.bins.len());
         self.counts.ndim()
     }
+
+    /// Borrow a view to the histogram matrix.
+    pub fn as_view(&self) -> ArrayViewD<usize> {
+        self.counts.view()
+    }
 }
 
 /// Extension trait for `ArrayBase` providing methods to compute histograms.
