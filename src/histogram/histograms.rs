@@ -3,13 +3,14 @@ use ndarray::Data;
 use super::bins::Bins;
 use super::errors::BinNotFound;
 
+/// Histogram data structure.
 pub struct Histogram<A: Ord> {
     counts: ArrayD<usize>,
     bins: Vec<Bins<A>>,
 }
 
 impl<A: Ord> Histogram<A> {
-    /// Return a new instance of HistogramCounts given
+    /// Return a new instance of Histogram given
     /// a vector of [`Bins`].
     ///
     /// The `i`-th element in `Vec<Bins<A>>` represents the 1-dimensional
