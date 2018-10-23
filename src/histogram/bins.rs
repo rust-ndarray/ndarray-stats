@@ -359,6 +359,8 @@ impl<A: Ord + Clone> Bins<A> {
 #[cfg(test)]
 mod edges_tests {
     use super::*;
+    use std::collections::BTreeSet;
+    use std::iter::FromIterator;
 
     quickcheck! {
         fn check_sorted_from_vec(v: Vec<i32>) -> bool {
@@ -406,12 +408,12 @@ mod edges_tests {
                 }
             }
         }
-    }
 
-    #[test]
-    fn check_degenerate_bins() {
-        let v = vec![2, 4, 4, 5, 6];
-        let edges = Edges::from(v);
-        assert_eq!(edges.indexes(&4), Some((1, 2)));
+        fn edges_are_deduped(v: Vec<i32>) -> bool {
+            let unique_elements = BTreeSet::from_iter(v.iter());
+            let edges = Edges::from(v.clone());
+            let unique_edges = BTreeSet::from_iter(edges.as_slice().iter());
+            unique_edges == unique_elements
+        }
     }
 }
