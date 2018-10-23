@@ -1,4 +1,4 @@
-pub use self::histograms::{HistogramCounts, HistogramExt};
+pub use self::histograms::{Histogram, HistogramExt};
 pub use self::bins::{Edges, Bins};
 pub use self::errors::BinNotFound;
 

@@ -3,12 +3,12 @@ use ndarray::Data;
 use super::bins::Bins;
 use super::errors::BinNotFound;
 
-pub struct HistogramCounts<A: Ord> {
+pub struct Histogram<A: Ord> {
     counts: ArrayD<usize>,
     bins: Vec<Bins<A>>,
 }
 
-impl<A: Ord> HistogramCounts<A> {
+impl<A: Ord> Histogram<A> {
     /// Return a new instance of HistogramCounts given
     /// a vector of [`Bins`].
     ///
@@ -17,11 +17,10 @@ impl<A: Ord> HistogramCounts<A> {
     ///
     /// [`Bins`]: struct.Bins.html
     pub fn new(bins: Vec<Bins<A>>) -> Self {
-        let ndim = bins.len();
         let counts = ArrayD::zeros(
             bins.iter().map(|e| e.len()
             ).collect::<Vec<_>>());
-        HistogramCounts { counts, bins }
+        Histogram { counts, bins }
     }
 
     /// Add a single observation to the histogram.
@@ -29,10 +28,10 @@ impl<A: Ord> HistogramCounts<A> {
     /// **Panics** if dimensions do not match: `self.ndim() != observation.len()`.
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
         assert_eq!(
-            self.ndim,
+            self.ndim(),
             observation.len(),
             "Dimensions do not match: observation has {0} dimensions, \
-             while the histogram has {1}.", observation.len(), self.ndim
+             while the histogram has {1}.", observation.len(), self.ndim()
         );
         let bin = observation
             .iter()
@@ -46,7 +45,7 @@ impl<A: Ord> HistogramCounts<A> {
     /// Returns the number of dimensions of the space the histogram is covering.
     pub fn ndim(&self) -> usize {
         debug_assert_eq!(self.counts.ndim(), self.bins.len());
-        self.counts.len()
+        self.counts.ndim()
     }
 }
 
@@ -67,7 +66,7 @@ pub trait HistogramExt<A, S>
     /// 4-dimensional space.
     ///
     /// **Panics** if `d` is different from `bins.len()`.
-    fn histogram(&self, bins: Vec<Bins<A>>) -> HistogramCounts<A>
+    fn histogram(&self, bins: Vec<Bins<A>>) -> Histogram<A>
         where
             A: Ord;
 }
@@ -77,9 +76,9 @@ impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
         S: Data<Elem = A>,
         A: Ord,
 {
-    fn histogram(&self, bins: Vec<Bins<A>>) -> HistogramCounts<A>
+    fn histogram(&self, bins: Vec<Bins<A>>) -> Histogram<A>
     {
-        let mut histogram = HistogramCounts::new(bins);
+        let mut histogram = Histogram::new(bins);
         for point in self.axis_iter(Axis(0)) {
             histogram.add_observation(point);
         }
