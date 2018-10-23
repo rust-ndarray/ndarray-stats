@@ -345,6 +345,10 @@ impl<A: Ord + Clone> Bins<A> {
     /// );
     /// ```
     pub fn get(&self, index: usize) -> Range<A> {
+        // It was not possible to implement this functionality
+        // using the `Index` trait unless we were willing to
+        // allocate a `Vec<Range<A>>` in the struct.
+        // Index, in fact, forces you to return a reference.
         Range {
             start: self.edges[index].clone(),
             end: self.edges[index+1].clone(),
