@@ -6,7 +6,6 @@ use super::errors::BinNotFound;
 pub struct HistogramCounts<A: Ord> {
     counts: ArrayD<usize>,
     bins: Vec<Bins<A>>,
-    ndim: usize,
 }
 
 impl<A: Ord> HistogramCounts<A> {
@@ -22,12 +21,12 @@ impl<A: Ord> HistogramCounts<A> {
         let counts = ArrayD::zeros(
             bins.iter().map(|e| e.len()
             ).collect::<Vec<_>>());
-        HistogramCounts { counts, bins, ndim }
+        HistogramCounts { counts, bins }
     }
 
     /// Add a single observation to the histogram.
     ///
-    /// **Panics** if dimensions do not match: `self.ndim != observation.len()`.
+    /// **Panics** if dimensions do not match: `self.ndim() != observation.len()`.
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
         assert_eq!(
             self.ndim,
@@ -42,6 +41,12 @@ impl<A: Ord> HistogramCounts<A> {
             .collect::<Result<Vec<_>, _>>()?;
         self.counts[IxDyn(&bin)] += 1;
         Ok(())
+    }
+
+    /// Returns the number of dimensions of the space the histogram is covering.
+    pub fn ndim(&self) -> usize {
+        debug_assert_eq!(self.counts.ndim(), self.bins.len());
+        self.counts.len()
     }
 }
 
