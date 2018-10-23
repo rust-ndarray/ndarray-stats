@@ -77,6 +77,12 @@ impl<A: Ord> Histogram<A> {
     pub fn as_view(&self) -> ArrayViewD<usize> {
         self.counts.view()
     }
+
+    /// Borrow an immutable reference to the histogram grid as a vector
+    /// slice.
+    pub fn grid(&self) -> &[Bins<A>] {
+        &self.bins
+    }
 }
 
 /// Extension trait for `ArrayBase` providing methods to compute histograms.
