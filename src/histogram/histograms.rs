@@ -41,7 +41,7 @@ impl<A: Ord> Histogram<A> {
     /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
     /// let bins = Bins::new(edges);
     /// let square_grid = vec![bins.clone(), bins.clone()];
-    /// let histogram = Histogram::new(square_grid);
+    /// let mut histogram = Histogram::new(square_grid);
     ///
     /// let observation = array![n64(0.5), n64(0.6)];
     ///
