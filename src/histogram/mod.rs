@@ -5,4 +5,5 @@ pub use self::errors::BinNotFound;
 
 mod histograms;
 mod bins;
+mod grid;
 mod errors;
