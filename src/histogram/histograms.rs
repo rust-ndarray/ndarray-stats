@@ -1,27 +1,28 @@
 use ndarray::prelude::*;
 use ndarray::Data;
 use super::bins::Bins;
+use super::grid::Grid;
 use super::errors::BinNotFound;
 
 /// Histogram data structure.
 pub struct Histogram<A: Ord> {
     counts: ArrayD<usize>,
-    bins: Vec<Bins<A>>,
+    grid: Grid<A>,
 }
 
 impl<A: Ord> Histogram<A> {
     /// Return a new instance of Histogram given
-    /// a vector of [`Bins`].
+    /// a [`Grid`].
     ///
-    /// The `i`-th element in `Vec<Bins<A>>` represents the 1-dimensional
+    /// The `i`-th element in `Grid<A>` represents the 1-dimensional
     /// projection of the bin grid on the `i`-th axis.
     ///
-    /// [`Bins`]: struct.Bins.html
-    pub fn new(bins: Vec<Bins<A>>) -> Self {
+    /// [`Grid`]: struct.Grid.html
+    pub fn new(grid: Grid<A>) -> Self {
         let counts = ArrayD::zeros(
-            bins.iter().map(|e| e.len()
+            grid.iter().map(|e| e.len()
             ).collect::<Vec<_>>());
-        Histogram { counts, bins }
+        Histogram { counts, grid }
     }
 
     /// Add a single observation to the histogram.
@@ -60,7 +61,7 @@ impl<A: Ord> Histogram<A> {
         );
         let bin = observation
             .iter()
-            .zip(&self.bins)
+            .zip(&self.grid)
             .map(|(v, e)| e.index(v).ok_or(BinNotFound))
             .collect::<Result<Vec<_>, _>>()?;
         self.counts[IxDyn(&bin)] += 1;
@@ -69,7 +70,7 @@ impl<A: Ord> Histogram<A> {
 
     /// Returns the number of dimensions of the space the histogram is covering.
     pub fn ndim(&self) -> usize {
-        debug_assert_eq!(self.counts.ndim(), self.bins.len());
+        debug_assert_eq!(self.counts.ndim(), self.grid.len());
         self.counts.ndim()
     }
 
@@ -80,8 +81,8 @@ impl<A: Ord> Histogram<A> {
 
     /// Borrow an immutable reference to the histogram grid as a vector
     /// slice.
-    pub fn grid(&self) -> &[Bins<A>] {
-        &self.bins
+    pub fn grid(&self) -> &Grid<A> {
+        &self.grid
     }
 }
 
@@ -101,8 +102,8 @@ pub trait HistogramExt<A, S>
     /// For example: a (3, 4) matrix `M` is a collection of 3 points in a
     /// 4-dimensional space.
     ///
-    /// **Panics** if `d` is different from `bins.len()`.
-    fn histogram(&self, bins: Vec<Bins<A>>) -> Histogram<A>
+    /// **Panics** if `d` is different from `grid.ndim()`.
+    fn histogram(&self, grid: Grid<A>) -> Histogram<A>
         where
             A: Ord;
 }
@@ -112,9 +113,9 @@ impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
         S: Data<Elem = A>,
         A: Ord,
 {
-    fn histogram(&self, bins: Vec<Bins<A>>) -> Histogram<A>
+    fn histogram(&self, grid: Grid<A>) -> Histogram<A>
     {
-        let mut histogram = Histogram::new(bins);
+        let mut histogram = Histogram::new(grid);
         for point in self.axis_iter(Axis(0)) {
             histogram.add_observation(point);
         }
