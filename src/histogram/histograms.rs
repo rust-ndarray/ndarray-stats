@@ -61,7 +61,7 @@ impl<A: Ord> Histogram<A> {
         );
         let bin = observation
             .iter()
-            .zip(&self.grid)
+            .zip(self.grid.iter())
             .map(|(v, e)| e.index(v).ok_or(BinNotFound))
             .collect::<Result<Vec<_>, _>>()?;
         self.counts[IxDyn(&bin)] += 1;
@@ -70,7 +70,7 @@ impl<A: Ord> Histogram<A> {
 
     /// Returns the number of dimensions of the space the histogram is covering.
     pub fn ndim(&self) -> usize {
-        debug_assert_eq!(self.counts.ndim(), self.grid.len());
+        debug_assert_eq!(self.counts.ndim(), self.grid.ndim());
         self.counts.ndim()
     }
 
