@@ -46,12 +46,6 @@ impl<A: Ord> Histogram<A> {
     /// # }
     /// ```
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
-        assert_eq!(
-            self.ndim(),
-            observation.len(),
-            "Dimensions do not match: observation has {0} dimensions, \
-             while the histogram has {1}.", observation.len(), self.ndim()
-        );
         let bin_index = self.grid.index(observation)?;
         self.counts[IxDyn(&bin_index)] += 1;
         Ok(())
