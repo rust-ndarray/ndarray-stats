@@ -14,7 +14,7 @@ impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
 }
 
 impl<A: Ord> Grid<A> {
-    pub fn iter(&self) -> Iter<Bins<A>> {
+    pub fn iter_projections(&self) -> Iter<Bins<A>> {
         self.projections.iter()
     }
 

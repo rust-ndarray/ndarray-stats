@@ -20,7 +20,7 @@ impl<A: Ord> Histogram<A> {
     /// [`Grid`]: struct.Grid.html
     pub fn new(grid: Grid<A>) -> Self {
         let counts = ArrayD::zeros(
-            grid.iter().map(|e| e.len()
+            grid.iter_projections().map(|e| e.len()
             ).collect::<Vec<_>>());
         Histogram { counts, grid }
     }
@@ -61,7 +61,7 @@ impl<A: Ord> Histogram<A> {
         );
         let bin = observation
             .iter()
-            .zip(self.grid.iter())
+            .zip(self.grid.iter_projections())
             .map(|(v, e)| e.index(v).ok_or(BinNotFound))
             .collect::<Result<Vec<_>, _>>()?;
         self.counts[IxDyn(&bin)] += 1;
