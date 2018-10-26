@@ -1,6 +1,5 @@
 use ndarray::prelude::*;
 use ndarray::Data;
-use super::bins::Bins;
 use super::grid::Grid;
 use super::errors::BinNotFound;
 
@@ -59,12 +58,8 @@ impl<A: Ord> Histogram<A> {
             "Dimensions do not match: observation has {0} dimensions, \
              while the histogram has {1}.", observation.len(), self.ndim()
         );
-        let bin = observation
-            .iter()
-            .zip(self.grid.iter_projections())
-            .map(|(v, e)| e.index(v).ok_or(BinNotFound))
-            .collect::<Result<Vec<_>, _>>()?;
-        self.counts[IxDyn(&bin)] += 1;
+        let bin_index = self.grid.index(observation)?;
+        self.counts[IxDyn(&bin_index)] += 1;
         Ok(())
     }
 
