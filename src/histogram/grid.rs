@@ -21,4 +21,8 @@ impl<A: Ord> Grid<A> {
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
+
+    pub fn projections(&self) -> &[Bins<A>] {
+        &self.projections
+    }
 }
