@@ -10,11 +10,7 @@ pub struct Histogram<A: Ord> {
 }
 
 impl<A: Ord> Histogram<A> {
-    /// Return a new instance of Histogram given
-    /// a [`Grid`].
-    ///
-    /// The `i`-th element in `Grid<A>` represents the 1-dimensional
-    /// projection of the bin grid on the `i`-th axis.
+    /// Return a new instance of Histogram given a [`Grid`].
     ///
     /// [`Grid`]: struct.Grid.html
     pub fn new(grid: Grid<A>) -> Self {

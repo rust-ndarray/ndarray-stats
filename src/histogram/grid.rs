@@ -10,6 +10,9 @@ pub struct Grid<A: Ord> {
 impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
 
     /// Get a `Grid` instance from a `Vec<Bins<A>>`.
+    ///
+    /// The `i`-th element in `Vec<Bins<A>>` represents the 1-dimensional
+    /// projection of the bin grid on the `i`-th axis.
     fn from(projections: Vec<Bins<A>>) -> Self {
         Grid { projections }
     }
