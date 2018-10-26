@@ -27,6 +27,10 @@ impl<A: Ord> Grid<A> {
         self.projections.len()
     }
 
+    pub fn shape(&self) -> Vec<usize> {
+        self.iter_projections().map(|e| e.len()).collect::<Vec<_>>()
+    }
+
     pub fn projections(&self) -> &[Bins<A>] {
         &self.projections
     }

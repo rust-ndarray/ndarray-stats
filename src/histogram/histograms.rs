@@ -14,9 +14,7 @@ impl<A: Ord> Histogram<A> {
     ///
     /// [`Grid`]: struct.Grid.html
     pub fn new(grid: Grid<A>) -> Self {
-        let counts = ArrayD::zeros(
-            grid.iter_projections().map(|e| e.len()
-            ).collect::<Vec<_>>());
+        let counts = ArrayD::zeros(grid.shape());
         Histogram { counts, grid }
     }
 
