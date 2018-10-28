@@ -1,5 +1,6 @@
 use super::bins::Bins;
 use super::errors::BinNotFound;
+use std::ops::Range;
 use std::slice::Iter;
 use ndarray::ArrayView1;
 
@@ -44,5 +45,18 @@ impl<A: Ord> Grid<A> {
             .zip(self.iter_projections())
             .map(|(v, e)| e.index(v).ok_or(BinNotFound))
             .collect::<Result<Vec<_>, _>>()
+    }
+}
+
+impl<A: Ord + Clone> Grid<A> {
+    fn get(&self, index: &[usize]) -> Vec<Range<A>> {
+        assert_eq!(index.len(), self.ndim(),
+                   "Dimension mismatch: the index has {0:?} dimensions, the grid \
+                   expected {1:?} dimensions.", index.len(), self.ndim());
+        let mut bin = vec![];
+        for (axis_index, i) in index.iter().enumerate() {
+            bin.push(self.projections[axis_index].get(*i));
+        }
+        bin
     }
 }
