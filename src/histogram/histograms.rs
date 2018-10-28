@@ -42,7 +42,11 @@ impl<A: Ord> Histogram<A> {
     /// histogram.add_observation(observation.view());
     ///
     /// let histogram_matrix = histogram.as_view();
-    /// assert_eq!(histogram_matrix[[1, 1]], 1);
+    /// let expected = array![
+    ///     [0, 0],
+    ///     [0, 1],
+    /// ];
+    /// assert_eq!(histogram_matrix, expected.into_dyn());
     /// # }
     /// ```
     pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
@@ -62,8 +66,7 @@ impl<A: Ord> Histogram<A> {
         self.counts.view()
     }
 
-    /// Borrow an immutable reference to the histogram grid as a vector
-    /// slice.
+    /// Borrow an immutable reference to the histogram grid.
     pub fn grid(&self) -> &Grid<A> {
         &self.grid
     }
