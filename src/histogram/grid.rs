@@ -4,6 +4,34 @@ use std::ops::Range;
 use std::slice::Iter;
 use ndarray::ArrayView1;
 
+/// A `Grid` is a partition of a rectangular region of an `n`-dimensional
+/// space (e.g. `[a_1, b_1]x...x[a_n, b_n]`) into a collection of
+/// rectangular `n`-dimensional bins.
+///
+/// The grid is **fully determined by its 1-dimensional projections** on the
+/// coordinate axes. For example, this is a partition that can be represented
+/// as a `Grid` struct:
+/// ```
+/// +---+-------+-+
+/// |   |       | |
+/// +---+-------+-+
+/// |   |       | |
+/// |   |       | |
+/// |   |       | |
+/// |   |       | |
+/// +---+-------+-+
+/// ```
+/// while the next one can't:
+/// ```
+/// +---+-------+-+
+/// |   |       | |
+/// |   +-------+-+
+/// |   |         |
+/// |   |         |
+/// |   |         |
+/// |   |         |
+/// +---+-------+-+
+/// ```
 pub struct Grid<A: Ord> {
     projections: Vec<Bins<A>>,
 }
