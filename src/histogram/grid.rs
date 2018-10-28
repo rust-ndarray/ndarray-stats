@@ -48,37 +48,43 @@ impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
 }
 
 impl<A: Ord> Grid<A> {
-    pub fn iter_projections(&self) -> Iter<Bins<A>> {
-        self.projections.iter()
-    }
-
     /// Returns `n`, the number of dimensions of the region partitioned by the grid.
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
 
+    /// Returns `v=(v_i)_i`, a vector, where `v_i` is the number of bins in the grid projection
+    /// on the `i`-th coordinate axis.
     pub fn shape(&self) -> Vec<usize> {
-        self.iter_projections().map(|e| e.len()).collect::<Vec<_>>()
+        self.projections.iter().map(|e| e.len()).collect::<Vec<_>>()
     }
 
+    /// Returns the grid projections on the coordinate axes as a slice of immutable references.
     pub fn projections(&self) -> &[Bins<A>] {
         &self.projections
     }
 
+    /// Given `P=(p_1, ..., p_n)`, a point, it returns:
+    /// - `Ok(i)`, where `i=(i_1, ..., i_n)`, if `p_j` belongs to `i_j`-th bin
+    /// on the `j`-th grid projection on the coordinate axes for all `j` in `{1, ..., n}`;
+    /// - `Err(BinNotFound)`, if `P` does not belong to the region of space covered by the grid.
     pub fn index(&self, point: ArrayView1<A>) -> Result<Vec<usize>, BinNotFound> {
         assert_eq!(point.len(), self.ndim(),
                    "Dimension mismatch: the point has {0:?} dimensions, the grid \
                    expected {1:?} dimensions.", point.len(), self.ndim());
         point
             .iter()
-            .zip(self.iter_projections())
+            .zip(self.projections.iter())
             .map(|(v, e)| e.index(v).ok_or(BinNotFound))
             .collect::<Result<Vec<_>, _>>()
     }
 }
 
 impl<A: Ord + Clone> Grid<A> {
-    fn get(&self, index: &[usize]) -> Vec<Range<A>> {
+    /// Given `i=(i_1, ..., i_n)`, an `n`-dimensional index, it returns `I_{i_1}x...xI_{i_n}`, an
+    /// `n`-dimensional bin, where `I_{i_j}` is the `i_j`-th interval on the `j`-th projection
+    /// of the grid on the coordinate axes.
+    pub fn get(&self, index: &[usize]) -> Vec<Range<A>> {
         assert_eq!(index.len(), self.ndim(),
                    "Dimension mismatch: the index has {0:?} dimensions, the grid \
                    expected {1:?} dimensions.", index.len(), self.ndim());
