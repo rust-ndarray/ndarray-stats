@@ -52,6 +52,7 @@ impl<A: Ord> Grid<A> {
         self.projections.iter()
     }
 
+    /// Returns `n`, the number of dimensions of the region partitioned by the grid.
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
