@@ -5,7 +5,7 @@ use std::slice::Iter;
 use ndarray::ArrayView1;
 
 /// A `Grid` is a partition of a rectangular region of an `n`-dimensional
-/// space (e.g. `[a_1, b_1]x...x[a_n, b_n]`) into a collection of
+/// space - e.g. `[a_0, b_0)x...x[a_{n-1}, b_{n-1})` - into a collection of
 /// rectangular `n`-dimensional bins.
 ///
 /// The grid is **fully determined by its 1-dimensional projections** on the
@@ -65,8 +65,8 @@ impl<A: Ord> Grid<A> {
     }
 
     /// Given `P=(p_1, ..., p_n)`, a point, it returns:
-    /// - `Ok(i)`, where `i=(i_1, ..., i_n)`, if `p_j` belongs to `i_j`-th bin
-    /// on the `j`-th grid projection on the coordinate axes for all `j` in `{1, ..., n}`;
+    /// - `Ok(i)`, where `i=(i_0, ..., i_{n-1})`, if `p_j` belongs to `i_j`-th bin
+    /// on the `j`-th grid projection on the coordinate axes for all `j` in `{0, ..., n-1}`;
     /// - `Err(BinNotFound)`, if `P` does not belong to the region of space covered by the grid.
     pub fn index(&self, point: ArrayView1<A>) -> Result<Vec<usize>, BinNotFound> {
         assert_eq!(point.len(), self.ndim(),
@@ -81,11 +81,11 @@ impl<A: Ord> Grid<A> {
 }
 
 impl<A: Ord + Clone> Grid<A> {
-    /// Given `i=(i_1, ..., i_n)`, an `n`-dimensional index, it returns `I_{i_1}x...xI_{i_n}`, an
-    /// `n`-dimensional bin, where `I_{i_j}` is the `i_j`-th interval on the `j`-th projection
-    /// of the grid on the coordinate axes.
+    /// Given `i=(i_0, ..., i_{n-1})`, an `n`-dimensional index, it returns
+    /// `I_{i_0}x...xI_{i_{n-1}}`, an `n`-dimensional bin, where `I_{i_j}` is
+    /// the `i_j`-th interval on the `j`-th projection of the grid on the coordinate axes.
     ///
-    /// *Panics* if at least one among `(i_1, ..., i_n)` is out of bounds on the respective
+    /// *Panics* if at least one among `(i_0, ..., i_{n-1})` is out of bounds on the respective
     /// coordinate axis - i.e. if there exists `j` such that `i_j >= self.projections[j].len()`.
     pub fn get(&self, index: &[usize]) -> Vec<Range<A>> {
         assert_eq!(index.len(), self.ndim(),
