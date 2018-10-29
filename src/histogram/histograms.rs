@@ -10,7 +10,7 @@ pub struct Histogram<A: Ord> {
 }
 
 impl<A: Ord> Histogram<A> {
-    /// Return a new instance of Histogram given a [`Grid`].
+    /// Returns a new instance of Histogram given a [`Grid`].
     ///
     /// [`Grid`]: struct.Grid.html
     pub fn new(grid: Grid<A>) -> Self {
@@ -18,7 +18,7 @@ impl<A: Ord> Histogram<A> {
         Histogram { counts, grid }
     }
 
-    /// Add a single observation to the histogram.
+    /// Adds a single observation to the histogram.
     ///
     /// **Panics** if dimensions do not match: `self.ndim() != observation.len()`.
     ///
@@ -61,12 +61,12 @@ impl<A: Ord> Histogram<A> {
         self.counts.ndim()
     }
 
-    /// Borrow a view to the histogram matrix.
+    /// Borrows a view on the histogram matrix.
     pub fn as_view(&self) -> ArrayViewD<usize> {
         self.counts.view()
     }
 
-    /// Borrow an immutable reference to the histogram grid.
+    /// Borrows an immutable reference to the histogram grid.
     pub fn grid(&self) -> &Grid<A> {
         &self.grid
     }
@@ -77,7 +77,7 @@ pub trait HistogramExt<A, S>
     where
         S: Data<Elem = A>,
 {
-    /// Return the [histogram](https://en.wikipedia.org/wiki/Histogram)
+    /// Returns the [histogram](https://en.wikipedia.org/wiki/Histogram)
     /// for a 2-dimensional array of points `M`.
     ///
     /// Let `(n, d)` be the shape of `M`:
