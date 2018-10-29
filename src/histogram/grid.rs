@@ -84,6 +84,9 @@ impl<A: Ord + Clone> Grid<A> {
     /// Given `i=(i_1, ..., i_n)`, an `n`-dimensional index, it returns `I_{i_1}x...xI_{i_n}`, an
     /// `n`-dimensional bin, where `I_{i_j}` is the `i_j`-th interval on the `j`-th projection
     /// of the grid on the coordinate axes.
+    ///
+    /// *Panics* if at least one among `(i_1, ..., i_n)` is out of bounds on the respective
+    /// coordinate axis - i.e. if there exists `j` such that `i_j >= self.projections[j].len()`.
     pub fn get(&self, index: &[usize]) -> Vec<Range<A>> {
         assert_eq!(index.len(), self.ndim(),
                    "Dimension mismatch: the index has {0:?} dimensions, the grid \
