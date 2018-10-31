@@ -1,7 +1,6 @@
 use super::bins::Bins;
 use super::errors::BinNotFound;
 use std::ops::Range;
-use std::slice::Iter;
 use ndarray::ArrayView1;
 
 /// A `Grid` is a partition of a rectangular region of an `n`-dimensional
