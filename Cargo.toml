@@ -14,6 +14,5 @@ quickcheck = "0.7"
 ndarray-rand = "0.8"
 
 [patch.crates-io]
-ndarray = { git = "https://github.com/jturner314/ndarray.git", branch = "master" }
+ndarray = { git = "https://github.com/rust-ndarray/ndarray.git", branch = "master" }
 noisy_float = { git = "https://github.com/SergiusIW/noisy_float-rs.git", rev = "c33a94803987475bbd205c9ff5a697af533f9a17" }
-matrixmultiply = { git = "https://github.com/jturner314/matrixmultiply.git", rev = "344f4b43c55fcf7b20be20baff38406ebe9afbfb" }
