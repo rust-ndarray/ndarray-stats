@@ -410,3 +410,55 @@ where
         })
     }
 }
+
+pub trait QuantileExt1d<A, S>
+    where
+        S: Data<Elem = A>,
+{
+    fn quantile_mut<I>(&mut self, q: f64) -> A
+    where
+        A: Ord + Clone,
+        S: DataMut,
+        I: Interpolate<A>;
+}
+
+impl<A, S> QuantileExt1d<A, S> for ArrayBase<S, Ix1>
+    where
+        S: Data<Elem = A>,
+{
+    fn quantile_mut<I>(&mut self, q: f64) -> A
+    where
+        A: Ord + Clone,
+        S: DataMut,
+        I: Interpolate<A>,
+    {
+        assert!((0. <= q) && (q <= 1.));
+        let mut lower = None;
+        let mut higher = None;
+        let len = self.len();
+        if I::needs_lower(q, len) {
+            let lower_index = I::lower_index(q,len);
+            lower = Some(self.sorted_get_mut(lower_index));
+            if I::needs_higher(q, len) {
+                let higher_index = I::higher_index(q, len);
+                let relative_higher_index = higher_index - lower_index;
+                higher = Some(
+                    self.
+                        slice_mut(s![lower_index..]).
+                        sorted_get_mut(relative_higher_index)
+                );
+            };
+        } else {
+            higher = Some(
+                self.sorted_get_mut(I::higher_index(q, len)),
+            );
+        };
+        I::interpolate(
+            lower.map(|x| Array::from_elem((1,), x)),
+            higher.map(|x| Array::from_elem((1,), x)),
+            q,
+            len
+        )[0].clone()
+    }
+}
+
