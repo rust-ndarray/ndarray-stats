@@ -1,7 +1,8 @@
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps};
-use super::super::QuantileExt;
+use super::super::{QuantileExt, QuantileExt1d};
+use super::super::interpolate::Nearest;
 use super::{Edges, Bins};
 
 pub trait BinsBuilder<T>
@@ -129,5 +130,48 @@ impl<T> BinsBuilder<T> for Sturges<T>
 
     fn build(&self) -> Bins<T> {
         self.builder.build()
+    }
+}
+
+impl<T> BinsBuilder<T> for FreedmanDiaconis<T>
+    where
+        T: Ord + Clone + FromPrimitive + NumOps
+{
+    fn from_array<S>(a: ArrayBase<S, Ix1>) -> Self
+        where
+            S: Data<Elem=T>,
+    {
+        let n_bins = a.len();
+
+        let mut a_copy = a.to_owned();
+        let first_quartile = a_copy.quantile_mut::<Nearest>(0.25);
+        let third_quartile = a_copy.quantile_mut::<Nearest>(0.75);
+        let iqr = third_quartile - first_quartile;
+
+        let bin_width = FreedmanDiaconis::bin_width(n_bins, iqr);
+        let min = a_copy.min().clone();
+        let max = a_copy.max().clone();
+        let mut max_edge = min.clone();
+        while max_edge < max {
+            max_edge = max_edge + bin_width.clone();
+        }
+        let builder = EquiSpaced::new(n_bins, min, max_edge);
+        Self { builder }
+    }
+
+    fn build(&self) -> Bins<T> {
+        self.builder.build()
+    }
+}
+
+impl<T> FreedmanDiaconis<T>
+    where
+        T: Ord + Clone + FromPrimitive + NumOps
+{
+    fn bin_width(n_bins: usize, iqr: T) -> T
+    {
+        let denominator = (n_bins as f64).powf(1. / 3.);
+        let bin_width = T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap();
+        bin_width
     }
 }

@@ -12,7 +12,7 @@ extern crate ndarray_rand;
 extern crate quickcheck;
 
 pub use maybe_nan::{MaybeNan, MaybeNanExt};
-pub use quantile::{interpolate, QuantileExt};
+pub use quantile::{interpolate, QuantileExt, QuantileExt1d};
 pub use sort::Sort1dExt;
 pub use correlation::CorrelationExt;
 pub use histogram::HistogramExt;
