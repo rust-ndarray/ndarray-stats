@@ -14,6 +14,8 @@ pub trait BinsBuilder<T>
             S: Data<Elem=T>;
 
     fn build(&self) -> Bins<T>;
+
+    fn n_bins(&self) -> usize;
 }
 
 pub struct EquiSpaced<T> {
@@ -38,16 +40,25 @@ pub struct FreedmanDiaconis<T> {
     builder: EquiSpaced<T>,
 }
 
+enum SturgesOrFD<T> {
+    Sturges(Sturges<T>),
+    FreedmanDiaconis(FreedmanDiaconis<T>),
+}
+
+pub struct Auto<T> {
+    builder: SturgesOrFD<T>,
+}
+
 impl<T> EquiSpaced<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    fn new(n_bins: usize, min: T, max: T) -> Self
+    pub fn new(n_bins: usize, min: T, max: T) -> Self
     {
         Self { n_bins, min, max }
     }
 
-    fn build(&self) -> Bins<T> {
+    pub fn build(&self) -> Bins<T> {
         let edges = match self.n_bins {
             0 => Edges::from(vec![]),
             1 => {
@@ -56,17 +67,26 @@ impl<T> EquiSpaced<T>
                 )
             },
             _ => {
-                let range = self.max.clone() - self.min.clone();
-                let step = range / T::from_usize(self.n_bins).unwrap();
+                let bin_width = self.bin_width();
                 let mut edges: Vec<T> = vec![];
                 for i in 0..(self.n_bins+1) {
-                    let edge = self.min.clone() + T::from_usize(i).unwrap()*step.clone();
+                    let edge = self.min.clone() + T::from_usize(i).unwrap()*bin_width.clone();
                     edges.push(edge);
                 }
                 Edges::from(edges)
             },
         };
         Bins::new(edges)
+    }
+
+    pub fn n_bins(&self) -> usize {
+        self.n_bins
+    }
+
+    pub fn bin_width(&self) -> T {
+        let range = self.max.clone() - self.min.clone();
+        let bin_width = range / T::from_usize(self.n_bins).unwrap();
+        bin_width
     }
 }
 
@@ -89,6 +109,19 @@ impl<T> BinsBuilder<T> for Sqrt<T>
     fn build(&self) -> Bins<T> {
         self.builder.build()
     }
+
+    fn n_bins(&self) -> usize {
+        self.builder.n_bins()
+    }
+}
+
+impl<T> Sqrt<T>
+    where
+        T: Ord + Clone + FromPrimitive + NumOps
+{
+    pub fn bin_width(&self) -> T {
+        self.builder.bin_width()
+    }
 }
 
 impl<T> BinsBuilder<T> for Rice<T>
@@ -109,6 +142,19 @@ impl<T> BinsBuilder<T> for Rice<T>
 
     fn build(&self) -> Bins<T> {
         self.builder.build()
+    }
+
+    fn n_bins(&self) -> usize {
+        self.builder.n_bins()
+    }
+}
+
+impl<T> Rice<T>
+    where
+        T: Ord + Clone + FromPrimitive + NumOps
+{
+    pub fn bin_width(&self) -> T {
+        self.builder.bin_width()
     }
 }
 
@@ -131,6 +177,19 @@ impl<T> BinsBuilder<T> for Sturges<T>
     fn build(&self) -> Bins<T> {
         self.builder.build()
     }
+
+    fn n_bins(&self) -> usize {
+        self.builder.n_bins()
+    }
+}
+
+impl<T> Sturges<T>
+    where
+        T: Ord + Clone + FromPrimitive + NumOps
+{
+    pub fn bin_width(&self) -> T {
+        self.builder.bin_width()
+    }
 }
 
 impl<T> BinsBuilder<T> for FreedmanDiaconis<T>
@@ -148,7 +207,7 @@ impl<T> BinsBuilder<T> for FreedmanDiaconis<T>
         let third_quartile = a_copy.quantile_mut::<Nearest>(0.75);
         let iqr = third_quartile - first_quartile;
 
-        let bin_width = FreedmanDiaconis::bin_width(n_bins, iqr);
+        let bin_width = FreedmanDiaconis::compute_bin_width(n_bins, iqr);
         let min = a_copy.min().clone();
         let max = a_copy.max().clone();
         let mut max_edge = min.clone();
@@ -162,16 +221,74 @@ impl<T> BinsBuilder<T> for FreedmanDiaconis<T>
     fn build(&self) -> Bins<T> {
         self.builder.build()
     }
+
+    fn n_bins(&self) -> usize {
+        self.builder.n_bins()
+    }
 }
 
 impl<T> FreedmanDiaconis<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    fn bin_width(n_bins: usize, iqr: T) -> T
+    fn compute_bin_width(n_bins: usize, iqr: T) -> T
     {
         let denominator = (n_bins as f64).powf(1. / 3.);
         let bin_width = T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap();
         bin_width
+    }
+
+    pub fn bin_width(&self) -> T {
+        self.builder.bin_width()
+    }
+}
+
+impl<T> BinsBuilder<T> for Auto<T>
+    where
+        T: Ord + Clone + FromPrimitive + NumOps
+{
+    fn from_array<S>(a: ArrayBase<S, Ix1>) -> Self
+        where
+            S: Data<Elem=T>,
+    {
+        let fd_builder = FreedmanDiaconis::from_array(a.view());
+        let sturges_builder = Sturges::from_array(a.view());
+        let builder = {
+            if fd_builder.bin_width() > sturges_builder.bin_width() {
+                SturgesOrFD::Sturges(sturges_builder)
+            } else {
+                SturgesOrFD::FreedmanDiaconis(fd_builder)
+            }
+        };
+        Self { builder }
+    }
+
+    fn build(&self) -> Bins<T> {
+        // Ugly
+        match &self.builder {
+            SturgesOrFD::FreedmanDiaconis(b) => b.build(),
+            SturgesOrFD::Sturges(b) => b.build(),
+        }
+    }
+
+    fn n_bins(&self) -> usize {
+        // Ugly
+        match &self.builder {
+            SturgesOrFD::FreedmanDiaconis(b) => b.n_bins(),
+            SturgesOrFD::Sturges(b) => b.n_bins(),
+        }
+    }
+}
+
+impl<T> Auto<T>
+    where
+        T: Ord + Clone + FromPrimitive + NumOps
+{
+    pub fn bin_width(&self) -> T {
+        // Ugly
+        match &self.builder {
+            SturgesOrFD::FreedmanDiaconis(b) => b.bin_width(),
+            SturgesOrFD::Sturges(b) => b.bin_width(),
+        }
     }
 }
