@@ -9,9 +9,7 @@ pub trait BinsBuilder<T>
     where
         T: Ord
 {
-    fn from_array<S>(array: ArrayBase<S, Ix1>) -> Self
-        where
-            S: Data<Elem=T>;
+    fn from_array(array: ArrayView1<T>) -> Self;
 
     fn build(&self) -> Bins<T>;
 
@@ -94,9 +92,7 @@ impl<T> BinsBuilder<T> for Sqrt<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    fn from_array<S>(a: ArrayBase<S, Ix1>) -> Self
-        where
-            S: Data<Elem=T>,
+    fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
@@ -128,9 +124,7 @@ impl<T> BinsBuilder<T> for Rice<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    fn from_array<S>(a: ArrayBase<S, Ix1>) -> Self
-        where
-            S: Data<Elem=T>,
+    fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
         let n_bins = (2.*n_elems as f64).powf(1./3.).round() as usize;
@@ -162,9 +156,7 @@ impl<T> BinsBuilder<T> for Sturges<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    fn from_array<S>(a: ArrayBase<S, Ix1>) -> Self
-        where
-            S: Data<Elem=T>,
+    fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
@@ -196,9 +188,7 @@ impl<T> BinsBuilder<T> for FreedmanDiaconis<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    fn from_array<S>(a: ArrayBase<S, Ix1>) -> Self
-        where
-            S: Data<Elem=T>,
+    fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_bins = a.len();
 
@@ -247,9 +237,7 @@ impl<T> BinsBuilder<T> for Auto<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    fn from_array<S>(a: ArrayBase<S, Ix1>) -> Self
-        where
-            S: Data<Elem=T>,
+    fn from_array(a: ArrayView1<T>) -> Self
     {
         let fd_builder = FreedmanDiaconis::from_array(a.view());
         let sturges_builder = Sturges::from_array(a.view());

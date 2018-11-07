@@ -3,7 +3,7 @@ use super::errors::BinNotFound;
 use super::builders::BinsBuilder;
 use std::ops::Range;
 use std::marker::PhantomData;
-use ndarray::{ArrayView1, ArrayBase, Data, Axis, Ix2};
+use ndarray::{ArrayView1, ArrayView2, Axis};
 
 /// A `Grid` is a partition of a rectangular region of an `n`-dimensional
 /// space - e.g. `[a_0, b_0)x...x[a_{n-1}, b_{n-1})` - into a collection of
@@ -41,8 +41,10 @@ use ndarray::{ArrayView1, ArrayBase, Data, Axis, Ix2};
 /// #[macro_use(array)]
 /// extern crate ndarray;
 /// extern crate noisy_float;
-/// use ndarray_stats::histogram::{Edges, Bins, Histogram, Grid, GridBuilder};
-/// use noisy_float::types::n64;
+/// use ndarray_stats::HistogramExt;
+/// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder};
+/// use ndarray_stats::histogram::builders::Sqrt;
+/// use noisy_float::types::{N64, n64};
 ///
 /// # fn main() {
 /// let observations = array![
@@ -51,19 +53,13 @@ use ndarray::{ArrayView1, ArrayBase, Data, Axis, Ix2};
 ///     [n64(-1.), n64(-0.5)],
 ///     [n64(0.5), n64(-1.)]
 /// ];
-/// let grid = GridBuilder
-/// let bins = Bins::new(edges);
-/// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
-/// let mut histogram = Histogram::new(square_grid);
-///
-/// let observation = array![n64(0.5), n64(0.6)];
-///
-/// histogram.add_observation(observation.view());
+/// let grid = GridBuilder::<N64, Sqrt<N64>>::from_array(observations.view()).build();
+/// let histogram = observations.histogram(grid);
 ///
 /// let histogram_matrix = histogram.as_view();
 /// let expected = array![
-///     [0, 0],
-///     [0, 1],
+///     [1, 0],
+///     [1, 0],
 /// ];
 /// assert_eq!(histogram_matrix, expected.into_dyn());
 /// # }
@@ -141,9 +137,7 @@ pub struct GridBuilder<A: Ord, B: BinsBuilder<A>> {
 }
 
 impl<A: Ord, B: BinsBuilder<A>> GridBuilder<A, B> {
-    pub fn from_array<S, D>(array: ArrayBase<S, Ix2>) -> Self
-        where
-            S: Data<Elem=A>,
+    pub fn from_array(array: ArrayView2<A>) -> Self
     {
         let mut bin_builders = vec![];
         for subview in array.axis_iter(Axis(1)) {
