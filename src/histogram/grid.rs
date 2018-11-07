@@ -1,7 +1,9 @@
 use super::bins::Bins;
 use super::errors::BinNotFound;
+use super::builders::BinsBuilder;
 use std::ops::Range;
-use ndarray::ArrayView1;
+use std::marker::PhantomData;
+use ndarray::{ArrayView1, ArrayBase, Data, Dimension};
 
 /// A `Grid` is a partition of a rectangular region of an `n`-dimensional
 /// space - e.g. `[a_0, b_0)x...x[a_{n-1}, b_{n-1})` - into a collection of
@@ -95,5 +97,24 @@ impl<A: Ord + Clone> Grid<A> {
             bin.push(self.projections[axis_index].get(*i));
         }
         bin
+    }
+}
+
+pub struct GridBuilder<A: Ord, B: BinsBuilder<A>> {
+    bin_builder: B,
+    phantom: PhantomData<A>
+}
+
+impl<A: Ord, B: BinsBuilder<A>> GridBuilder<A, B> {
+    pub fn from_array<S, D>(array: ArrayBase<S, D>) -> Self
+        where
+            S: Data<Elem=A>,
+            D: Dimension,
+    {
+        unimplemented!()
+    }
+
+    pub fn build(&self) -> Grid<A> {
+        unimplemented!()
     }
 }
