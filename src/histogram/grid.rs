@@ -119,6 +119,10 @@ impl<A: Ord, B: BinsBuilder<A>> GridBuilder<A, B> {
     }
 
     pub fn build(&self) -> Grid<A> {
-        unimplemented!()
+        let mut projections = vec![];
+        for bin_builder in &self.bin_builders {
+            projections.push(bin_builder.build());
+        }
+        Grid::from(projections)
     }
 }
