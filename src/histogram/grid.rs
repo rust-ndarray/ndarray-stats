@@ -33,6 +33,41 @@ use ndarray::{ArrayView1, ArrayBase, Data, Axis, Ix2};
 /// |   |         |
 /// +---+-------+-+
 /// ```
+///
+/// # Example:
+///
+/// ```
+/// extern crate ndarray_stats;
+/// #[macro_use(array)]
+/// extern crate ndarray;
+/// extern crate noisy_float;
+/// use ndarray_stats::histogram::{Edges, Bins, Histogram, Grid, GridBuilder};
+/// use noisy_float::types::n64;
+///
+/// # fn main() {
+/// let observations = array![
+///     [n64(1.), n64(0.5)],
+///     [n64(-0.5), n64(1.)],
+///     [n64(-1.), n64(-0.5)],
+///     [n64(0.5), n64(-1.)]
+/// ];
+/// let grid = GridBuilder
+/// let bins = Bins::new(edges);
+/// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+/// let mut histogram = Histogram::new(square_grid);
+///
+/// let observation = array![n64(0.5), n64(0.6)];
+///
+/// histogram.add_observation(observation.view());
+///
+/// let histogram_matrix = histogram.as_view();
+/// let expected = array![
+///     [0, 0],
+///     [0, 1],
+/// ];
+/// assert_eq!(histogram_matrix, expected.into_dyn());
+/// # }
+/// ```
 pub struct Grid<A: Ord> {
     projections: Vec<Bins<A>>,
 }
