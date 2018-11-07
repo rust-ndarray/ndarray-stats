@@ -3,7 +3,7 @@ use super::errors::BinNotFound;
 use super::builders::BinsBuilder;
 use std::ops::Range;
 use std::marker::PhantomData;
-use ndarray::{ArrayView1, ArrayBase, Data, Dimension};
+use ndarray::{ArrayView1, ArrayBase, Data, Axis, Ix2};
 
 /// A `Grid` is a partition of a rectangular region of an `n`-dimensional
 /// space - e.g. `[a_0, b_0)x...x[a_{n-1}, b_{n-1})` - into a collection of
@@ -101,17 +101,21 @@ impl<A: Ord + Clone> Grid<A> {
 }
 
 pub struct GridBuilder<A: Ord, B: BinsBuilder<A>> {
-    bin_builder: B,
+    bin_builders: Vec<B>,
     phantom: PhantomData<A>
 }
 
 impl<A: Ord, B: BinsBuilder<A>> GridBuilder<A, B> {
-    pub fn from_array<S, D>(array: ArrayBase<S, D>) -> Self
+    pub fn from_array<S, D>(array: ArrayBase<S, Ix2>) -> Self
         where
             S: Data<Elem=A>,
-            D: Dimension,
     {
-        unimplemented!()
+        let mut bin_builders = vec![];
+        for subview in array.axis_iter(Axis(1)) {
+            let bin_builder = B::from_array(subview);
+            bin_builders.push(bin_builder);
+        }
+        Self { bin_builders, phantom: PhantomData }
     }
 
     pub fn build(&self) -> Grid<A> {
