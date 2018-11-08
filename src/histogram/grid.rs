@@ -1,6 +1,6 @@
 use super::bins::Bins;
 use super::errors::BinNotFound;
-use super::builders::BinsBuildingStrategy;
+use super::strategies::BinsBuildingStrategy;
 use std::ops::Range;
 use std::marker::PhantomData;
 use ndarray::{ArrayView1, ArrayView2, Axis};
@@ -43,7 +43,7 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 /// extern crate noisy_float;
 /// use ndarray_stats::HistogramExt;
 /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder};
-/// use ndarray_stats::histogram::builders::Auto;
+/// use ndarray_stats::histogram::strategies::Auto;
 /// use noisy_float::types::{N64, n64};
 ///
 /// # fn main() {
@@ -141,7 +141,7 @@ impl<A: Ord + Clone> Grid<A> {
 ///
 /// [`Grid`]: struct.Grid.html
 /// [`histogram`]: trait.HistogramExt.html
-/// [`strategy`]: builders/index.html
+/// [`strategy`]: strategies/index.html
 pub struct GridBuilder<A: Ord, B: BinsBuildingStrategy<A>> {
     bin_builders: Vec<B>,
     phantom: PhantomData<A>
@@ -153,7 +153,7 @@ impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
     /// to build a [`Grid`] according to the specified [`strategy`].
     ///
     /// [`Grid`]: struct.Grid.html
-    /// [`strategy`]: builders/index.html
+    /// [`strategy`]: strategies/index.html
     pub fn from_array(array: ArrayView2<A>) -> Self
     {
         let mut bin_builders = vec![];
@@ -168,7 +168,7 @@ impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
     /// using the parameters inferred from observations in [`from_array`].
     ///
     /// [`Grid`]: struct.Grid.html
-    /// [`strategy`]: builders/index.html
+    /// [`strategy`]: strategies/index.html
     /// [`from_array`]: #method.from_array.html
     pub fn build(&self) -> Grid<A> {
         let mut projections = vec![];

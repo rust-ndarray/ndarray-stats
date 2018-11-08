@@ -6,6 +6,6 @@ pub use self::errors::BinNotFound;
 
 mod histograms;
 mod bins;
-pub mod builders;
+pub mod strategies;
 mod grid;
 mod errors;
