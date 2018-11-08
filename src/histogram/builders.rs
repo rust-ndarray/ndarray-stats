@@ -16,7 +16,7 @@ pub trait BinsBuildingStrategy<T>
     fn n_bins(&self) -> usize;
 }
 
-pub struct EquiSpaced<T> {
+struct EquiSpaced<T> {
     n_bins: usize,
     min: T,
     max: T,
@@ -51,12 +51,12 @@ impl<T> EquiSpaced<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
-    pub fn new(n_bins: usize, min: T, max: T) -> Self
+    fn new(n_bins: usize, min: T, max: T) -> Self
     {
         Self { n_bins, min, max }
     }
 
-    pub fn build(&self) -> Bins<T> {
+    fn build(&self) -> Bins<T> {
         let edges = match self.n_bins {
             0 => Edges::from(vec![]),
             1 => {
@@ -77,11 +77,11 @@ impl<T> EquiSpaced<T>
         Bins::new(edges)
     }
 
-    pub fn n_bins(&self) -> usize {
+    fn n_bins(&self) -> usize {
         self.n_bins
     }
 
-    pub fn bin_width(&self) -> T {
+    fn bin_width(&self) -> T {
         let range = self.max.clone() - self.min.clone();
         let bin_width = range / T::from_usize(self.n_bins).unwrap();
         bin_width
