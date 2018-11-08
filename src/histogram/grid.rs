@@ -57,6 +57,7 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 /// let histogram = observations.histogram(grid);
 ///
 /// let histogram_matrix = histogram.as_view();
+/// // Bins are left inclusive, right exclusive!
 /// let expected = array![
 ///     [1, 0],
 ///     [1, 0],
