@@ -91,6 +91,7 @@ impl<T> EquiSpaced<T>
         self.n_bins
     }
 
+    /// The bin width (or bin length) according to the fitted strategy.
     fn bin_width(&self) -> T {
         let range = self.max.clone() - self.min.clone();
         let bin_width = range / T::from_usize(self.n_bins).unwrap();
@@ -125,6 +126,7 @@ impl<T> Sqrt<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
+    /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
         self.builder.bin_width()
     }
@@ -157,6 +159,7 @@ impl<T> Rice<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
+    /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
         self.builder.bin_width()
     }
@@ -189,6 +192,7 @@ impl<T> Sturges<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
+    /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
         self.builder.bin_width()
     }
@@ -238,6 +242,7 @@ impl<T> FreedmanDiaconis<T>
         bin_width
     }
 
+    /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
         self.builder.bin_width()
     }
@@ -282,6 +287,7 @@ impl<T> Auto<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
+    /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
         // Ugly
         match &self.builder {
