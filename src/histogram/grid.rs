@@ -136,6 +136,12 @@ impl<A: Ord + Clone> Grid<A> {
     }
 }
 
+/// `GridBuilder`, given a [`strategy`] and some observations, returns a [`Grid`]
+/// instance for [`histogram`] computation.
+///
+/// [`Grid`]: struct.Grid.html
+/// [`histogram`]: trait.HistogramExt.html
+/// [`strategy`]: builders/index.html
 pub struct GridBuilder<A: Ord, B: BinsBuilder<A>> {
     bin_builders: Vec<B>,
     phantom: PhantomData<A>
