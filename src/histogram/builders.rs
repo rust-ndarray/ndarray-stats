@@ -1,9 +1,19 @@
+//! Strategies to build [`Bins`]s and [`Grid`]s (using [`GridBuilder`]) inferring
+//! optimal parameters directly from data.
+//!
+//! The docs for each strategy have been taken almost verbatim from [`NumPy`].
+//!
+//! [`Bins`]: ../struct.Bins.html
+//! [`Grid`]: ../struct.Grid.html
+//! [`GridBuilder`]: ../struct.GridBuilder.html
+//! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps};
 use super::super::{QuantileExt, QuantileExt1d};
 use super::super::interpolate::Nearest;
 use super::{Edges, Bins};
+
 
 /// A trait implemented by all strategies to build [`Bins`]
 /// with parameters inferred from observations.
@@ -19,10 +29,23 @@ pub trait BinsBuildingStrategy<T>
     where
         T: Ord
 {
+    /// Given some observations in a 1-dimensional array it returns a `BinsBuildingStrategy`
+    /// that has learned the required parameter to build a collection of [`Bins`].
+    ///
+    /// [`Bins`]: ../struct.Bins.html
     fn from_array(array: ArrayView1<T>) -> Self;
 
+    /// Returns a [`Bins`] instance, built accordingly to the parameters
+    /// inferred from observations in [`from_array`].
+    ///
+    /// [`Bins`]: ../struct.Bins.html
+    /// [`from_array`]: #method.from_array.html
     fn build(&self) -> Bins<T>;
 
+    /// Returns the optimal number of bins, according to the parameters
+    /// inferred from observations in [`from_array`].
+    ///
+    /// [`from_array`]: #method.from_array.html
     fn n_bins(&self) -> usize;
 }
 
@@ -32,18 +55,26 @@ struct EquiSpaced<T> {
     max: T,
 }
 
+/// Square root (of data size) strategy, used by Excel and other programs
+/// for its speed and simplicity.
 pub struct Sqrt<T> {
     builder: EquiSpaced<T>,
 }
 
+/// A strategy that does not take variability into account, only data size. Commonly
+/// overestimates number of bins required.
 pub struct Rice<T> {
     builder: EquiSpaced<T>,
 }
 
+/// R’s default strategy, only accounts for data size. Only optimal for gaussian data and
+/// underestimates number of bins for large non-gaussian datasets.
 pub struct Sturges<T> {
     builder: EquiSpaced<T>,
 }
 
+/// Robust (resilient to outliers) strategy that takes into
+/// account data variability and data size.
 pub struct FreedmanDiaconis<T> {
     builder: EquiSpaced<T>,
 }
@@ -53,6 +84,11 @@ enum SturgesOrFD<T> {
     FreedmanDiaconis(FreedmanDiaconis<T>),
 }
 
+/// Maximum of the [`Sturges`] and [`FreedmanDiaconis`] strategies.
+/// Provides good all around performance.
+///
+/// [`Sturges`]: struct.Sturges.html
+/// [`FreedmanDiaconis`]: struct.FreedmanDiaconis.html
 pub struct Auto<T> {
     builder: SturgesOrFD<T>,
 }
