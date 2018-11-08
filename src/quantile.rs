@@ -169,7 +169,7 @@ pub mod interpolate {
     }
 }
 
-/// Quantile methods.
+/// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
 where
     S: Data<Elem = A>,
@@ -411,6 +411,7 @@ where
     }
 }
 
+/// Quantile methods for 1-dimensional arrays.
 pub trait QuantileExt1d<A, S>
     where
         S: Data<Elem = A>,
