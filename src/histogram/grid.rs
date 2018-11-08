@@ -148,6 +148,12 @@ pub struct GridBuilder<A: Ord, B: BinsBuilder<A>> {
 }
 
 impl<A: Ord, B: BinsBuilder<A>> GridBuilder<A, B> {
+    /// Given some observations in a 2-dimensional array with shape `(n_observations, n_dimension)`
+    /// it returns a `GridBuilder` instance that has learned the required parameter
+    /// to build a [`Grid`] according to the specified [`strategy`].
+    ///
+    /// [`Grid`]: struct.Grid.html
+    /// [`strategy`]: builders/index.html
     pub fn from_array(array: ArrayView2<A>) -> Self
     {
         let mut bin_builders = vec![];
@@ -158,6 +164,12 @@ impl<A: Ord, B: BinsBuilder<A>> GridBuilder<A, B> {
         Self { bin_builders, phantom: PhantomData }
     }
 
+    /// Returns a [`Grid`] instance, built accordingly to the specified [`strategy`]
+    /// using the parameters inferred from observations in [`from_array`].
+    ///
+    /// [`Grid`]: struct.Grid.html
+    /// [`strategy`]: builders/index.html
+    /// [`from_array`]: #method.from_array.html
     pub fn build(&self) -> Grid<A> {
         let mut projections = vec![];
         for bin_builder in &self.bin_builders {
