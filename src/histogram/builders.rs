@@ -5,6 +5,16 @@ use super::super::{QuantileExt, QuantileExt1d};
 use super::super::interpolate::Nearest;
 use super::{Edges, Bins};
 
+/// A trait implemented by all strategies to build [`Bins`]
+/// with parameters inferred from observations.
+///
+/// A `BinsBuildingStrategy` is required by [`GridBuilder`]
+/// to know how to build a [`Grid`]'s projections on the
+/// coordinate axes.
+///
+/// [`Bins`]: ../struct.Bins.html
+/// [`Grid`]: ../struct.Grid.html
+/// [`GridBuilder`]: ../struct.GridBuilder.html
 pub trait BinsBuildingStrategy<T>
     where
         T: Ord
