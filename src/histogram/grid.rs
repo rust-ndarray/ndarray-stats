@@ -43,25 +43,24 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 /// extern crate noisy_float;
 /// use ndarray_stats::HistogramExt;
 /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder};
-/// use ndarray_stats::histogram::builders::Sqrt;
+/// use ndarray_stats::histogram::builders::Auto;
 /// use noisy_float::types::{N64, n64};
 ///
 /// # fn main() {
-/// let observations = array![
-///     [n64(1.), n64(0.5)],
-///     [n64(-0.5), n64(1.)],
-///     [n64(-1.), n64(-0.5)],
-///     [n64(0.5), n64(-1.)]
+/// // 1-dimensional observations, as a (n_observations, 1) 2-d matrix
+/// let mut observations = array![
+///     [1, 4, 5, 2, 100, 20, 50, 65, 27, 40, 45, 23]
 /// ];
-/// let grid = GridBuilder::<N64, Sqrt<N64>>::from_array(observations.view()).build();
+/// observations.swap_axes(0, 1);
+///
+/// // The optimal grid layout is inferred from the data,
+/// // specifying a strategy (Auto in this case)
+/// let grid = GridBuilder::<usize, Auto<usize>>::from_array(observations.view()).build();
 /// let histogram = observations.histogram(grid);
 ///
 /// let histogram_matrix = histogram.as_view();
 /// // Bins are left inclusive, right exclusive!
-/// let expected = array![
-///     [1, 0],
-///     [1, 0],
-/// ];
+/// let expected = array![4, 1, 2, 1, 2, 0, 1, 0, 0, 1, 0, 0];
 /// assert_eq!(histogram_matrix, expected.into_dyn());
 /// # }
 /// ```
@@ -75,6 +74,11 @@ impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
     ///
     /// The `i`-th element in `Vec<Bins<A>>` represents the 1-dimensional
     /// projection of the bin grid on the `i`-th axis.
+    ///
+    /// Alternatively, a `Grid` can be build directly from data using a
+    /// [`GridBuilder`].
+    ///
+    /// [`GridBuilder`]: struct.GridBuilder.html
     fn from(projections: Vec<Bins<A>>) -> Self {
         Grid { projections }
     }

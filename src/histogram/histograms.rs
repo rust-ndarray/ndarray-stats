@@ -89,6 +89,38 @@ pub trait HistogramExt<A, S>
     /// 4-dimensional space.
     ///
     /// **Panics** if `d` is different from `grid.ndim()`.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// extern crate ndarray_stats;
+    /// #[macro_use(array)]
+    /// extern crate ndarray;
+    /// extern crate noisy_float;
+    /// use ndarray_stats::HistogramExt;
+    /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder};
+    /// use ndarray_stats::histogram::builders::Sqrt;
+    /// use noisy_float::types::{N64, n64};
+    ///
+    /// # fn main() {
+    /// let observations = array![
+    ///     [n64(1.), n64(0.5)],
+    ///     [n64(-0.5), n64(1.)],
+    ///     [n64(-1.), n64(-0.5)],
+    ///     [n64(0.5), n64(-1.)]
+    /// ];
+    /// let grid = GridBuilder::<N64, Sqrt<N64>>::from_array(observations.view()).build();
+    /// let histogram = observations.histogram(grid);
+    ///
+    /// let histogram_matrix = histogram.as_view();
+    /// // Bins are left inclusive, right exclusive!
+    /// let expected = array![
+    ///     [1, 0],
+    ///     [1, 0],
+    /// ];
+    /// assert_eq!(histogram_matrix, expected.into_dyn());
+    /// # }
+    /// ```
     fn histogram(&self, grid: Grid<A>) -> Histogram<A>
         where
             A: Ord;
