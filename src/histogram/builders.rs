@@ -5,7 +5,7 @@ use super::super::{QuantileExt, QuantileExt1d};
 use super::super::interpolate::Nearest;
 use super::{Edges, Bins};
 
-pub trait BinsBuilder<T>
+pub trait BinsBuildingStrategy<T>
     where
         T: Ord
 {
@@ -88,7 +88,7 @@ impl<T> EquiSpaced<T>
     }
 }
 
-impl<T> BinsBuilder<T> for Sqrt<T>
+impl<T> BinsBuildingStrategy<T> for Sqrt<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
@@ -120,7 +120,7 @@ impl<T> Sqrt<T>
     }
 }
 
-impl<T> BinsBuilder<T> for Rice<T>
+impl<T> BinsBuildingStrategy<T> for Rice<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
@@ -152,7 +152,7 @@ impl<T> Rice<T>
     }
 }
 
-impl<T> BinsBuilder<T> for Sturges<T>
+impl<T> BinsBuildingStrategy<T> for Sturges<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
@@ -184,7 +184,7 @@ impl<T> Sturges<T>
     }
 }
 
-impl<T> BinsBuilder<T> for FreedmanDiaconis<T>
+impl<T> BinsBuildingStrategy<T> for FreedmanDiaconis<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {
@@ -233,7 +233,7 @@ impl<T> FreedmanDiaconis<T>
     }
 }
 
-impl<T> BinsBuilder<T> for Auto<T>
+impl<T> BinsBuildingStrategy<T> for Auto<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps
 {

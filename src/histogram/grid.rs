@@ -1,6 +1,6 @@
 use super::bins::Bins;
 use super::errors::BinNotFound;
-use super::builders::BinsBuilder;
+use super::builders::BinsBuildingStrategy;
 use std::ops::Range;
 use std::marker::PhantomData;
 use ndarray::{ArrayView1, ArrayView2, Axis};
@@ -142,12 +142,12 @@ impl<A: Ord + Clone> Grid<A> {
 /// [`Grid`]: struct.Grid.html
 /// [`histogram`]: trait.HistogramExt.html
 /// [`strategy`]: builders/index.html
-pub struct GridBuilder<A: Ord, B: BinsBuilder<A>> {
+pub struct GridBuilder<A: Ord, B: BinsBuildingStrategy<A>> {
     bin_builders: Vec<B>,
     phantom: PhantomData<A>
 }
 
-impl<A: Ord, B: BinsBuilder<A>> GridBuilder<A, B> {
+impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
     /// Given some observations in a 2-dimensional array with shape `(n_observations, n_dimension)`
     /// it returns a `GridBuilder` instance that has learned the required parameter
     /// to build a [`Grid`] according to the specified [`strategy`].
