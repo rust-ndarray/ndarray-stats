@@ -23,7 +23,7 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 /// +---+-------+-+
 /// ```
 /// while the next one can't:
-/// ```rust,ignore
+/// ```text
 /// +---+-------+-+
 /// |   |       | |
 /// |   +-------+-+
