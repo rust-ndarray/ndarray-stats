@@ -381,7 +381,9 @@ mod edges_tests {
             let edges = Edges::from(a);
             let n = edges.len();
             for i in 1..n {
-                assert!(edges[i-1] <= edges[i]);
+                if edges[i-1] > edges[i]) {
+                    return false;
+                }
             }
             true
         }
