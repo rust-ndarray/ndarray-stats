@@ -12,7 +12,7 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 /// The grid is **fully determined by its 1-dimensional projections** on the
 /// coordinate axes. For example, this is a partition that can be represented
 /// as a `Grid` struct:
-/// ```rust,ignore
+/// ```text
 /// +---+-------+-+
 /// |   |       | |
 /// +---+-------+-+
