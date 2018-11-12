@@ -95,7 +95,7 @@ impl<A: Ord> Grid<A> {
     /// Returns `v=(v_i)_i`, a vector, where `v_i` is the number of bins in the grid projection
     /// on the `i`-th coordinate axis.
     pub fn shape(&self) -> Vec<usize> {
-        self.projections.iter().map(|e| e.len()).collect::<Vec<_>>()
+        self.projections.iter().map(|e| e.len()).collect()
     }
 
     /// Returns the grid projections on the coordinate axes as a slice of immutable references.
