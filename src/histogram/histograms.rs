@@ -49,8 +49,11 @@ impl<A: Ord> Histogram<A> {
     /// assert_eq!(histogram_matrix, expected.into_dyn());
     /// # }
     /// ```
-    pub fn add_observation(&mut self, observation: ArrayView1<A>) -> Result<(), BinNotFound> {
-        let bin_index = self.grid.index(observation)?;
+    pub fn add_observation<S>(&mut self, observation: &ArrayBase<S, Ix1>) -> Result<(), BinNotFound>
+    where
+        S: Data<Elem = A>,
+    {
+        let bin_index = self.grid.index_of(observation)?;
         self.counts[IxDyn(&bin_index)] += 1;
         Ok(())
     }
@@ -135,7 +138,7 @@ impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
     {
         let mut histogram = Histogram::new(grid);
         for point in self.axis_iter(Axis(0)) {
-            histogram.add_observation(point);
+            histogram.add_observation(&point);
         }
         histogram
     }

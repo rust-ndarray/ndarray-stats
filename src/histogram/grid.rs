@@ -3,7 +3,7 @@ use super::errors::BinNotFound;
 use super::strategies::BinsBuildingStrategy;
 use std::ops::Range;
 use std::marker::PhantomData;
-use ndarray::{ArrayBase, Data, Ix2, ArrayView1, Axis};
+use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 
 /// A `Grid` is a partition of a rectangular region of an `n`-dimensional
 /// space - e.g. `[a_0, b_0)x...x[a_{n-1}, b_{n-1})` - into a collection of
@@ -106,7 +106,10 @@ impl<A: Ord> Grid<A> {
     /// - `Ok(i)`, where `i=(i_0, ..., i_{n-1})`, if `p_j` belongs to `i_j`-th bin
     /// on the `j`-th grid projection on the coordinate axes for all `j` in `{0, ..., n-1}`;
     /// - `Err(BinNotFound)`, if `P` does not belong to the region of space covered by the grid.
-    pub fn index(&self, point: ArrayView1<A>) -> Result<Vec<usize>, BinNotFound> {
+    pub fn index_of<S>(&self, point: &ArrayBase<S, Ix1>) -> Result<Vec<usize>, BinNotFound>
+    where
+        S: Data<Elem = A>,
+    {
         assert_eq!(point.len(), self.ndim(),
                    "Dimension mismatch: the point has {:?} dimensions, the grid \
                    expected {:?} dimensions.", point.len(), self.ndim());
