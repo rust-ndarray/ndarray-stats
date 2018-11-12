@@ -134,23 +134,24 @@ impl<A: Ord> Edges<A> {
         self.edges.len()
     }
 
-    /// Borrow an immutable reference to the edges as a vector
-    /// slice.
+    /// Borrow an immutable reference to the edges as a 1-dimensional
+    /// array view.
     ///
     /// # Example:
     ///
     /// ```
     /// extern crate ndarray_stats;
+    /// use ndarray::array;
     /// use ndarray_stats::histogram::Edges;
     ///
     /// let edges = Edges::from(vec![0, 5, 3]);
     /// assert_eq!(
-    ///     edges.as_slice(),
-    ///     vec![0, 3, 5].as_slice()
+    ///     edges.as_array_view(),
+    ///     array![0, 3, 5].view()
     /// );
     /// ```
-    pub fn as_slice(&self) -> &[A] {
-        &self.edges
+    pub fn as_array_view(&self) -> ArrayView1<A> {
+        ArrayView1::from(&self.edges)
     }
 
     /// Given `value`, it returns an option:
