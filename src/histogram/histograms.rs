@@ -25,13 +25,13 @@ impl<A: Ord> Histogram<A> {
     /// # Example:
     /// ```
     /// extern crate ndarray_stats;
-    /// #[macro_use(array)]
     /// extern crate ndarray;
     /// extern crate noisy_float;
+    /// use ndarray::array;
     /// use ndarray_stats::histogram::{Edges, Bins, Histogram, Grid};
     /// use noisy_float::types::n64;
     ///
-    /// # fn main() {
+    /// # fn main() -> Result<(), Box<std::error::Error>> {
     /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
     /// let bins = Bins::new(edges);
     /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
@@ -39,7 +39,7 @@ impl<A: Ord> Histogram<A> {
     ///
     /// let observation = array![n64(0.5), n64(0.6)];
     ///
-    /// histogram.add_observation(&observation);
+    /// histogram.add_observation(&observation)?;
     ///
     /// let histogram_matrix = histogram.as_view();
     /// let expected = array![
