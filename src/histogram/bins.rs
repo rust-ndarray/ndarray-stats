@@ -325,9 +325,7 @@ impl<A: Ord> Bins<A> {
             }
         )
     }
-}
 
-impl<A: Ord + Clone> Bins<A> {
     /// Get the `i`-th bin.
     ///
     /// **Panics** if `index` is out of bounds.
@@ -345,7 +343,10 @@ impl<A: Ord + Clone> Bins<A> {
     ///     5..10
     /// );
     /// ```
-    pub fn get(&self, index: usize) -> Range<A> {
+    pub fn get(&self, index: usize) -> Range<A>
+        where
+        A: Clone,
+    {
         // It was not possible to implement this functionality
         // using the `Index` trait unless we were willing to
         // allocate a `Vec<Range<A>>` in the struct.
