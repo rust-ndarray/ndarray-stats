@@ -39,7 +39,7 @@ impl<A: Ord> Histogram<A> {
     ///
     /// let observation = array![n64(0.5), n64(0.6)];
     ///
-    /// histogram.add_observation(observation.view());
+    /// histogram.add_observation(&observation);
     ///
     /// let histogram_matrix = histogram.as_view();
     /// let expected = array![
