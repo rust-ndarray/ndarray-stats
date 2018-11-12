@@ -3,7 +3,7 @@ use super::errors::BinNotFound;
 use super::strategies::BinsBuildingStrategy;
 use std::ops::Range;
 use std::marker::PhantomData;
-use ndarray::{ArrayView1, ArrayView2, Axis};
+use ndarray::{ArrayBase, Data, Ix2, ArrayView1, Axis};
 
 /// A `Grid` is a partition of a rectangular region of an `n`-dimensional
 /// space - e.g. `[a_0, b_0)x...x[a_{n-1}, b_{n-1})` - into a collection of
@@ -41,6 +41,7 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 /// #[macro_use(array)]
 /// extern crate ndarray;
 /// extern crate noisy_float;
+/// use ndarray::Array;
 /// use ndarray_stats::HistogramExt;
 /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder};
 /// use ndarray_stats::histogram::strategies::Auto;
@@ -55,7 +56,7 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 ///
 /// // The optimal grid layout is inferred from the data,
 /// // specifying a strategy (Auto in this case)
-/// let grid = GridBuilder::<usize, Auto<usize>>::from_array(observations.view()).build();
+/// let grid = GridBuilder::<usize, Auto<usize>>::from_array(&observations).build();
 /// let histogram = observations.histogram(grid);
 ///
 /// let histogram_matrix = histogram.as_view();
@@ -154,7 +155,9 @@ impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
     ///
     /// [`Grid`]: struct.Grid.html
     /// [`strategy`]: strategies/index.html
-    pub fn from_array(array: ArrayView2<A>) -> Self
+    pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Self
+    where
+        S: Data<Elem=A>,
     {
         let mut bin_builders = vec![];
         for subview in array.axis_iter(Axis(1)) {

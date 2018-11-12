@@ -109,7 +109,7 @@ pub trait HistogramExt<A, S>
     ///     [n64(-1.), n64(-0.5)],
     ///     [n64(0.5), n64(-1.)]
     /// ];
-    /// let grid = GridBuilder::<N64, Sqrt<N64>>::from_array(observations.view()).build();
+    /// let grid = GridBuilder::<N64, Sqrt<N64>>::from_array(&observations).build();
     /// let histogram = observations.histogram(grid);
     ///
     /// let histogram_matrix = histogram.as_view();
