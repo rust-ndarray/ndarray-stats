@@ -54,7 +54,7 @@ impl<A: Ord> Histogram<A> {
         S: Data<Elem = A>,
     {
         let bin_index = self.grid.index_of(observation)?;
-        self.counts[IxDyn(&bin_index)] += 1;
+        self.counts[&*bin_index] += 1;
         Ok(())
     }
 
