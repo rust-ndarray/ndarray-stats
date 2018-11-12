@@ -129,7 +129,7 @@ impl<A: Ord + Clone> Grid<A> {
     ///
     /// **Panics** if at least one among `(i_0, ..., i_{n-1})` is out of bounds on the respective
     /// coordinate axis - i.e. if there exists `j` such that `i_j >= self.projections[j].len()`.
-    pub fn get(&self, index: &[usize]) -> Vec<Range<A>> {
+    pub fn index(&self, index: &[usize]) -> Vec<Range<A>> {
         assert_eq!(index.len(), self.ndim(),
                    "Dimension mismatch: the index has {0:?} dimensions, the grid \
                    expected {1:?} dimensions.", index.len(), self.ndim());
