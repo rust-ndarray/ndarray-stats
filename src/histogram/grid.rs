@@ -65,6 +65,7 @@ use ndarray::{ArrayBase, Data, Ix2, ArrayView1, Axis};
 /// assert_eq!(histogram_matrix, expected.into_dyn());
 /// # }
 /// ```
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grid<A: Ord> {
     projections: Vec<Bins<A>>,
 }

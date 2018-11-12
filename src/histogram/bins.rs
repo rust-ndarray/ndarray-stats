@@ -27,7 +27,7 @@ use std::ops::{Index, Range};
 ///     None
 /// );
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Edges<A: Ord> {
     edges: Vec<A>,
 }
@@ -226,7 +226,7 @@ impl<A: Ord> Edges<A> {
 ///     n64(1.)..n64(2.)
 /// );
 /// ```
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Bins<A: Ord> {
     edges: Edges<A>,
 }
