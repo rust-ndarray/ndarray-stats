@@ -91,6 +91,8 @@ pub trait HistogramExt<A, S>
     /// For example: a (3, 4) matrix `M` is a collection of 3 points in a
     /// 4-dimensional space.
     ///
+    /// Important: points outside the grid are ignored!
+    ///
     /// **Panics** if `d` is different from `grid.ndim()`.
     ///
     /// # Example:
