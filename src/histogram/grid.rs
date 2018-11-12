@@ -48,10 +48,10 @@ use ndarray::{ArrayView1, ArrayView2, Axis};
 ///
 /// # fn main() {
 /// // 1-dimensional observations, as a (n_observations, 1) 2-d matrix
-/// let mut observations = array![
-///     [1, 4, 5, 2, 100, 20, 50, 65, 27, 40, 45, 23]
-/// ];
-/// observations.swap_axes(0, 1);
+/// let observations = Array::from_shape_vec(
+///     (12, 1),
+///     vec![1, 4, 5, 2, 100, 20, 50, 65, 27, 40, 45, 23],
+/// ).unwrap();
 ///
 /// // The optimal grid layout is inferred from the data,
 /// // specifying a strategy (Auto in this case)
