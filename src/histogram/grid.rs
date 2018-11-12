@@ -101,11 +101,13 @@ impl<A: Ord> Grid<A> {
         &self.projections
     }
 
-    /// Given `P=(p_1, ..., p_n)`, a point, it returns:
-    /// - `Ok(i)`, where `i=(i_0, ..., i_{n-1})`, if `p_j` belongs to `i_j`-th bin
-    /// on the `j`-th grid projection on the coordinate axes for all `j` in `{0, ..., n-1}`;
-    /// - `Err(BinNotFound)`, if `P` does not belong to the region of space covered by the grid.
-    pub fn index_of<S>(&self, point: &ArrayBase<S, Ix1>) -> Result<Vec<usize>, BinNotFound>
+    /// Returns the index of the *n*-dimensional bin containing the point, if
+    /// one exists.
+    ///
+    /// Returns `None` if the point is outside the grid.
+    ///
+    /// **Panics** if `point.len()` does not equal `self.ndim()`.
+    pub fn index_of<S>(&self, point: &ArrayBase<S, Ix1>) -> Option<Vec<usize>>
     where
         S: Data<Elem = A>,
     {
@@ -115,7 +117,7 @@ impl<A: Ord> Grid<A> {
         point
             .iter()
             .zip(self.projections.iter())
-            .map(|(v, e)| e.index_of(v).ok_or(BinNotFound))
+            .map(|(v, e)| e.index_of(v))
             .collect()
     }
 }

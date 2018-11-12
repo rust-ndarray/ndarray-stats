@@ -53,9 +53,13 @@ impl<A: Ord> Histogram<A> {
     where
         S: Data<Elem = A>,
     {
-        let bin_index = self.grid.index_of(observation)?;
-        self.counts[&*bin_index] += 1;
-        Ok(())
+        match self.grid.index_of(observation) {
+            Some(bin_index) => {
+                self.counts[&*bin_index] += 1;
+                Ok(())
+            },
+            None => Err(BinNotFound)
+        }
     }
 
     /// Returns the number of dimensions of the space the histogram is covering.
