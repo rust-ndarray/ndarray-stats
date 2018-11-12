@@ -140,6 +140,7 @@ impl<A: Ord> Edges<A> {
     /// # Example:
     ///
     /// ```
+    /// extern crate ndarray;
     /// extern crate ndarray_stats;
     /// use ndarray::array;
     /// use ndarray_stats::histogram::Edges;
@@ -386,12 +387,12 @@ mod edges_tests {
 
         fn edges_are_right_exclusive(v: Vec<i32>) -> bool {
             let edges = Edges::from(v);
-            let last = edges.as_slice().last();
-            match last {
-                None => true,
-                Some(x) => {
-                    edges.indices_of(x).is_none()
-                }
+            let view = edges.as_array_view();
+            if view.len() == 0 {
+                true
+            } else {
+                let last = view[view.len()-1];
+                edges.indices_of(&last).is_none()
             }
         }
 
@@ -400,12 +401,12 @@ mod edges_tests {
             match edges.len() {
                 1 => true,
                 _ => {
-                    let first = edges.as_slice().first();
-                    match first {
-                        None => true,
-                        Some(x) => {
-                            edges.indices_of(x).is_some()
-                        }
+                    let view = edges.as_array_view();
+                    if view.len() == 0 {
+                        true
+                    } else {
+                        let first = view[0];
+                        edges.indices_of(&first).is_some()
                     }
                 }
             }
@@ -414,7 +415,8 @@ mod edges_tests {
         fn edges_are_deduped(v: Vec<i32>) -> bool {
             let unique_elements = BTreeSet::from_iter(v.iter());
             let edges = Edges::from(v.clone());
-            let unique_edges = BTreeSet::from_iter(edges.as_slice().iter());
+            let view = edges.as_array_view();
+            let unique_edges = BTreeSet::from_iter(view.iter());
             unique_edges == unique_elements
         }
     }
