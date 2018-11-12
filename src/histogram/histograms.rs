@@ -47,6 +47,7 @@ impl<A: Ord> Histogram<A> {
     ///     [0, 1],
     /// ];
     /// assert_eq!(histogram_matrix, expected.into_dyn());
+    /// # Ok(())
     /// # }
     /// ```
     pub fn add_observation<S>(&mut self, observation: &ArrayBase<S, Ix1>) -> Result<(), BinNotFound>
