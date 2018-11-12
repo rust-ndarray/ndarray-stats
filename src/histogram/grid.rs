@@ -114,7 +114,7 @@ impl<A: Ord> Grid<A> {
             .iter()
             .zip(self.projections.iter())
             .map(|(v, e)| e.index_of(v).ok_or(BinNotFound))
-            .collect::<Result<Vec<_>, _>>()
+            .collect()
     }
 }
 
