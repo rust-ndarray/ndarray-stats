@@ -69,8 +69,8 @@ impl<A: Ord> Histogram<A> {
         self.counts.ndim()
     }
 
-    /// Borrows a view on the histogram matrix.
-    pub fn as_view(&self) -> ArrayViewD<usize> {
+    /// Borrows a view on the histogram counts matrix.
+    pub fn counts(&self) -> ArrayViewD<usize> {
         self.counts.view()
     }
 
