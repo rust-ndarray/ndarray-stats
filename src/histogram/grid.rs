@@ -58,7 +58,7 @@ use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 /// let grid = GridBuilder::<usize, Auto<usize>>::from_array(&observations).build();
 /// let histogram = observations.histogram(grid);
 ///
-/// let histogram_matrix = histogram.as_view();
+/// let histogram_matrix = histogram.counts();
 /// // Bins are left inclusive, right exclusive!
 /// let expected = array![4, 1, 2, 1, 2, 0, 1, 0, 0, 1, 0, 0];
 /// assert_eq!(histogram_matrix, expected.into_dyn());

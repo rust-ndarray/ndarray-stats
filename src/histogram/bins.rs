@@ -113,15 +113,6 @@ impl<A: Ord> Index<usize> for Edges<A>{
     }
 }
 
-impl<A: Ord> IntoIterator for Edges<A> {
-    type Item = A;
-    type IntoIter = ::std::vec::IntoIter<A>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.edges.into_iter()
-    }
-}
-
 impl<A: Ord> Edges<A> {
     /// Number of edges in `self`.
     ///
@@ -197,6 +188,10 @@ impl<A: Ord> Edges<A> {
                 }
             }
         }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &A> {
+        self.edges.iter()
     }
 }
 

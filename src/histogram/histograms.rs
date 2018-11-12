@@ -41,7 +41,7 @@ impl<A: Ord> Histogram<A> {
     ///
     /// histogram.add_observation(&observation)?;
     ///
-    /// let histogram_matrix = histogram.as_view();
+    /// let histogram_matrix = histogram.counts();
     /// let expected = array![
     ///     [0, 0],
     ///     [0, 1],
@@ -121,7 +121,7 @@ pub trait HistogramExt<A, S>
     /// let grid = GridBuilder::<N64, Sqrt<N64>>::from_array(&observations).build();
     /// let histogram = observations.histogram(grid);
     ///
-    /// let histogram_matrix = histogram.as_view();
+    /// let histogram_matrix = histogram.counts();
     /// // Bins are left inclusive, right exclusive!
     /// let expected = array![
     ///     [1, 0],
