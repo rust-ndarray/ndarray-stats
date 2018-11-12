@@ -70,7 +70,7 @@ pub struct Sqrt<T> {
 ///
 /// Let `n` be the number of observations and `n_bins` the number of bins.
 ///
-/// `n_bins` = 2 * `n^(1/3)`
+/// `n_bins` = 2`n`<sup>1/3</sup>
 ///
 /// `n_bins` is only proportional to cube root of `n`. It tends to overestimate
 /// the `n_bins` and it does not take into account data variability.
