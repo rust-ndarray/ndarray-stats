@@ -68,7 +68,7 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
 impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
     /// Get an `Edges` instance from a `Array1<A>`:
     /// the array elements will be sorted in increasing order
-    /// using an unstable sorting algorithm.
+    /// using an unstable sorting algorithm and duplicates will be removed.
     ///
     /// # Example:
     ///
