@@ -209,7 +209,7 @@ impl<T> BinsBuildingStrategy<T> for Rice<T>
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
-        let n_bins = (2.*n_elems as f64).powf(1./3.).round() as usize;
+        let n_bins = (2. * (n_elems as f64).powf(1./3.)).round() as usize;
         let min = a.min().clone();
         let max = a.max().clone();
         let builder = EquiSpaced::new(n_bins, min, max);
