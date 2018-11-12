@@ -1,8 +1,8 @@
 use super::bins::Bins;
-use super::errors::BinNotFound;
 use super::strategies::BinsBuildingStrategy;
 use std::ops::Range;
 use std::marker::PhantomData;
+use itertools::izip;
 use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 
 /// A `Grid` is a partition of a rectangular region of an *n*-dimensional
@@ -133,11 +133,9 @@ impl<A: Ord + Clone> Grid<A> {
         assert_eq!(index.len(), self.ndim(),
                    "Dimension mismatch: the index has {0:?} dimensions, the grid \
                    expected {1:?} dimensions.", index.len(), self.ndim());
-        let mut bin = vec![];
-        for (axis_index, i) in index.iter().enumerate() {
-            bin.push(self.projections[axis_index].index(*i));
-        }
-        bin
+        izip!(&self.projections, index)
+            .map(|(bins, &i)| bins.index(i))
+            .collect()
     }
 }
 

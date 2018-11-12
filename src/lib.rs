@@ -4,6 +4,7 @@ extern crate ndarray;
 extern crate noisy_float;
 extern crate num_traits;
 extern crate rand;
+extern crate itertools;
 
 #[cfg(test)]
 extern crate ndarray_rand;

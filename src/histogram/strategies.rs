@@ -8,7 +8,6 @@
 //! [`GridBuilder`]: ../struct.GridBuilder.html
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use ndarray::prelude::*;
-use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps};
 use super::super::{QuantileExt, QuantileExt1d};
 use super::super::interpolate::Nearest;
