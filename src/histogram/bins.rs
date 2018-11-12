@@ -317,8 +317,7 @@ impl<A: Ord> Bins<A> {
     {
         let edges_indexes = self.edges.indexes(value);
         edges_indexes.map(
-            |t| {
-                let (left, right) = t;
+            |(left, right)| {
                 Range {
                     start: self.edges[left].clone(),
                     end: self.edges[right].clone(),
