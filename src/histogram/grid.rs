@@ -175,10 +175,7 @@ impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
     /// [`strategy`]: strategies/index.html
     /// [`from_array`]: #method.from_array.html
     pub fn build(&self) -> Grid<A> {
-        let mut projections = vec![];
-        for bin_builder in &self.bin_builders {
-            projections.push(bin_builder.build());
-        }
+        let projections: Vec<_> = self.bin_builders.iter().map(|b| b.build()).collect();
         Grid::from(projections)
     }
 }
