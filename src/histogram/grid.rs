@@ -108,8 +108,8 @@ impl<A: Ord> Grid<A> {
     /// - `Err(BinNotFound)`, if `P` does not belong to the region of space covered by the grid.
     pub fn index(&self, point: ArrayView1<A>) -> Result<Vec<usize>, BinNotFound> {
         assert_eq!(point.len(), self.ndim(),
-                   "Dimension mismatch: the point has {0:?} dimensions, the grid \
-                   expected {1:?} dimensions.", point.len(), self.ndim());
+                   "Dimension mismatch: the point has {:?} dimensions, the grid \
+                   expected {:?} dimensions.", point.len(), self.ndim());
         point
             .iter()
             .zip(self.projections.iter())
