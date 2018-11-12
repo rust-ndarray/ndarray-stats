@@ -143,7 +143,7 @@ impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
     {
         let mut histogram = Histogram::new(grid);
         for point in self.axis_iter(Axis(0)) {
-            histogram.add_observation(&point);
+            let _ = histogram.add_observation(&point);
         }
         histogram
     }
