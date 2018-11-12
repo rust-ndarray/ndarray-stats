@@ -38,10 +38,9 @@ use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 ///
 /// ```
 /// extern crate ndarray_stats;
-/// #[macro_use(array)]
 /// extern crate ndarray;
 /// extern crate noisy_float;
-/// use ndarray::Array;
+/// use ndarray::{Array, array};
 /// use ndarray_stats::HistogramExt;
 /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder};
 /// use ndarray_stats::histogram::strategies::Auto;
