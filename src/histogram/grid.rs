@@ -92,8 +92,7 @@ impl<A: Ord> Grid<A> {
         self.projections.len()
     }
 
-    /// Returns `v=(v_i)_i`, a vector, where `v_i` is the number of bins in the grid projection
-    /// on the `i`-th coordinate axis.
+    /// Returns the number of bins along each coordinate axis.
     pub fn shape(&self) -> Vec<usize> {
         self.projections.iter().map(|e| e.len()).collect()
     }
