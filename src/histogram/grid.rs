@@ -161,11 +161,10 @@ impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
     where
         S: Data<Elem=A>,
     {
-        let mut bin_builders = vec![];
-        for subview in array.axis_iter(Axis(1)) {
-            let bin_builder = B::from_array(subview);
-            bin_builders.push(bin_builder);
-        }
+        let bin_builders = array
+            .axis_iter(Axis(1))
+            .map(|data| B::from_array(data))
+            .collect();
         Self { bin_builders, phantom: PhantomData }
     }
 
