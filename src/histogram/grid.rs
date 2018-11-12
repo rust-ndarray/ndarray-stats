@@ -134,7 +134,7 @@ impl<A: Ord + Clone> Grid<A> {
                    expected {1:?} dimensions.", index.len(), self.ndim());
         let mut bin = vec![];
         for (axis_index, i) in index.iter().enumerate() {
-            bin.push(self.projections[axis_index].get(*i));
+            bin.push(self.projections[axis_index].index(*i));
         }
         bin
     }

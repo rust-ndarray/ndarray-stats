@@ -217,12 +217,12 @@ impl<A: Ord> Edges<A> {
 /// let bins = Bins::new(edges);
 /// // first bin
 /// assert_eq!(
-///     bins.get(0),
+///     bins.index(0),
 ///     n64(0.)..n64(1.) // n64(1.) is not included in the bin!
 /// );
 /// // second bin
 /// assert_eq!(
-///     bins.get(1),
+///     bins.index(1),
 ///     n64(1.)..n64(2.)
 /// );
 /// ```
@@ -281,7 +281,7 @@ impl<A: Ord> Bins<A> {
     ///     Some(0)
     /// );
     /// assert_eq!(
-    ///     bins.get(bins.index_of(&1).unwrap()),
+    ///     bins.index(bins.index_of(&1).unwrap()),
     ///     0..2
     /// );
     /// ```
@@ -339,11 +339,11 @@ impl<A: Ord> Bins<A> {
     /// let edges = Edges::from(vec![1, 5, 10, 20]);
     /// let bins = Bins::new(edges);
     /// assert_eq!(
-    ///     bins.get(1),
+    ///     bins.index(1),
     ///     5..10
     /// );
     /// ```
-    pub fn get(&self, index: usize) -> Range<A>
+    pub fn index(&self, index: usize) -> Range<A>
         where
         A: Clone,
     {
@@ -434,6 +434,6 @@ mod bins_tests {
         let edges = Edges::from(vec![0]);
         let bins = Bins::new(edges);
         // we need at least two edges to make a valid bin!
-        bins.get(0);
+        bins.index(0);
     }
 }
