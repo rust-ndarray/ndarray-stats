@@ -5,9 +5,9 @@ use std::ops::Range;
 use std::marker::PhantomData;
 use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 
-/// A `Grid` is a partition of a rectangular region of an `n`-dimensional
-/// space - e.g. `[a_0, b_0)x...x[a_{n-1}, b_{n-1})` - into a collection of
-/// rectangular `n`-dimensional bins.
+/// A `Grid` is a partition of a rectangular region of an *n*-dimensional
+/// space—e.g. [*a*<sub>0</sub>, *b*<sub>0</sub>) × ⋯ × [*a*<sub>*n*−1</sub>,
+/// *b*<sub>*n*−1</sub>)—into a collection of rectangular *n*-dimensional bins.
 ///
 /// The grid is **fully determined by its 1-dimensional projections** on the
 /// coordinate axes. For example, this is a partition that can be represented
