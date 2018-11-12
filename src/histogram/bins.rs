@@ -18,12 +18,12 @@ use std::ops::{Index, Range};
 /// let unit_interval = Bins::new(unit_edges);
 /// // left inclusive
 /// assert_eq!(
-///     unit_interval.range(&n64(0.)).unwrap(),
+///     unit_interval.range_of(&n64(0.)).unwrap(),
 ///     n64(0.)..n64(1.),
 /// );
 /// // right exclusive
 /// assert_eq!(
-///     unit_interval.range(&n64(1.)),
+///     unit_interval.range_of(&n64(1.)),
 ///     None
 /// );
 /// ```
@@ -277,15 +277,15 @@ impl<A: Ord> Bins<A> {
     /// let bins = Bins::new(edges);
     /// let value = 1;
     /// assert_eq!(
-    ///     bins.index(&1),
+    ///     bins.index_of(&1),
     ///     Some(0)
     /// );
     /// assert_eq!(
-    ///     bins.get(bins.index(&1).unwrap()),
+    ///     bins.get(bins.index_of(&1).unwrap()),
     ///     0..2
     /// );
     /// ```
-    pub fn index(&self, value: &A) -> Option<usize> {
+    pub fn index_of(&self, value: &A) -> Option<usize> {
         self.edges.indexes(value).map(|t| t.0)
     }
 
@@ -303,15 +303,15 @@ impl<A: Ord> Bins<A> {
     /// let edges = Edges::from(vec![0, 2, 4, 6]);
     /// let bins = Bins::new(edges);
     /// assert_eq!(
-    ///     bins.range(&1),
+    ///     bins.range_of(&1),
     ///     Some(0..2)
     /// );
     /// assert_eq!(
-    ///     bins.range(&10),
+    ///     bins.range_of(&10),
     ///     None
     /// );
     /// ```
-    pub fn range(&self, value: &A) -> Option<Range<A>>
+    pub fn range_of(&self, value: &A) -> Option<Range<A>>
         where
             A: Clone,
     {

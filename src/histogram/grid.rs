@@ -112,7 +112,7 @@ impl<A: Ord> Grid<A> {
         point
             .iter()
             .zip(self.projections.iter())
-            .map(|(v, e)| e.index(v).ok_or(BinNotFound))
+            .map(|(v, e)| e.index_of(v).ok_or(BinNotFound))
             .collect::<Result<Vec<_>, _>>()
     }
 }
