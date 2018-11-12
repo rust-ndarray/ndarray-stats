@@ -175,15 +175,15 @@ impl<A: Ord> Edges<A> {
     ///
     /// let edges = Edges::from(vec![0, 2, 3]);
     /// assert_eq!(
-    ///     edges.indexes(&1),
+    ///     edges.indices_of(&1),
     ///     Some((0, 1))
     /// );
     /// assert_eq!(
-    ///     edges.indexes(&5),
+    ///     edges.indices_of(&5),
     ///     None
     /// );
     /// ```
-    pub fn indexes(&self, value: &A) -> Option<(usize, usize)> {
+    pub fn indices_of(&self, value: &A) -> Option<(usize, usize)> {
         // binary search for the correct bin
         let n_edges = self.len();
         match self.edges.binary_search(value) {
@@ -286,7 +286,7 @@ impl<A: Ord> Bins<A> {
     /// );
     /// ```
     pub fn index_of(&self, value: &A) -> Option<usize> {
-        self.edges.indexes(value).map(|t| t.0)
+        self.edges.indices_of(value).map(|t| t.0)
     }
 
     /// Given `value`, it returns:
@@ -315,7 +315,7 @@ impl<A: Ord> Bins<A> {
         where
             A: Clone,
     {
-        let edges_indexes = self.edges.indexes(value);
+        let edges_indexes = self.edges.indices_of(value);
         edges_indexes.map(
             |(left, right)| {
                 Range {
@@ -394,7 +394,7 @@ mod edges_tests {
             match last {
                 None => true,
                 Some(x) => {
-                    edges.indexes(x).is_none()
+                    edges.indices_of(x).is_none()
                 }
             }
         }
@@ -408,7 +408,7 @@ mod edges_tests {
                     match first {
                         None => true,
                         Some(x) => {
-                            edges.indexes(x).is_some()
+                            edges.indices_of(x).is_some()
                         }
                     }
                 }
