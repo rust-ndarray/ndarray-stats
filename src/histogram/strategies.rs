@@ -82,7 +82,7 @@ pub struct Rice<T> {
 /// underestimates number of bins for large non-gaussian datasets.
 ///
 /// Let `n` be the number of observations.
-/// The number of bins is the base 2 log of `n`. This estimator assumes normality of data and
+/// The number of bins is 1 plus the base 2 log of `n`. This estimator assumes normality of data and
 /// is too conservative for larger, non-normal datasets.
 ///
 /// This is the default method in R’s hist method.
