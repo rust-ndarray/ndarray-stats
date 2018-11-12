@@ -101,8 +101,7 @@ pub trait HistogramExt<A, S>
     /// extern crate ndarray;
     /// extern crate noisy_float;
     /// use ndarray_stats::HistogramExt;
-    /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder};
-    /// use ndarray_stats::histogram::strategies::Sqrt;
+    /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder, strategies::Sqrt};
     /// use noisy_float::types::{N64, n64};
     ///
     /// # fn main() {
