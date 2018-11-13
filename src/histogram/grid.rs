@@ -1,7 +1,6 @@
 use super::bins::Bins;
 use super::strategies::BinsBuildingStrategy;
 use std::ops::Range;
-use std::marker::PhantomData;
 use itertools::izip;
 use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 
@@ -55,7 +54,7 @@ use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 ///
 /// // The optimal grid layout is inferred from the data,
 /// // specifying a strategy (Auto in this case)
-/// let grid = GridBuilder::<usize, Auto<usize>>::from_array(&observations).build();
+/// let grid = GridBuilder::<Auto<usize>>::from_array(&observations).build();
 /// let expected_grid = Grid::from(vec![Bins::new(Edges::from(vec![1, 20, 39, 58, 77, 96, 115]))]);
 /// assert_eq!(grid, expected_grid);
 ///
@@ -148,12 +147,15 @@ impl<A: Ord + Clone> Grid<A> {
 /// [`Grid`]: struct.Grid.html
 /// [`histogram`]: trait.HistogramExt.html
 /// [`strategy`]: strategies/index.html
-pub struct GridBuilder<A: Ord, B: BinsBuildingStrategy<A>> {
+pub struct GridBuilder<B: BinsBuildingStrategy> {
     bin_builders: Vec<B>,
-    phantom: PhantomData<A>
 }
 
-impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
+impl<A, B> GridBuilder<B>
+where
+    A: Ord,
+    B: BinsBuildingStrategy<Elem = A>,
+{
     /// Given some observations in a 2-dimensional array with shape `(n_observations, n_dimension)`
     /// it returns a `GridBuilder` instance that has learned the required parameter
     /// to build a [`Grid`] according to the specified [`strategy`].
@@ -168,7 +170,7 @@ impl<A: Ord, B: BinsBuildingStrategy<A>> GridBuilder<A, B> {
             .axis_iter(Axis(1))
             .map(|data| B::from_array(data))
             .collect();
-        Self { bin_builders, phantom: PhantomData }
+        Self { bin_builders }
     }
 
     /// Returns a [`Grid`] instance, built accordingly to the specified [`strategy`]

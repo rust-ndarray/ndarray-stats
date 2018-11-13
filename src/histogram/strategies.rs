@@ -35,22 +35,21 @@ use super::{Edges, Bins};
 /// [`Bins`]: ../struct.Bins.html
 /// [`Grid`]: ../struct.Grid.html
 /// [`GridBuilder`]: ../struct.GridBuilder.html
-pub trait BinsBuildingStrategy<T>
-    where
-        T: Ord
+pub trait BinsBuildingStrategy
 {
+    type Elem: Ord;
     /// Given some observations in a 1-dimensional array it returns a `BinsBuildingStrategy`
     /// that has learned the required parameter to build a collection of [`Bins`].
     ///
     /// [`Bins`]: ../struct.Bins.html
-    fn from_array(array: ArrayView1<T>) -> Self;
+    fn from_array(array: ArrayView1<Self::Elem>) -> Self;
 
     /// Returns a [`Bins`] instance, built accordingly to the parameters
     /// inferred from observations in [`from_array`].
     ///
     /// [`Bins`]: ../struct.Bins.html
     /// [`from_array`]: #method.from_array.html
-    fn build(&self) -> Bins<T>;
+    fn build(&self) -> Bins<Self::Elem>;
 
     /// Returns the optimal number of bins, according to the parameters
     /// inferred from observations in [`from_array`].
@@ -172,10 +171,12 @@ impl<T> EquiSpaced<T>
     }
 }
 
-impl<T> BinsBuildingStrategy<T> for Sqrt<T>
+impl<T> BinsBuildingStrategy for Sqrt<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
+    type Elem = T;
+
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
@@ -206,10 +207,12 @@ impl<T> Sqrt<T>
     }
 }
 
-impl<T> BinsBuildingStrategy<T> for Rice<T>
+impl<T> BinsBuildingStrategy for Rice<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
+    type Elem = T;
+
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
@@ -240,10 +243,12 @@ impl<T> Rice<T>
     }
 }
 
-impl<T> BinsBuildingStrategy<T> for Sturges<T>
+impl<T> BinsBuildingStrategy for Sturges<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
+    type Elem = T;
+
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
@@ -274,10 +279,12 @@ impl<T> Sturges<T>
     }
 }
 
-impl<T> BinsBuildingStrategy<T> for FreedmanDiaconis<T>
+impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
+    type Elem = T;
+
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_points = a.len();
@@ -320,10 +327,12 @@ impl<T> FreedmanDiaconis<T>
     }
 }
 
-impl<T> BinsBuildingStrategy<T> for Auto<T>
+impl<T> BinsBuildingStrategy for Auto<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
+    type Elem = T;
+
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let fd_builder = FreedmanDiaconis::from_array(a.view());
