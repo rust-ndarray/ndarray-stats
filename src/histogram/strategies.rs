@@ -8,6 +8,7 @@
 //! [`GridBuilder`]: ../struct.GridBuilder.html
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use ndarray::prelude::*;
+use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps};
 use super::super::{QuantileExt, QuantileExt1d};
 use super::super::interpolate::Nearest;
@@ -273,21 +274,16 @@ impl<T> BinsBuildingStrategy<T> for FreedmanDiaconis<T>
 {
     fn from_array(a: ArrayView1<T>) -> Self
     {
-        let n_bins = a.len();
+        let n_points = a.len();
 
         let mut a_copy = a.to_owned();
         let first_quartile = a_copy.quantile_mut::<Nearest>(0.25);
         let third_quartile = a_copy.quantile_mut::<Nearest>(0.75);
         let iqr = third_quartile - first_quartile;
 
-        let bin_width = FreedmanDiaconis::compute_bin_width(n_bins, iqr);
-        let min = a_copy.min().clone();
-        let max = a_copy.max().clone();
-        let mut max_edge = min.clone();
-        while max_edge < max {
-            max_edge = max_edge + bin_width.clone();
-        }
-        let builder = EquiSpaced::new(n_bins, min, max_edge);
+        let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
+        let (max_edge, min_edge, n_bins) = FreedmanDiaconis::compute_equispaced_parameters(a, &bin_width);
+        let builder = EquiSpaced::new(n_bins, min_edge, max_edge);
         Self { builder }
     }
 
@@ -309,6 +305,22 @@ impl<T> FreedmanDiaconis<T>
         let denominator = (n_bins as f64).powf(1. / 3.);
         let bin_width = T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap();
         bin_width
+    }
+
+    fn compute_equispaced_parameters<S>(a: ArrayBase<S, Ix1>, bin_width: &T) -> (T, T, usize)
+    where
+        S: Data<Elem = T>,
+    {
+        let min_edge = a.min().clone();
+        let max = a.max().clone();
+        let mut max_edge = min_edge.clone();
+        let mut n_bins = 0;
+        while max_edge < max {
+            max_edge = max_edge + bin_width.clone();
+            n_bins += 1;
+        }
+        n_bins = usize::max(n_bins, 1);
+        return (max_edge, min_edge, n_bins)
     }
 
     /// The bin width (or bin length) according to the fitted strategy.

@@ -43,7 +43,7 @@ use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 /// use ndarray::{Array, array};
 /// use ndarray_stats::{HistogramExt,
 ///                     histogram::{Histogram, Grid, GridBuilder,
-///                                 Edges, Bins, strategies::Auto}};
+///                                 Edges, Bins, strategies::FreedmanDiaconis}};
 /// use noisy_float::types::{N64, n64};
 ///
 /// # fn main() {
@@ -55,7 +55,7 @@ use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 ///
 /// // The optimal grid layout is inferred from the data,
 /// // specifying a strategy (Auto in this case)
-/// let grid = GridBuilder::<usize, Auto<usize>>::from_array(&observations).build();
+/// let grid = GridBuilder::<usize, FreedmanDiaconis<usize>>::from_array(&observations).build();
 /// let expected_grid = Grid::from(vec![Bins::new(Edges::from(vec![
 ///     1, 11, 21, 31, 41, 51, 61, 71, 81, 91, 101, 111, 121,
 /// ]))]);
