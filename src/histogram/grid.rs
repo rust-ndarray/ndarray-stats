@@ -56,14 +56,14 @@ use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 /// // The optimal grid layout is inferred from the data,
 /// // specifying a strategy (Auto in this case)
 /// let grid = GridBuilder::<usize, Auto<usize>>::from_array(&observations).build();
-/// let expected_grid = Grid::from(vec![Bins::new(Edges::from(vec![1, 20, 39, 58, 77, 96]))]);
+/// let expected_grid = Grid::from(vec![Bins::new(Edges::from(vec![1, 20, 39, 58, 77, 96, 115]))]);
 /// assert_eq!(grid, expected_grid);
 ///
 /// let histogram = observations.histogram(grid);
 ///
 /// let histogram_matrix = histogram.counts();
 /// // Bins are left inclusive, right exclusive!
-/// let expected = array![4, 3, 3, 1, 0];
+/// let expected = array![4, 3, 3, 1, 0, 1];
 /// assert_eq!(histogram_matrix, expected.into_dyn());
 /// # }
 /// ```

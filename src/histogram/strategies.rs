@@ -8,8 +8,7 @@
 //! [`GridBuilder`]: ../struct.GridBuilder.html
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use ndarray::prelude::*;
-use ndarray::Data;
-use num_traits::{FromPrimitive, NumOps};
+use num_traits::{FromPrimitive, NumOps, Zero};
 use super::super::{QuantileExt, QuantileExt1d};
 use super::super::interpolate::Nearest;
 use super::{Edges, Bins};
@@ -50,7 +49,7 @@ pub trait BinsBuildingStrategy<T>
 }
 
 struct EquiSpaced<T> {
-    n_bins: usize,
+    bin_width: T,
     min: T,
     max: T,
 }
@@ -129,49 +128,42 @@ pub struct Auto<T> {
 
 impl<T> EquiSpaced<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
-    fn new(n_bins: usize, min: T, max: T) -> Self
+    fn new(bin_width: T, min: T, max: T) -> Self
     {
-        Self { n_bins, min, max }
+        assert!(bin_width > T::zero());
+        Self { bin_width, min, max }
     }
 
     fn build(&self) -> Bins<T> {
-        let edges = match self.n_bins {
-            0 => Edges::from(vec![]),
-            1 => {
-                Edges::from(
-                    vec![self.min.clone(), self.max.clone()]
-                )
-            },
-            _ => {
-                let bin_width = self.bin_width();
-                let mut edges: Vec<T> = vec![];
-                for i in 0..(self.n_bins+1) {
-                    let edge = self.min.clone() + T::from_usize(i).unwrap()*bin_width.clone();
-                    edges.push(edge);
-                }
-                Edges::from(edges)
-            },
-        };
-        Bins::new(edges)
+        let n_bins = self.n_bins();
+        let mut edges: Vec<T> = vec![];
+        for i in 0..(n_bins+1) {
+            let edge = self.min.clone() + T::from_usize(i).unwrap()*self.bin_width.clone();
+            edges.push(edge);
+        }
+        Bins::new(Edges::from(edges))
     }
 
     fn n_bins(&self) -> usize {
-        self.n_bins
+        let mut max_edge = self.min.clone();
+        let mut n_bins = 0;
+        while max_edge <= self.max {
+            max_edge = max_edge + self.bin_width.clone();
+            n_bins += 1;
+        }
+        return n_bins
     }
 
-    /// The bin width (or bin length) according to the fitted strategy.
     fn bin_width(&self) -> T {
-        let range = self.max.clone() - self.min.clone();
-        let bin_width = range / T::from_usize(self.n_bins).unwrap();
-        bin_width
+        self.bin_width.clone()
     }
 }
 
 impl<T> BinsBuildingStrategy<T> for Sqrt<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     fn from_array(a: ArrayView1<T>) -> Self
     {
@@ -179,7 +171,8 @@ impl<T> BinsBuildingStrategy<T> for Sqrt<T>
         let n_bins = (n_elems as f64).sqrt().round() as usize;
         let min = a.min().clone();
         let max = a.max().clone();
-        let builder = EquiSpaced::new(n_bins, min, max);
+        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+        let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
     }
 
@@ -194,7 +187,7 @@ impl<T> BinsBuildingStrategy<T> for Sqrt<T>
 
 impl<T> Sqrt<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -204,7 +197,7 @@ impl<T> Sqrt<T>
 
 impl<T> BinsBuildingStrategy<T> for Rice<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     fn from_array(a: ArrayView1<T>) -> Self
     {
@@ -212,7 +205,8 @@ impl<T> BinsBuildingStrategy<T> for Rice<T>
         let n_bins = (2. * (n_elems as f64).powf(1./3.)).round() as usize;
         let min = a.min().clone();
         let max = a.max().clone();
-        let builder = EquiSpaced::new(n_bins, min, max);
+        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+        let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
     }
 
@@ -227,7 +221,7 @@ impl<T> BinsBuildingStrategy<T> for Rice<T>
 
 impl<T> Rice<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -237,7 +231,7 @@ impl<T> Rice<T>
 
 impl<T> BinsBuildingStrategy<T> for Sturges<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     fn from_array(a: ArrayView1<T>) -> Self
     {
@@ -245,7 +239,8 @@ impl<T> BinsBuildingStrategy<T> for Sturges<T>
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
         let min = a.min().clone();
         let max = a.max().clone();
-        let builder = EquiSpaced::new(n_bins, min, max);
+        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+        let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
     }
 
@@ -260,7 +255,7 @@ impl<T> BinsBuildingStrategy<T> for Sturges<T>
 
 impl<T> Sturges<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -270,7 +265,7 @@ impl<T> Sturges<T>
 
 impl<T> BinsBuildingStrategy<T> for FreedmanDiaconis<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     fn from_array(a: ArrayView1<T>) -> Self
     {
@@ -282,8 +277,9 @@ impl<T> BinsBuildingStrategy<T> for FreedmanDiaconis<T>
         let iqr = third_quartile - first_quartile;
 
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
-        let (max_edge, min_edge, n_bins) = FreedmanDiaconis::compute_equispaced_parameters(a, &bin_width);
-        let builder = EquiSpaced::new(n_bins, min_edge, max_edge);
+        let min = a_copy.min().clone();
+        let max = a_copy.max().clone();
+        let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
     }
 
@@ -298,29 +294,13 @@ impl<T> BinsBuildingStrategy<T> for FreedmanDiaconis<T>
 
 impl<T> FreedmanDiaconis<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     fn compute_bin_width(n_bins: usize, iqr: T) -> T
     {
         let denominator = (n_bins as f64).powf(1. / 3.);
         let bin_width = T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap();
         bin_width
-    }
-
-    fn compute_equispaced_parameters<S>(a: ArrayBase<S, Ix1>, bin_width: &T) -> (T, T, usize)
-    where
-        S: Data<Elem = T>,
-    {
-        let min_edge = a.min().clone();
-        let max = a.max().clone();
-        let mut max_edge = min_edge.clone();
-        let mut n_bins = 0;
-        while max_edge < max {
-            max_edge = max_edge + bin_width.clone();
-            n_bins += 1;
-        }
-        n_bins = usize::max(n_bins, 1);
-        return (max_edge, min_edge, n_bins)
     }
 
     /// The bin width (or bin length) according to the fitted strategy.
@@ -331,7 +311,7 @@ impl<T> FreedmanDiaconis<T>
 
 impl<T> BinsBuildingStrategy<T> for Auto<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     fn from_array(a: ArrayView1<T>) -> Self
     {
@@ -366,7 +346,7 @@ impl<T> BinsBuildingStrategy<T> for Auto<T>
 
 impl<T> Auto<T>
     where
-        T: Ord + Clone + FromPrimitive + NumOps
+        T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -376,4 +356,14 @@ impl<T> Auto<T>
             SturgesOrFD::Sturges(b) => b.bin_width(),
         }
     }
+}
+
+/// The bin width (or bin length) according to the fitted strategy.
+fn compute_bin_width<T>(min: T, max: T, n_bins: usize) -> T
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+{
+    let range = max.clone() - min.clone();
+    let bin_width = range / T::from_usize(n_bins).unwrap();
+    bin_width
 }

@@ -107,8 +107,13 @@ pub trait HistogramExt<A, S>
     /// #[macro_use(array)]
     /// extern crate ndarray;
     /// extern crate noisy_float;
-    /// use ndarray_stats::HistogramExt;
-    /// use ndarray_stats::histogram::{Histogram, Grid, GridBuilder, strategies::Sqrt};
+    /// use ndarray_stats::{
+    ///     HistogramExt,
+    ///     histogram::{
+    ///         Histogram, Grid, GridBuilder,
+    ///         Edges, Bins,
+    ///         strategies::Sqrt},
+    /// };
     /// use noisy_float::types::{N64, n64};
     ///
     /// # fn main() {
@@ -119,13 +124,22 @@ pub trait HistogramExt<A, S>
     ///     [n64(0.5), n64(-1.)]
     /// ];
     /// let grid = GridBuilder::<N64, Sqrt<N64>>::from_array(&observations).build();
+    /// let expected_grid = Grid::from(
+    ///     vec![
+    ///         Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.), n64(2.)])),
+    ///         Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.), n64(2.)])),
+    ///     ]
+    /// );
+    /// assert_eq!(grid, expected_grid);
+    ///
     /// let histogram = observations.histogram(grid);
     ///
     /// let histogram_matrix = histogram.counts();
     /// // Bins are left inclusive, right exclusive!
     /// let expected = array![
-    ///     [1, 0],
-    ///     [1, 0],
+    ///     [1, 0, 1],
+    ///     [1, 0, 0],
+    ///     [0, 1, 0],
     /// ];
     /// assert_eq!(histogram_matrix, expected.into_dyn());
     /// # }
