@@ -3,6 +3,17 @@
 //!
 //! The docs for each strategy have been taken almost verbatim from [`NumPy`].
 //!
+//! Each strategy specifies how to compute the optimal number of [`Bins`] or
+//! the optimal bin width.
+//! For those strategies that prescribe the optimal number
+//! of [`Bins`] we then compute the optimal bin width with
+//!
+//! `bin_width = (max - min)/n`
+//!
+//! All our bins are left-inclusive and right-exclusive: we make sure to add an extra bin
+//! if it is necessary to include the maximum value of the array that has been passed as argument
+//! to the `from_array` method.
+//!
 //! [`Bins`]: ../struct.Bins.html
 //! [`Grid`]: ../struct.Grid.html
 //! [`GridBuilder`]: ../struct.GridBuilder.html
