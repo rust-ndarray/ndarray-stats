@@ -140,6 +140,7 @@ impl<T> EquiSpaced<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
+    /// **Panics** if `bin_width<=0`.
     fn new(bin_width: T, min: T, max: T) -> Self
     {
         assert!(bin_width > T::zero());
@@ -177,6 +178,7 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
 {
     type Elem = T;
 
+    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
@@ -213,6 +215,7 @@ impl<T> BinsBuildingStrategy for Rice<T>
 {
     type Elem = T;
 
+    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
@@ -249,6 +252,7 @@ impl<T> BinsBuildingStrategy for Sturges<T>
 {
     type Elem = T;
 
+    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_elems = a.len();
@@ -285,6 +289,7 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
 {
     type Elem = T;
 
+    /// **Panics** if `IQR==0` or if `a.len()==0` and division by 0 panics for `T`.
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let n_points = a.len();
@@ -333,6 +338,8 @@ impl<T> BinsBuildingStrategy for Auto<T>
 {
     type Elem = T;
 
+    /// **Panics** if `IQR==0`, the array is constant or if
+    /// `a.len()==0` and division by 0 panics for `T`.
     fn from_array(a: ArrayView1<T>) -> Self
     {
         let fd_builder = FreedmanDiaconis::from_array(a.view());
@@ -378,7 +385,12 @@ impl<T> Auto<T>
     }
 }
 
-/// The bin width (or bin length) according to the fitted strategy.
+/// Given a range (max, min) and the number of bins, it returns
+/// the associated bin_width:
+///
+/// `bin_width = (max - min)/n`
+///
+/// **Panics** if division by 0 panics for `T`.
 fn compute_bin_width<T>(min: T, max: T, n_bins: usize) -> T
 where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
