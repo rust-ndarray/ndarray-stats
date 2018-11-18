@@ -433,4 +433,10 @@ mod sqrt_tests {
     fn constant_array_are_bad() {
         Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
     }
+
+    #[should_panic]
+    #[test]
+    fn empty_arrays_cause_panic() {
+        let _: Sqrt<usize> = Sqrt::from_array(&array![]);
+    }
 }
