@@ -399,3 +399,14 @@ where
     let bin_width = range / T::from_usize(n_bins).unwrap();
     bin_width
 }
+
+#[cfg(test)]
+mod equispaced_tests {
+    use super::*;
+
+    #[should_panic]
+    #[test]
+    fn bin_width_has_to_be_positive() {
+        EquiSpaced::new(0, 0, 200);
+    }
+}
