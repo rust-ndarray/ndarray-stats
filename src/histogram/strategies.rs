@@ -19,6 +19,7 @@
 //! [`GridBuilder`]: ../struct.GridBuilder.html
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use ndarray::prelude::*;
+use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps, Zero};
 use super::super::{QuantileExt, QuantileExt1d};
 use super::super::interpolate::Nearest;
@@ -42,7 +43,9 @@ pub trait BinsBuildingStrategy
     /// that has learned the required parameter to build a collection of [`Bins`].
     ///
     /// [`Bins`]: ../struct.Bins.html
-    fn from_array(array: ArrayView1<Self::Elem>) -> Self;
+    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Self
+    where
+        S: Data<Elem=Self::Elem>;
 
     /// Returns a [`Bins`] instance, built accordingly to the parameters
     /// inferred from observations in [`from_array`].
@@ -179,7 +182,9 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
     type Elem = T;
 
     /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
-    fn from_array(a: ArrayView1<T>) -> Self
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    where
+        S: Data<Elem=Self::Elem>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
@@ -216,7 +221,9 @@ impl<T> BinsBuildingStrategy for Rice<T>
     type Elem = T;
 
     /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
-    fn from_array(a: ArrayView1<T>) -> Self
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    where
+        S: Data<Elem=Self::Elem>
     {
         let n_elems = a.len();
         let n_bins = (2. * (n_elems as f64).powf(1./3.)).round() as usize;
@@ -253,7 +260,9 @@ impl<T> BinsBuildingStrategy for Sturges<T>
     type Elem = T;
 
     /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
-    fn from_array(a: ArrayView1<T>) -> Self
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    where
+        S: Data<Elem=Self::Elem>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
@@ -290,7 +299,9 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
     type Elem = T;
 
     /// **Panics** if `IQR==0` or if `a.len()==0` and division by 0 panics for `T`.
-    fn from_array(a: ArrayView1<T>) -> Self
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    where
+        S: Data<Elem=Self::Elem>
     {
         let n_points = a.len();
 
@@ -340,10 +351,12 @@ impl<T> BinsBuildingStrategy for Auto<T>
 
     /// **Panics** if `IQR==0`, the array is constant or if
     /// `a.len()==0` and division by 0 panics for `T`.
-    fn from_array(a: ArrayView1<T>) -> Self
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    where
+        S: Data<Elem=Self::Elem>
     {
-        let fd_builder = FreedmanDiaconis::from_array(a.view());
-        let sturges_builder = Sturges::from_array(a.view());
+        let fd_builder = FreedmanDiaconis::from_array(&a);
+        let sturges_builder = Sturges::from_array(&a);
         let builder = {
             if fd_builder.bin_width() > sturges_builder.bin_width() {
                 SturgesOrFD::Sturges(sturges_builder)
@@ -408,5 +421,16 @@ mod equispaced_tests {
     #[test]
     fn bin_width_has_to_be_positive() {
         EquiSpaced::new(0, 0, 200);
+    }
+}
+
+#[cfg(test)]
+mod sqrt_tests {
+    use super::*;
+
+    #[should_panic]
+    #[test]
+    fn constant_array_are_bad() {
+        Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
     }
 }

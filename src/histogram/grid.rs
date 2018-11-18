@@ -168,7 +168,7 @@ where
     {
         let bin_builders = array
             .axis_iter(Axis(1))
-            .map(|data| B::from_array(data))
+            .map(|data| B::from_array(&data))
             .collect();
         Self { bin_builders }
     }
