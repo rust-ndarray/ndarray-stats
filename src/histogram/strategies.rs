@@ -497,3 +497,26 @@ mod fd_tests {
         let _: FreedmanDiaconis<usize> = FreedmanDiaconis::from_array(&array![]);
     }
 }
+
+#[cfg(test)]
+mod auto_tests {
+    use super::*;
+
+    #[should_panic]
+    #[test]
+    fn constant_array_are_bad() {
+        Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+    }
+
+    #[should_panic]
+    #[test]
+    fn zero_iqr_causes_panic() {
+        Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]);
+    }
+
+    #[should_panic]
+    #[test]
+    fn empty_arrays_cause_panic() {
+        let _: Auto<usize> = Auto::from_array(&array![]);
+    }
+}
