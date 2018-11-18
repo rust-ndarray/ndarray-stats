@@ -474,3 +474,26 @@ mod sturges_tests {
         let _: Sturges<usize> = Sturges::from_array(&array![]);
     }
 }
+
+#[cfg(test)]
+mod fd_tests {
+    use super::*;
+
+    #[should_panic]
+    #[test]
+    fn constant_array_are_bad() {
+        FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+    }
+
+    #[should_panic]
+    #[test]
+    fn zero_iqr_causes_panic() {
+        FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]);
+    }
+
+    #[should_panic]
+    #[test]
+    fn empty_arrays_cause_panic() {
+        let _: FreedmanDiaconis<usize> = FreedmanDiaconis::from_array(&array![]);
+    }
+}
