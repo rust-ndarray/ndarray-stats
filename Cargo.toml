@@ -1,7 +1,7 @@
 [package]
 name = "ndarray-stats"
 version = "0.1.0"
-authors = ["Jim Turner <rust@turner.link>"]
+authors = ["Jim Turner <rust@turner.link>", "LukeMathWalker <lpalmieri@contact.com>"]
 
 [dependencies]
 ndarray = "0.12"
