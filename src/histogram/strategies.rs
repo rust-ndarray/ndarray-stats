@@ -181,7 +181,7 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
@@ -220,7 +220,7 @@ impl<T> BinsBuildingStrategy for Rice<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
@@ -259,7 +259,7 @@ impl<T> BinsBuildingStrategy for Sturges<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
@@ -298,7 +298,7 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0` or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if `IQR==0` or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
@@ -349,8 +349,7 @@ impl<T> BinsBuildingStrategy for Auto<T>
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0`, the array is constant or if
-    /// `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if `IQR==0`, the array is constant, or `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
@@ -403,7 +402,7 @@ impl<T> Auto<T>
 ///
 /// `bin_width = (max - min)/n`
 ///
-/// **Panics** if division by 0 panics for `T`.
+/// **Panics** if `n_bins == 0` and division by 0 panics for `T`.
 fn compute_bin_width<T>(min: T, max: T, n_bins: usize) -> T
 where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
