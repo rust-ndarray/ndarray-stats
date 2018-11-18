@@ -10,7 +10,7 @@ documentation = "https://docs.rs/ndarray-stats/"
 
 description = "Statistical routines for ArrayBase, the n-dimensional array data structure provided by ndarray."
 
-keywords = ["array", "data-structure", "multidimensional", "statistics", "matrix", "ndarray"]
+keywords = ["array", "multidimensional", "statistics", "matrix", "ndarray"]
 categories = ["data-structures", "science"]
 
 [dependencies]
