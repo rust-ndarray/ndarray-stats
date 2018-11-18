@@ -406,8 +406,10 @@ pub trait QuantileExt1d<A, S>
     /// - worst case: O(`m`^2);
     /// where `m` is the number of elements in the array.
     ///
+    /// Returns `None` if the array is empty.
+    ///
     /// **Panics** if `q` is not between `0.` and `1.` (inclusive).
-    fn quantile_mut<I>(&mut self, q: f64) -> A
+    fn quantile_mut<I>(&mut self, q: f64) -> Option<A>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -418,13 +420,17 @@ impl<A, S> QuantileExt1d<A, S> for ArrayBase<S, Ix1>
     where
         S: Data<Elem = A>,
 {
-    fn quantile_mut<I>(&mut self, q: f64) -> A
+    fn quantile_mut<I>(&mut self, q: f64) -> Option<A>
     where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
-        self.quantile_axis_mut::<I>(Axis(0), q).into_scalar()
+        if self.is_empty() {
+            None
+        } else {
+            Some(self.quantile_axis_mut::<I>(Axis(0), q).into_scalar())
+        }
     }
 }
 

@@ -306,8 +306,8 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
         let n_points = a.len();
 
         let mut a_copy = a.to_owned();
-        let first_quartile = a_copy.quantile_mut::<Nearest>(0.25);
-        let third_quartile = a_copy.quantile_mut::<Nearest>(0.75);
+        let first_quartile = a_copy.quantile_mut::<Nearest>(0.25).unwrap();
+        let third_quartile = a_copy.quantile_mut::<Nearest>(0.75).unwrap();
         let iqr = third_quartile - first_quartile;
 
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
