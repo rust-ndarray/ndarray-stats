@@ -457,3 +457,20 @@ mod rice_tests {
         let _: Rice<usize> = Rice::from_array(&array![]);
     }
 }
+
+#[cfg(test)]
+mod sturges_tests {
+    use super::*;
+
+    #[should_panic]
+    #[test]
+    fn constant_array_are_bad() {
+        Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+    }
+
+    #[should_panic]
+    #[test]
+    fn empty_arrays_cause_panic() {
+        let _: Sturges<usize> = Sturges::from_array(&array![]);
+    }
+}
