@@ -440,3 +440,20 @@ mod sqrt_tests {
         let _: Sqrt<usize> = Sqrt::from_array(&array![]);
     }
 }
+
+#[cfg(test)]
+mod rice_tests {
+    use super::*;
+
+    #[should_panic]
+    #[test]
+    fn constant_array_are_bad() {
+        Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+    }
+
+    #[should_panic]
+    #[test]
+    fn empty_arrays_cause_panic() {
+        let _: Rice<usize> = Rice::from_array(&array![]);
+    }
+}
