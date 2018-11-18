@@ -5,7 +5,7 @@ authors = ["Jim Turner <rust@turner.link>"]
 
 [dependencies]
 ndarray = "0.12"
-noisy_float = "0.1"
+noisy_float = "0.1.8"
 num-traits = "0.2"
 rand = "0.5"
 itertools = { version = "0.7.0", default-features = false }
@@ -16,4 +16,3 @@ ndarray-rand = "0.8"
 
 [patch.crates-io]
 ndarray = { git = "https://github.com/rust-ndarray/ndarray.git", branch = "master" }
-noisy_float = { git = "https://github.com/SergiusIW/noisy_float-rs.git", rev = "c33a94803987475bbd205c9ff5a697af533f9a17" }
