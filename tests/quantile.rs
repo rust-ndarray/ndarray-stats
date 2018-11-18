@@ -70,6 +70,20 @@ fn test_quantile_axis_mut_with_odd_axis_length() {
 }
 
 #[test]
+#[should_panic]
+fn test_quantile_axis_mut_with_zero_axis_length() {
+    let mut a = Array2::<i32>::zeros((5, 0));
+    a.quantile_axis_mut::<Lower>(Axis(1), 0.5);
+}
+
+#[test]
+fn test_quantile_axis_mut_with_empty_array() {
+    let mut a = Array2::<i32>::zeros((5, 0));
+    let p = a.quantile_axis_mut::<Lower>(Axis(0), 0.5);
+    assert_eq!(p.shape(), &[0]);
+}
+
+#[test]
 fn test_quantile_axis_mut_with_even_axis_length() {
     let mut b = arr2(&[[1, 3, 2, 10], [2, 4, 3, 11], [3, 5, 6, 12], [4, 6, 7, 13]]);
     let q = b.quantile_axis_mut::<Lower>(Axis(0), 0.5);

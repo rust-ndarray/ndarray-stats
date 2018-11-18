@@ -245,8 +245,8 @@ where
     /// - worst case: O(`m`^2);
     /// where `m` is the number of elements in the array.
     ///
-    /// **Panics** if `axis` is out of bounds or if `q` is not between
-    /// `0.` and `1.` (inclusive).
+    /// **Panics** if `axis` is out of bounds, if the axis has length 0, or if
+    /// `q` is not between `0.` and `1.` (inclusive).
     fn quantile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
     where
         D: RemoveAxis,
