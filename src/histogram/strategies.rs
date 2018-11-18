@@ -21,7 +21,7 @@
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps, Zero};
-use super::super::{QuantileExt, QuantileExt1d};
+use super::super::{QuantileExt, Quantile1dExt};
 use super::super::interpolate::Nearest;
 use super::{Edges, Bins};
 

@@ -411,8 +411,8 @@ where
     }
 }
 
-/// Quantile methods for 1-dimensional arrays.
-pub trait QuantileExt1d<A, S>
+/// Quantile methods for 1-D arrays.
+pub trait Quantile1dExt<A, S>
     where
         S: Data<Elem = A>,
 {
@@ -450,7 +450,7 @@ pub trait QuantileExt1d<A, S>
         I: Interpolate<A>;
 }
 
-impl<A, S> QuantileExt1d<A, S> for ArrayBase<S, Ix1>
+impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
     where
         S: Data<Elem = A>,
 {
