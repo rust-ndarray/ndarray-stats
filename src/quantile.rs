@@ -460,7 +460,7 @@ impl<A, S> QuantileExt1d<A, S> for ArrayBase<S, Ix1>
         S: DataMut,
         I: Interpolate<A>,
     {
-        self.quantile_axis_mut::<I>(Axis(0), q)[()].clone()
+        self.quantile_axis_mut::<I>(Axis(0), q).into_scalar()
     }
 }
 
