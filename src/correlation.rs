@@ -2,7 +2,7 @@ use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{Float, FromPrimitive};
 
-/// Extension trait for ArrayBase providing functions
+/// Extension trait for `ArrayBase` providing functions
 /// to compute different correlation measures.
 pub trait CorrelationExt<A, S>
 where

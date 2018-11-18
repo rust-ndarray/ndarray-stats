@@ -1,7 +1,17 @@
 [package]
 name = "ndarray-stats"
 version = "0.1.0"
-authors = ["Jim Turner <rust@turner.link>"]
+authors = ["Jim Turner <ndarray-stats@turner.link>", "LukeMathWalker <lpalmieri@contact.com>"]
+
+license = "MIT/Apache-2.0"
+
+repository = "https://github.com/jturner314/ndarray-stats"
+documentation = "https://docs.rs/ndarray-stats/"
+
+description = "Statistical routines for ArrayBase, the n-dimensional array data structure provided by ndarray."
+
+keywords = ["array", "multidimensional", "statistics", "matrix", "ndarray"]
+categories = ["data-structures", "science"]
 
 [dependencies]
 ndarray = "0.12"
