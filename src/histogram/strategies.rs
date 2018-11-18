@@ -188,8 +188,8 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
-        let min = a.min().clone();
-        let max = a.max().clone();
+        let min = a.min().unwrap().clone();
+        let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
@@ -227,8 +227,8 @@ impl<T> BinsBuildingStrategy for Rice<T>
     {
         let n_elems = a.len();
         let n_bins = (2. * (n_elems as f64).powf(1./3.)).round() as usize;
-        let min = a.min().clone();
-        let max = a.max().clone();
+        let min = a.min().unwrap().clone();
+        let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
@@ -266,8 +266,8 @@ impl<T> BinsBuildingStrategy for Sturges<T>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
-        let min = a.min().clone();
-        let max = a.max().clone();
+        let min = a.min().unwrap().clone();
+        let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
@@ -311,8 +311,8 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
         let iqr = third_quartile - first_quartile;
 
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
-        let min = a_copy.min().clone();
-        let max = a_copy.max().clone();
+        let min = a_copy.min().unwrap().clone();
+        let max = a_copy.max().unwrap().clone();
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
     }

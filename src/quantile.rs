@@ -177,19 +177,12 @@ where
 {
     /// Finds the elementwise minimum of the array.
     ///
-    /// **Panics** if the array is empty.
-    fn min(&self) -> &A
-    where
-        A: Ord;
-
-    /// Finds the elementwise minimum of the array.
-    ///
     /// Returns `None` if any of the pairwise orderings tested by the function
     /// are undefined. (For example, this occurs if there are any
     /// floating-point NaN values in the array.)
     ///
     /// Additionally, returns `None` if the array is empty.
-    fn min_partialord(&self) -> Option<&A>
+    fn min(&self) -> Option<&A>
     where
         A: PartialOrd;
 
@@ -205,19 +198,12 @@ where
 
     /// Finds the elementwise maximum of the array.
     ///
-    /// **Panics** if the array is empty.
-    fn max(&self) -> &A
-    where
-        A: Ord;
-
-    /// Finds the elementwise maximum of the array.
-    ///
     /// Returns `None` if any of the pairwise orderings tested by the function
     /// are undefined. (For example, this occurs if there are any
     /// floating-point NaN values in the array.)
     ///
     /// Additionally, returns `None` if the array is empty.
-    fn max_partialord(&self) -> Option<&A>
+    fn max(&self) -> Option<&A>
     where
         A: PartialOrd;
 
@@ -285,22 +271,11 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    fn min(&self) -> &A
-    where
-        A: Ord,
-    {
-        let first = self
-            .iter()
-            .next()
-            .expect("Attempted to find min of empty array.");
-        self.fold(first, |acc, elem| if elem < acc { elem } else { acc })
-    }
-
-    fn min_partialord(&self) -> Option<&A>
+    fn min(&self) -> Option<&A>
     where
         A: PartialOrd,
     {
-        let first = self.iter().next()?;
+        let first = self.first()?;
         self.fold(Some(first), |acc, elem| match elem.partial_cmp(acc?)? {
             cmp::Ordering::Less => Some(elem),
             _ => acc,
@@ -312,7 +287,7 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        let first = self.iter().next().and_then(|v| v.try_as_not_nan());
+        let first = self.first().and_then(|v| v.try_as_not_nan());
         A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
             Some(match acc {
                 Some(acc) => acc.min(elem),
@@ -321,22 +296,11 @@ where
         }))
     }
 
-    fn max(&self) -> &A
-    where
-        A: Ord,
-    {
-        let first = self
-            .iter()
-            .next()
-            .expect("Attempted to find max of empty array.");
-        self.fold(first, |acc, elem| if elem > acc { elem } else { acc })
-    }
-
-    fn max_partialord(&self) -> Option<&A>
+    fn max(&self) -> Option<&A>
     where
         A: PartialOrd,
     {
-        let first = self.iter().next()?;
+        let first = self.first()?;
         self.fold(Some(first), |acc, elem| match elem.partial_cmp(acc?)? {
             cmp::Ordering::Greater => Some(elem),
             _ => acc,
@@ -348,7 +312,7 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        let first = self.iter().next().and_then(|v| v.try_as_not_nan());
+        let first = self.first().and_then(|v| v.try_as_not_nan());
         A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
             Some(match acc {
                 Some(acc) => acc.max(elem),

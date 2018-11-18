@@ -11,16 +11,13 @@ use ndarray_stats::{
 #[test]
 fn test_min() {
     let a = array![[1, 5, 3], [2, 0, 6]];
-    assert_eq!(a.min(), &0);
-}
+    assert_eq!(a.min(), Some(&0));
 
-#[test]
-fn test_min_partialord() {
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.min_partialord(), Some(&0.));
+    assert_eq!(a.min(), Some(&0.));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.min_partialord(), None);
+    assert_eq!(a.min(), None);
 }
 
 #[test]
@@ -41,16 +38,13 @@ fn test_min_skipnan_all_nan() {
 #[test]
 fn test_max() {
     let a = array![[1, 5, 7], [2, 0, 6]];
-    assert_eq!(a.max(), &7);
-}
+    assert_eq!(a.max(), Some(&7));
 
-#[test]
-fn test_max_partialord() {
     let a = array![[1., 5., 7.], [2., 0., 6.]];
-    assert_eq!(a.max_partialord(), Some(&7.));
+    assert_eq!(a.max(), Some(&7.));
 
     let a = array![[1., 5., 7.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.max_partialord(), None);
+    assert_eq!(a.max(), None);
 }
 
 #[test]
