@@ -4,6 +4,7 @@ extern crate ndarray;
 extern crate noisy_float;
 extern crate num_traits;
 extern crate rand;
+extern crate itertools;
 
 #[cfg(test)]
 extern crate ndarray_rand;
@@ -12,11 +13,13 @@ extern crate ndarray_rand;
 extern crate quickcheck;
 
 pub use maybe_nan::{MaybeNan, MaybeNanExt};
-pub use quantile::{interpolate, QuantileExt};
+pub use quantile::{interpolate, QuantileExt, QuantileExt1d};
 pub use sort::Sort1dExt;
 pub use correlation::CorrelationExt;
+pub use histogram::HistogramExt;
 
 mod maybe_nan;
 mod quantile;
 mod sort;
 mod correlation;
+pub mod histogram;

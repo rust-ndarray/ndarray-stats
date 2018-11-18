@@ -169,7 +169,7 @@ pub mod interpolate {
     }
 }
 
-/// Quantile methods.
+/// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
 where
     S: Data<Elem = A>,
@@ -410,3 +410,57 @@ where
         })
     }
 }
+
+/// Quantile methods for 1-dimensional arrays.
+pub trait QuantileExt1d<A, S>
+    where
+        S: Data<Elem = A>,
+{
+    /// Return the qth quantile of the data.
+    ///
+    /// `q` needs to be a float between 0 and 1, bounds included.
+    /// The qth quantile for a 1-dimensional array of length `N` is defined
+    /// as the element that would be indexed as `(N-1)q` if the array were to be sorted
+    /// in increasing order.
+    /// If `(N-1)q` is not an integer the desired quantile lies between
+    /// two data points: we return the lower, nearest, higher or interpolated
+    /// value depending on the type `Interpolate` bound `I`.
+    ///
+    /// Some examples:
+    /// - `q=0.` returns the minimum;
+    /// - `q=0.5` returns the median;
+    /// - `q=1.` returns the maximum.
+    /// (`q=0` and `q=1` are considered improper quantiles)
+    ///
+    /// The array is shuffled **in place** in order to produce the required quantile
+    /// without allocating a copy.
+    /// No assumptions should be made on the ordering of the array elements
+    /// after this computation.
+    ///
+    /// Complexity ([quickselect](https://en.wikipedia.org/wiki/Quickselect)):
+    /// - average case: O(`m`);
+    /// - worst case: O(`m`^2);
+    /// where `m` is the number of elements in the array.
+    ///
+    /// **Panics** if `q` is not between `0.` and `1.` (inclusive).
+    fn quantile_mut<I>(&mut self, q: f64) -> A
+    where
+        A: Ord + Clone,
+        S: DataMut,
+        I: Interpolate<A>;
+}
+
+impl<A, S> QuantileExt1d<A, S> for ArrayBase<S, Ix1>
+    where
+        S: Data<Elem = A>,
+{
+    fn quantile_mut<I>(&mut self, q: f64) -> A
+    where
+        A: Ord + Clone,
+        S: DataMut,
+        I: Interpolate<A>,
+    {
+        self.quantile_axis_mut::<I>(Axis(0), q).into_scalar()
+    }
+}
+
