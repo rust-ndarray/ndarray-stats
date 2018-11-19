@@ -11,16 +11,13 @@ use ndarray_stats::{
 #[test]
 fn test_min() {
     let a = array![[1, 5, 3], [2, 0, 6]];
-    assert_eq!(a.min(), &0);
-}
+    assert_eq!(a.min(), Some(&0));
 
-#[test]
-fn test_min_partialord() {
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.min_partialord(), Some(&0.));
+    assert_eq!(a.min(), Some(&0.));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.min_partialord(), None);
+    assert_eq!(a.min(), None);
 }
 
 #[test]
@@ -41,16 +38,13 @@ fn test_min_skipnan_all_nan() {
 #[test]
 fn test_max() {
     let a = array![[1, 5, 7], [2, 0, 6]];
-    assert_eq!(a.max(), &7);
-}
+    assert_eq!(a.max(), Some(&7));
 
-#[test]
-fn test_max_partialord() {
     let a = array![[1., 5., 7.], [2., 0., 6.]];
-    assert_eq!(a.max_partialord(), Some(&7.));
+    assert_eq!(a.max(), Some(&7.));
 
     let a = array![[1., 5., 7.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.max_partialord(), None);
+    assert_eq!(a.max(), None);
 }
 
 #[test]
@@ -73,6 +67,20 @@ fn test_quantile_axis_mut_with_odd_axis_length() {
     let mut a = arr2(&[[1, 3, 2, 10], [2, 4, 3, 11], [3, 5, 6, 12]]);
     let p = a.quantile_axis_mut::<Lower>(Axis(0), 0.5);
     assert!(p == a.subview(Axis(0), 1));
+}
+
+#[test]
+#[should_panic]
+fn test_quantile_axis_mut_with_zero_axis_length() {
+    let mut a = Array2::<i32>::zeros((5, 0));
+    a.quantile_axis_mut::<Lower>(Axis(1), 0.5);
+}
+
+#[test]
+fn test_quantile_axis_mut_with_empty_array() {
+    let mut a = Array2::<i32>::zeros((5, 0));
+    let p = a.quantile_axis_mut::<Lower>(Axis(0), 0.5);
+    assert_eq!(p.shape(), &[0]);
 }
 
 #[test]

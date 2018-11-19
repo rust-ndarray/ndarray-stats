@@ -181,15 +181,15 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
-        let min = a.min().clone();
-        let max = a.max().clone();
+        let min = a.min().unwrap().clone();
+        let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
@@ -220,15 +220,15 @@ impl<T> BinsBuildingStrategy for Rice<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
     {
         let n_elems = a.len();
         let n_bins = (2. * (n_elems as f64).powf(1./3.)).round() as usize;
-        let min = a.min().clone();
-        let max = a.max().clone();
+        let min = a.min().unwrap().clone();
+        let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
@@ -259,15 +259,15 @@ impl<T> BinsBuildingStrategy for Sturges<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
-        let min = a.min().clone();
-        let max = a.max().clone();
+        let min = a.min().unwrap().clone();
+        let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
@@ -298,7 +298,7 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0` or if `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if `IQR==0` or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
@@ -306,13 +306,13 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
         let n_points = a.len();
 
         let mut a_copy = a.to_owned();
-        let first_quartile = a_copy.quantile_mut::<Nearest>(0.25);
-        let third_quartile = a_copy.quantile_mut::<Nearest>(0.75);
+        let first_quartile = a_copy.quantile_mut::<Nearest>(0.25).unwrap();
+        let third_quartile = a_copy.quantile_mut::<Nearest>(0.75).unwrap();
         let iqr = third_quartile - first_quartile;
 
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
-        let min = a_copy.min().clone();
-        let max = a_copy.max().clone();
+        let min = a_copy.min().unwrap().clone();
+        let max = a_copy.max().unwrap().clone();
         let builder = EquiSpaced::new(bin_width, min, max);
         Self { builder }
     }
@@ -349,8 +349,7 @@ impl<T> BinsBuildingStrategy for Auto<T>
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0`, the array is constant or if
-    /// `a.len()==0` and division by 0 panics for `T`.
+    /// **Panics** if `IQR==0`, the array is constant, or `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
     where
         S: Data<Elem=Self::Elem>
@@ -403,7 +402,7 @@ impl<T> Auto<T>
 ///
 /// `bin_width = (max - min)/n`
 ///
-/// **Panics** if division by 0 panics for `T`.
+/// **Panics** if `n_bins == 0` and division by 0 panics for `T`.
 fn compute_bin_width<T>(min: T, max: T, n_bins: usize) -> T
 where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
