@@ -167,7 +167,7 @@ where
 mod cov_tests {
     use super::*;
     use rand;
-    use rand::distributions::Range;
+    use rand::distributions::Uniform;
     use ndarray_rand::RandomExt;
 
     quickcheck! {
@@ -186,7 +186,7 @@ mod cov_tests {
             let n_observations = 4;
             let a = Array::random(
                 (n_random_variables, n_observations),
-                Range::new(-bound.abs(), bound.abs())
+                Uniform::new(-bound.abs(), bound.abs())
             );
             let covariance = a.cov(1.);
             covariance.all_close(&covariance.t(), 1e-8)
@@ -200,7 +200,7 @@ mod cov_tests {
         let n_observations = 4;
         let a = Array::random(
             (n_random_variables, n_observations),
-            Range::new(0., 10.)
+            Uniform::new(0., 10.)
         );
         let invalid_ddof = (n_observations as f64) + rand::random::<f64>().abs();
         a.cov(invalid_ddof);
@@ -278,7 +278,7 @@ mod cov_tests {
 #[cfg(test)]
 mod pearson_correlation_tests {
     use super::*;
-    use rand::distributions::Range;
+    use rand::distributions::Uniform;
     use ndarray_rand::RandomExt;
 
     quickcheck! {
@@ -287,7 +287,7 @@ mod pearson_correlation_tests {
             let n_observations = 4;
             let a = Array::random(
                 (n_random_variables, n_observations),
-                Range::new(-bound.abs(), bound.abs())
+                Uniform::new(-bound.abs(), bound.abs())
             );
             let pearson_correlation = a.pearson_correlation();
             pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
