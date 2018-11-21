@@ -22,9 +22,7 @@ ndarray-stats = "0.1"
 
 * **0.1.0** (not yet released)
 
-  * Initial release.
-  * Includes quantile functionality provided by @LukeMathWalker. (See
-    [`ndarray` issue #461](https://github.com/bluss/ndarray/pull/461).)
+  * Initial release by @LukeMathWalker and @jturner314.
 
 ## Contributing
 
