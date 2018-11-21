@@ -20,7 +20,7 @@ ndarray-stats = "0.1"
 
 ## Releases
 
-* **0.1.0** (not yet released)
+* **0.1.0**
 
   * Initial release by @LukeMathWalker and @jturner314.
 
