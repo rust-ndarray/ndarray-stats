@@ -14,7 +14,7 @@ keywords = ["array", "multidimensional", "statistics", "matrix", "ndarray"]
 categories = ["data-structures", "science"]
 
 [dependencies]
-ndarray = "0.12"
+ndarray = "0.12.1"
 noisy_float = "0.1.8"
 num-traits = "0.2"
 rand = "0.5"
@@ -23,6 +23,3 @@ itertools = { version = "0.7.0", default-features = false }
 [dev-dependencies]
 quickcheck = "0.7"
 ndarray-rand = "0.8"
-
-[patch.crates-io]
-ndarray = { git = "https://github.com/rust-ndarray/ndarray.git", branch = "master" }
