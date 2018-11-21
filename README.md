@@ -14,7 +14,7 @@ new functionality!
 
 ```toml
 [dependencies]
-ndarray = "0.12"
+ndarray = "0.12.1"
 ndarray-stats = "0.1"
 ```
 
