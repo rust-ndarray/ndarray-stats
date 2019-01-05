@@ -40,8 +40,22 @@ pub trait SummaryStatisticsExt<A, S, D>
     fn harmonic_mean(&self) -> Result<A, &'static str>
     where
         A: Float + FromPrimitive + PartialEq;
-}
 
+    /// Returns the [`geometric mean`] `GM(X)` of all elements in the array:
+    ///
+    /// ```text
+    ///           n
+    /// GM(X) = ( Π xᵢ)^(1/n)
+    ///          i=1
+    /// ```
+    ///
+    /// If the array is empty, an `Err` is returned.
+    ///
+    /// [`geometric mean`]: https://en.wikipedia.org/wiki/Geometric_mean
+    fn geometric_mean(&self) -> Result<A, &'static str>
+        where
+            A: Float + FromPrimitive + PartialEq;
+}
 
 impl<A, S, D> SummaryStatisticsExt<A, S, D> for ArrayBase<S, D>
 where
@@ -72,6 +86,17 @@ where
             Ok(self.map(|x| x.recip()).mean()?.recip())
         }
     }
+
+    fn geometric_mean(&self) -> Result<A, &'static str>
+        where
+            A: Float + FromPrimitive + PartialEq,
+    {
+        if self.len() == 0 {
+            Err("The geometric mean of an empty array is not defined.")
+        } else {
+            Ok(self.map(|x| x.ln()).mean()?.exp())
+        }
+    }
 }
 
 #[cfg(test)]
@@ -86,6 +111,7 @@ mod tests {
         let a = array![f64::NAN, 1.];
         assert!(a.mean().unwrap().is_nan());
         assert!(a.harmonic_mean().unwrap().is_nan());
+        assert!(a.geometric_mean().unwrap().is_nan());
     }
 
     #[test]
@@ -93,6 +119,7 @@ mod tests {
         let a: Array1<f64> = array![];
         assert!(a.mean().is_err());
         assert!(a.harmonic_mean().is_err());
+        assert!(a.geometric_mean().is_err());
     }
 
     #[test]
@@ -100,6 +127,7 @@ mod tests {
         let a: Array1<N64> = array![];
         assert!(a.mean().is_err());
         assert!(a.harmonic_mean().is_err());
+        assert!(a.geometric_mean().is_err());
     }
 
     #[test]
@@ -120,8 +148,11 @@ mod tests {
         let expected_mean = 0.5475494059146699;
         // Computed using SciPy
         let expected_harmonic_mean = 0.21790094950226022;
+        // Computed using SciPy
+        let expected_geometric_mean = 0.4345897639796527;
 
         abs_diff_eq!(a.mean().unwrap(), expected_mean, epsilon = f64::EPSILON);
         abs_diff_eq!(a.harmonic_mean().unwrap(), expected_harmonic_mean, epsilon = f64::EPSILON);
+        abs_diff_eq!(a.geometric_mean().unwrap(), expected_geometric_mean, epsilon = f64::EPSILON);
     }
 }
