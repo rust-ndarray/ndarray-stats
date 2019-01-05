@@ -1,6 +1,7 @@
 use ndarray::{Data, Dimension, ArrayBase};
-use std::ops::{Add, Div};
 use num_traits::{FromPrimitive, Float, Zero};
+use std::result::Result;
+use std::ops::{Add, Div};
 
 
 /// Extension trait for `ArrayBase` providing methods
@@ -10,13 +11,13 @@ pub trait SummaryStatisticsExt<A, S, D>
         S: Data<Elem = A>,
         D: Dimension,
 {
-    fn mean(&self) -> A
+    fn mean(&self) -> Result<A, &'static str>
     where
-        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + Zero;
+        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + PartialEq + Zero;
 
-    fn harmonic_mean(&self) -> A
+    fn harmonic_mean(&self) -> Result<A, &'static str>
     where
-        A: Float + FromPrimitive;
+        A: Float + FromPrimitive + PartialEq;
 }
 
 
@@ -25,20 +26,29 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    fn mean(&self) -> A
+    fn mean(&self) -> Result<A, &'static str>
     where
-        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + Zero
+        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + PartialEq + Zero
     {
-        let n_elements = A::from_usize(self.len())
-            .expect("Converting number of elements to `A` must not fail.");
-        self.sum() / n_elements
+        let n_elements = self.len();
+        if n_elements == 0 {
+            Err("The mean of an empty array is not defined.")
+        } else {
+            let n_elements = A::from_usize(n_elements)
+                .expect("Converting number of elements to `A` must not fail.");
+            Ok(self.sum() / n_elements)
+        }
     }
 
-    fn harmonic_mean(&self) -> A
+    fn harmonic_mean(&self) -> Result<A, &'static str>
     where
-        A: Float + FromPrimitive,
+        A: Float + FromPrimitive + PartialEq,
     {
-        self.map(|x| x.recip()).mean().recip()
+        if self.len() == 0 {
+            Err("The harmonic mean of an empty array is not defined.")
+        } else {
+            Ok(self.map(|x| x.recip()).mean()?.recip())
+        }
     }
 }
 
@@ -52,19 +62,18 @@ mod tests {
     #[test]
     fn test_mean_with_nan_values() {
         let a = array![f64::NAN, 1.];
-        assert!(a.mean().is_nan());
+        assert!(a.mean().unwrap().is_nan());
     }
 
     #[test]
     fn test_mean_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert!(a.mean().is_nan());
+        assert!(a.mean().is_err());
     }
 
     #[test]
-    #[should_panic] // This looks highly undesirable
     fn test_mean_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
-        assert!(a.mean().is_nan());
+        assert!(a.mean().is_err());
     }
 }
