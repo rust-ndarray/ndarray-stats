@@ -46,10 +46,11 @@ pub use quantile::{interpolate, QuantileExt, Quantile1dExt};
 pub use sort::Sort1dExt;
 pub use correlation::CorrelationExt;
 pub use histogram::HistogramExt;
+pub use summary_statistics::SummaryStatisticsExt;
 
 mod maybe_nan;
 mod quantile;
 mod sort;
 mod correlation;
+mod summary_statistics;
 pub mod histogram;
-pub mod summary_statistics;
