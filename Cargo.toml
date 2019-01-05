@@ -24,3 +24,4 @@ itertools = { version = "0.7.0", default-features = false }
 [dev-dependencies]
 quickcheck = "0.7"
 ndarray-rand = "0.9"
+approx = "0.3"

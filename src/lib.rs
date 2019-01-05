@@ -37,6 +37,9 @@ extern crate ndarray_rand;
 #[cfg(test)]
 #[macro_use(quickcheck)]
 extern crate quickcheck;
+#[cfg(test)]
+#[macro_use(abs_diff_eq)]
+extern crate approx;
 
 pub use maybe_nan::{MaybeNan, MaybeNanExt};
 pub use quantile::{interpolate, QuantileExt, Quantile1dExt};
