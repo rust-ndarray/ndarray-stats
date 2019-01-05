@@ -49,3 +49,4 @@ mod quantile;
 mod sort;
 mod correlation;
 pub mod histogram;
+pub mod summary_statistics;
