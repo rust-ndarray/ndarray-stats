@@ -1,6 +1,5 @@
 use ndarray::{Data, Dimension, ArrayBase};
 use num_traits::{FromPrimitive, Float, Zero};
-use std::result::Result;
 use std::ops::{Add, Div};
 use super::SummaryStatisticsExt;
 
@@ -10,46 +9,38 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    fn mean(&self) -> Result<A, &'static str>
+    fn mean(&self) -> Option<A>
     where
-        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + PartialEq + Zero
+        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + Zero
     {
         let n_elements = self.len();
         if n_elements == 0 {
-            Err("The mean of an empty array is not defined.")
+            None
         } else {
             let n_elements = A::from_usize(n_elements)
                 .expect("Converting number of elements to `A` must not fail.");
-            Ok(self.sum() / n_elements)
+            Some(self.sum() / n_elements)
         }
     }
 
-    fn harmonic_mean(&self) -> Result<A, &'static str>
+    fn harmonic_mean(&self) -> Option<A>
     where
-        A: Float + FromPrimitive + PartialEq,
+        A: Float + FromPrimitive,
     {
-        if self.len() == 0 {
-            Err("The harmonic mean of an empty array is not defined.")
-        } else {
-            Ok(self.map(|x| x.recip()).mean()?.recip())
-        }
+        self.map(|x| x.recip()).mean().map(|x| x.recip())
     }
 
-    fn geometric_mean(&self) -> Result<A, &'static str>
+    fn geometric_mean(&self) -> Option<A>
         where
-            A: Float + FromPrimitive + PartialEq,
+            A: Float + FromPrimitive,
     {
-        if self.len() == 0 {
-            Err("The geometric mean of an empty array is not defined.")
-        } else {
-            Ok(self.map(|x| x.ln()).mean()?.exp())
-        }
+        self.map(|x| x.ln()).mean().map(|x| x.exp())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::SummaryStatisticsExt;
     use std::f64;
     use noisy_float::types::N64;
     use ndarray::Array1;
@@ -65,17 +56,17 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert!(a.mean().is_err());
-        assert!(a.harmonic_mean().is_err());
-        assert!(a.geometric_mean().is_err());
+        assert!(a.mean().is_none());
+        assert!(a.harmonic_mean().is_none());
+        assert!(a.geometric_mean().is_none());
     }
 
     #[test]
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
-        assert!(a.mean().is_err());
-        assert!(a.harmonic_mean().is_err());
-        assert!(a.geometric_mean().is_err());
+        assert!(a.mean().is_none());
+        assert!(a.harmonic_mean().is_none());
+        assert!(a.geometric_mean().is_none());
     }
 
     #[test]

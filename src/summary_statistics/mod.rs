@@ -1,7 +1,6 @@
 //! Summary statistics (e.g. mean, variance, etc.).
 use ndarray::{Data, Dimension};
 use num_traits::{FromPrimitive, Float, Zero};
-use std::result::Result;
 use std::ops::{Add, Div};
 
 /// Extension trait for `ArrayBase` providing methods
@@ -21,10 +20,12 @@ pub trait SummaryStatisticsExt<A, S, D>
     ///
     /// If the array is empty, an `Err` is returned.
     ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    ///
     /// [`arithmetic mean`]: https://en.wikipedia.org/wiki/Arithmetic_mean
-    fn mean(&self) -> Result<A, &'static str>
+    fn mean(&self) -> Option<A>
         where
-            A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + PartialEq + Zero;
+            A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + Zero;
 
     /// Returns the [`harmonic mean`] `HM(X)` of all elements in the array:
     ///
@@ -36,10 +37,12 @@ pub trait SummaryStatisticsExt<A, S, D>
     ///
     /// If the array is empty, an `Err` is returned.
     ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    ///
     /// [`harmonic mean`]: https://en.wikipedia.org/wiki/Harmonic_mean
-    fn harmonic_mean(&self) -> Result<A, &'static str>
+    fn harmonic_mean(&self) -> Option<A>
         where
-            A: Float + FromPrimitive + PartialEq;
+            A: Float + FromPrimitive;
 
     /// Returns the [`geometric mean`] `GM(X)` of all elements in the array:
     ///
@@ -51,11 +54,13 @@ pub trait SummaryStatisticsExt<A, S, D>
     ///
     /// If the array is empty, an `Err` is returned.
     ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    ///
     /// [`geometric mean`]: https://en.wikipedia.org/wiki/Geometric_mean
-    fn geometric_mean(&self) -> Result<A, &'static str>
+    fn geometric_mean(&self) -> Option<A>
         where
-            A: Float + FromPrimitive + PartialEq;
+            A: Float + FromPrimitive;
+
 }
 
 mod means;
-
