@@ -18,7 +18,7 @@ pub trait SummaryStatisticsExt<A, S, D>
     ///     n  i=1
     /// ```
     ///
-    /// If the array is empty, an `Err` is returned.
+    /// If the array is empty, `None` is returned.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
@@ -30,12 +30,12 @@ pub trait SummaryStatisticsExt<A, S, D>
     /// Returns the [`harmonic mean`] `HM(X)` of all elements in the array:
     ///
     /// ```text
-    ///             n
-    /// HM(X) = n ( ∑ xᵢ⁻¹)⁻¹
-    ///            i=1
+    ///           ⎛ n     ⎞⁻¹
+    /// HM(X) = n ⎜ ∑ xᵢ⁻¹⎟
+    ///           ⎝i=1    ⎠
     /// ```
     ///
-    /// If the array is empty, an `Err` is returned.
+    /// If the array is empty, `None` is returned.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
@@ -47,12 +47,12 @@ pub trait SummaryStatisticsExt<A, S, D>
     /// Returns the [`geometric mean`] `GM(X)` of all elements in the array:
     ///
     /// ```text
-    ///           n
-    /// GM(X) = ( Π xᵢ)^(1/n)
-    ///          i=1
+    ///         ⎛ n   ⎞¹⁄ₙ
+    /// GM(X) = ⎜ ∏ xᵢ⎟
+    ///         ⎝i=1  ⎠
     /// ```
     ///
-    /// If the array is empty, an `Err` is returned.
+    /// If the array is empty, `None` is returned.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
