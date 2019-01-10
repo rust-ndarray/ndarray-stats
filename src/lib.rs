@@ -37,15 +37,20 @@ extern crate ndarray_rand;
 #[cfg(test)]
 #[macro_use(quickcheck)]
 extern crate quickcheck;
+#[cfg(test)]
+#[macro_use(abs_diff_eq)]
+extern crate approx;
 
 pub use maybe_nan::{MaybeNan, MaybeNanExt};
 pub use quantile::{interpolate, QuantileExt, Quantile1dExt};
 pub use sort::Sort1dExt;
 pub use correlation::CorrelationExt;
 pub use histogram::HistogramExt;
+pub use summary_statistics::SummaryStatisticsExt;
 
 mod maybe_nan;
 mod quantile;
 mod sort;
 mod correlation;
+mod summary_statistics;
 pub mod histogram;
