@@ -42,8 +42,9 @@ where
 mod tests {
     use super::SummaryStatisticsExt;
     use std::f64;
+    use approx::abs_diff_eq;
     use noisy_float::types::N64;
-    use ndarray::Array1;
+    use ndarray::{array, Array1};
 
     #[test]
     fn test_means_with_nan_values() {

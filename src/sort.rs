@@ -1,5 +1,5 @@
 use ndarray::prelude::*;
-use ndarray::{Data, DataMut};
+use ndarray::{s, Data, DataMut};
 use rand::prelude::*;
 use rand::thread_rng;
 

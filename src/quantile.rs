@@ -1,11 +1,12 @@
 use interpolate::Interpolate;
 use ndarray::prelude::*;
-use ndarray::{Data, DataMut, RemoveAxis};
+use ndarray::{s, Data, DataMut, RemoveAxis};
 use std::cmp;
 use {MaybeNan, MaybeNanExt, Sort1dExt};
 
 /// Interpolation strategies.
 pub mod interpolate {
+    use ndarray::azip;
     use ndarray::prelude::*;
     use num_traits::{FromPrimitive, ToPrimitive};
     use std::ops::{Add, Div};

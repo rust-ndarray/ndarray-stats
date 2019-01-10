@@ -1,5 +1,5 @@
 use ndarray::prelude::*;
-use ndarray::{Data, DataMut, RemoveAxis};
+use ndarray::{s, Data, DataMut, RemoveAxis};
 use noisy_float::types::{N32, N64};
 
 /// A number type that can have not-a-number values.
@@ -347,6 +347,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use quickcheck::quickcheck;
 
     quickcheck! {
         fn remove_nan_mut_idempotent(is_nan: Vec<bool>) -> bool {
