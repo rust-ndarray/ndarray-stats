@@ -426,6 +426,7 @@ mod equispaced_tests {
 #[cfg(test)]
 mod sqrt_tests {
     use super::*;
+    use ndarray::array;
 
     #[should_panic]
     #[test]
@@ -443,6 +444,7 @@ mod sqrt_tests {
 #[cfg(test)]
 mod rice_tests {
     use super::*;
+    use ndarray::array;
 
     #[should_panic]
     #[test]
@@ -460,6 +462,7 @@ mod rice_tests {
 #[cfg(test)]
 mod sturges_tests {
     use super::*;
+    use ndarray::array;
 
     #[should_panic]
     #[test]
@@ -477,6 +480,7 @@ mod sturges_tests {
 #[cfg(test)]
 mod fd_tests {
     use super::*;
+    use ndarray::array;
 
     #[should_panic]
     #[test]
@@ -500,6 +504,7 @@ mod fd_tests {
 #[cfg(test)]
 mod auto_tests {
     use super::*;
+    use ndarray::array;
 
     #[should_panic]
     #[test]

@@ -166,6 +166,8 @@ where
 #[cfg(test)]
 mod cov_tests {
     use super::*;
+    use ndarray::array;
+    use quickcheck::quickcheck;
     use rand;
     use rand::distributions::Uniform;
     use ndarray_rand::RandomExt;
@@ -278,6 +280,8 @@ mod cov_tests {
 #[cfg(test)]
 mod pearson_correlation_tests {
     use super::*;
+    use ndarray::array;
+    use quickcheck::quickcheck;
     use rand::distributions::Uniform;
     use ndarray_rand::RandomExt;
 

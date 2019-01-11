@@ -358,6 +358,7 @@ impl<A: Ord> Bins<A> {
 #[cfg(test)]
 mod edges_tests {
     use super::*;
+    use quickcheck::quickcheck;
     use std::collections::BTreeSet;
     use std::iter::FromIterator;
 
