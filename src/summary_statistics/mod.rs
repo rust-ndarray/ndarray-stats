@@ -72,7 +72,7 @@ where
     /// If the array is empty, `None` is returned.
     ///
     /// The *n*-th central moment is computed using a corrected two-pass algorithm (see Section 3.5
-    /// in [Pébay et al., 2016]).
+    /// in [Pébay et al., 2016]). Complexity is *O(N(p+1))* when *N >> p*, *p > 1*.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
@@ -81,7 +81,6 @@ where
     fn central_moment(&self, order: usize) -> Option<A>
     where
         A: Float + FromPrimitive;
-
 }
 
 mod means;
