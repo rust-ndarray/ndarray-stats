@@ -42,16 +42,48 @@ where
         A: Float + FromPrimitive
     {
         let mean = self.mean();
-        if mean.is_none() {
-            None
-        } else {
-            match n {
-                0 => Some(A::one()),
-                1 => Some(A::zero()),
-                n => unimplemented!()
+        match mean {
+            None => None,
+            Some(mean) => {
+                match n {
+                    0 => Some(A::one()),
+                    1 => Some(A::zero()),
+                    n => {
+                        let n_elements = A::from_usize(self.len()).
+                            expect("Converting number of elements to `A` must not fail");
+                        let shifted_array = self.map(|x| x.clone() - mean);
+                        let correction_term = -shifted_array.sum() / n_elements;
+                        let coefficients: Vec<A> = (0..n).map(
+                            |k| A::from_usize(binomial_coefficient(n, k)).unwrap() *
+                                shifted_array.map(|x| x.powi((n - k) as i32)).sum()
+                        ).collect();
+                        // Use Horner's method here
+                        let mut result = A::zero();
+                        for (k, coefficient) in coefficients.iter().enumerate() {
+                            result = result + *coefficient * correction_term.powi(k as i32);
+                        }
+                        Some(result)
+                    }
+                }
             }
         }
     }
+}
+
+/// Returns the binomial coefficient "n over k".
+fn binomial_coefficient(n: usize, k: usize) -> usize {
+    // BC(n, k) = BC(n, n-k)
+    let k = if k > n - k {
+        n - k
+    } else {
+        k
+    };
+    let mut result = 1;
+    for i in 0..k {
+        result = result * (n - i);
+        result = result / (i + 1);
+    }
+    result
 }
 
 #[cfg(test)]
