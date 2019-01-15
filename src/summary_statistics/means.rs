@@ -131,4 +131,16 @@ mod tests {
         );
         assert_eq!(a.nth_central_order_moment(0).unwrap(), 1.);
     }
+
+    #[test]
+    fn test_first_central_order_moment_is_zero() {
+        let a: Array1<f64> = array![];
+        let n = 50;
+        let bound: f64 = 200.;
+        let a = Array::random(
+            n,
+            Uniform::new(-bound.abs(), bound.abs())
+        );
+        assert_eq!(a.nth_central_order_moment(1).unwrap(), 0.);
+    }
 }
