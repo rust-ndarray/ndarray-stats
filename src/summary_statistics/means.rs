@@ -45,7 +45,11 @@ where
         if mean.is_none() {
             None
         } else {
-            unimplemented!()
+            match n {
+                0 => Some(A::one()),
+                1 => Some(A::zero()),
+                n => unimplemented!()
+            }
         }
     }
 }
@@ -56,7 +60,9 @@ mod tests {
     use std::f64;
     use approx::abs_diff_eq;
     use noisy_float::types::N64;
-    use ndarray::{array, Array1};
+    use ndarray::{array, Array, Array1};
+    use ndarray_rand::RandomExt;
+    use rand::distributions::Uniform;
 
     #[test]
     fn test_means_with_nan_values() {
@@ -112,5 +118,17 @@ mod tests {
     fn test_central_order_moment_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
         assert!(a.nth_central_order_moment(1).is_none());
+    }
+
+    #[test]
+    fn test_zeroth_central_order_moment_is_one() {
+        let a: Array1<f64> = array![];
+        let n = 50;
+        let bound: f64 = 200.;
+        let a = Array::random(
+            n,
+            Uniform::new(-bound.abs(), bound.abs())
+        );
+        assert_eq!(a.nth_central_order_moment(0).unwrap(), 1.);
     }
 }
