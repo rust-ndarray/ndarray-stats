@@ -6,9 +6,9 @@ use std::ops::{Add, Div};
 /// Extension trait for `ArrayBase` providing methods
 /// to compute several summary statistics (e.g. mean, variance, etc.).
 pub trait SummaryStatisticsExt<A, S, D>
-    where
-        S: Data<Elem = A>,
-        D: Dimension,
+where
+    S: Data<Elem = A>,
+    D: Dimension,
 {
     /// Returns the [`arithmetic mean`] x̅ of all elements in the array:
     ///
@@ -24,8 +24,8 @@ pub trait SummaryStatisticsExt<A, S, D>
     ///
     /// [`arithmetic mean`]: https://en.wikipedia.org/wiki/Arithmetic_mean
     fn mean(&self) -> Option<A>
-        where
-            A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + Zero;
+    where
+        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + Zero;
 
     /// Returns the [`harmonic mean`] `HM(X)` of all elements in the array:
     ///
@@ -41,8 +41,8 @@ pub trait SummaryStatisticsExt<A, S, D>
     ///
     /// [`harmonic mean`]: https://en.wikipedia.org/wiki/Harmonic_mean
     fn harmonic_mean(&self) -> Option<A>
-        where
-            A: Float + FromPrimitive;
+    where
+        A: Float + FromPrimitive;
 
     /// Returns the [`geometric mean`] `GM(X)` of all elements in the array:
     ///
@@ -58,8 +58,25 @@ pub trait SummaryStatisticsExt<A, S, D>
     ///
     /// [`geometric mean`]: https://en.wikipedia.org/wiki/Geometric_mean
     fn geometric_mean(&self) -> Option<A>
-        where
-            A: Float + FromPrimitive;
+    where
+        A: Float + FromPrimitive;
+
+    /// Returns the *n*th [central order moment] of all elements in the array, μₚ:
+    ///
+    /// ```text
+    ///      1  n
+    /// μₚ = ―  ∑ (xᵢ-x̅)ᵖ
+    ///      n i=1
+    /// ```
+    ///
+    /// If the array is empty, `None` is returned.
+    ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    ///
+    /// [central order moment]: https://en.wikipedia.org/wiki/Central_moment
+    fn nth_central_order_moment(&self, n: usize) -> Option<A>
+    where
+        A: Float + FromPrimitive;
 
 }
 
