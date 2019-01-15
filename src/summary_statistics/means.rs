@@ -53,10 +53,21 @@ where
                             expect("Converting number of elements to `A` must not fail");
                         let shifted_array = self.map(|x| x.clone() - mean);
                         let correction_term = -shifted_array.sum() / n_elements;
-                        let coefficients: Vec<A> = (0..=n).map(
+
+                        let mut coefficients: Vec<A> = (0..n-1).map(
                             |k| A::from_usize(binomial_coefficient(n, k)).unwrap() *
                                 shifted_array.map(|x| x.powi((n - k) as i32)).sum() / n_elements
                         ).collect();
+                        // When k=n-1, we can reuse the already computed correction_term, by
+                        // flipping its sign
+                        coefficients.push(
+                            A::from_usize(binomial_coefficient(n, n-1)).unwrap() *
+                                (-correction_term)
+                        );
+                        // When k=n, we are raising each element to the 0th power
+                        // No need to waste CPU cycles going through the array
+                        coefficients.push(A::one());
+
                         Some(horner_method(coefficients, correction_term))
                     }
                 }
