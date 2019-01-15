@@ -61,7 +61,7 @@ where
     where
         A: Float + FromPrimitive;
 
-    /// Returns the *n*th [central order moment] of all elements in the array, μₚ:
+    /// Returns the *n*-th [central moment] of all elements in the array, μₚ:
     ///
     /// ```text
     ///      1  n
@@ -73,8 +73,8 @@ where
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
-    /// [central order moment]: https://en.wikipedia.org/wiki/Central_moment
-    fn nth_central_order_moment(&self, n: usize) -> Option<A>
+    /// [central moment]: https://en.wikipedia.org/wiki/Central_moment
+    fn central_moment(&self, order: usize) -> Option<A>
     where
         A: Float + FromPrimitive;
 

@@ -37,7 +37,7 @@ where
         self.map(|x| x.ln()).mean().map(|x| x.exp())
     }
 
-    fn nth_central_order_moment(&self, n: usize) -> Option<A>
+    fn central_moment(&self, order: usize) -> Option<A>
     where
         A: Float + FromPrimitive
     {
@@ -45,7 +45,7 @@ where
         match mean {
             None => None,
             Some(mean) => {
-                match n {
+                match order {
                     0 => Some(A::one()),
                     1 => Some(A::zero()),
                     n => {
@@ -53,9 +53,9 @@ where
                             expect("Converting number of elements to `A` must not fail");
                         let shifted_array = self.map(|x| x.clone() - mean);
                         let correction_term = -shifted_array.sum() / n_elements;
-                        let coefficients: Vec<A> = (0..n).map(
+                        let coefficients: Vec<A> = (0..=n).map(
                             |k| A::from_usize(binomial_coefficient(n, k)).unwrap() *
-                                shifted_array.map(|x| x.powi((n - k) as i32)).sum()
+                                shifted_array.map(|x| x.powi((n - k) as i32)).sum() / n_elements
                         ).collect();
                         // Use Horner's method here
                         let mut result = A::zero();
@@ -149,7 +149,7 @@ mod tests {
     #[test]
     fn test_central_order_moment_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert!(a.nth_central_order_moment(1).is_none());
+        assert!(a.central_moment(1).is_none());
     }
 
     #[test]
@@ -160,7 +160,7 @@ mod tests {
             n,
             Uniform::new(-bound.abs(), bound.abs())
         );
-        assert_eq!(a.nth_central_order_moment(0).unwrap(), 1.);
+        assert_eq!(a.central_moment(0).unwrap(), 1.);
     }
 
     #[test]
@@ -171,11 +171,11 @@ mod tests {
             n,
             Uniform::new(-bound.abs(), bound.abs())
         );
-        assert_eq!(a.nth_central_order_moment(1).unwrap(), 0.);
+        assert_eq!(a.central_moment(1).unwrap(), 0.);
     }
 
     #[test]
-    fn test_second_central_order_moment() {
+    fn test_central_order_moments() {
         let a: Array1<f64> = array![
             0.07820559, 0.5026185 , 0.80935324, 0.39384033, 0.9483038,
             0.62516215, 0.90772261, 0.87329831, 0.60267392, 0.2960298,
@@ -188,6 +188,13 @@ mod tests {
             0.62005503, 0.996492  , 0.5342986 , 0.97822099, 0.5028445,
             0.6693834 , 0.14256682, 0.52724704, 0.73482372, 0.1809703,
         ];
-        assert_eq!(a.nth_central_order_moment(2).unwrap(), 0.09339920262960291);
+        // Computed using scipy.stats.moment
+        let expected_moments = vec![
+            1., 0., 0.09339920262960291, -0.0026849636727735186,
+            0.015403769257729755, -0.001204176487006564, 0.002976822584939186,
+        ];
+        for (order, expected_moment) in expected_moments.iter().enumerate() {
+            abs_diff_eq!(a.central_moment(order).unwrap(), expected_moment, epsilon = f64::EPSILON);
+        }
     }
 }
