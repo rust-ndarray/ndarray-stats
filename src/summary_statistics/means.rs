@@ -57,12 +57,7 @@ where
                             |k| A::from_usize(binomial_coefficient(n, k)).unwrap() *
                                 shifted_array.map(|x| x.powi((n - k) as i32)).sum() / n_elements
                         ).collect();
-                        // Use Horner's method here
-                        let mut result = A::zero();
-                        for (k, coefficient) in coefficients.iter().enumerate() {
-                            result = result + *coefficient * correction_term.powi(k as i32);
-                        }
-                        Some(result)
+                        Some(horner_method(coefficients, correction_term))
                     }
                 }
             }
@@ -71,17 +66,44 @@ where
 }
 
 /// Returns the binomial coefficient "n over k".
+///
+/// **Panics** if k > n.
 fn binomial_coefficient(n: usize, k: usize) -> usize {
+    if k > n {
+        panic!(
+            "Tried to compute the binomial coefficient of {0} over {1}, \
+            but {1} is strictly greater than {0}!"
+        )
+    }
     // BC(n, k) = BC(n, n-k)
-    let k = if k > n - k {
-        n - k
-    } else {
-        k
-    };
+    let k = if k > n-k { n-k } else { k };
     let mut result = 1;
     for i in 0..k {
         result = result * (n - i);
         result = result / (i + 1);
+    }
+    result
+}
+
+/// Uses [Horner's method] to evaluate a polynomial with a single indeterminate.
+///
+/// Coefficients are expected to be sorted by ascending order
+/// with respect to the indeterminate's exponent.
+///
+/// If the array is empty, `A::zero()` is returned.
+///
+/// Horner's method can evaluate a polynomial of order *n* with a single indeterminate
+/// using only *n-1* multiplications and *n-1* sums - in terms of number of operations,
+/// this is an optimal algorithm for polynomial evaluation.
+///
+/// [Horner's method]: https://en.wikipedia.org/wiki/Horner%27s_method
+fn horner_method<A>(coefficients: Vec<A>, indeterminate: A) -> A
+where
+    A: Float,
+{
+    let mut result = A::zero();
+    for coefficient in coefficients.into_iter().rev() {
+        result = coefficient + indeterminate * result
     }
     result
 }
