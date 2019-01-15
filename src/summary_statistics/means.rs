@@ -41,7 +41,12 @@ where
     where
         A: Float + FromPrimitive
     {
-        unimplemented!()
+        let mean = self.mean();
+        if mean.is_none() {
+            None
+        } else {
+            unimplemented!()
+        }
     }
 }
 
@@ -101,5 +106,11 @@ mod tests {
         abs_diff_eq!(a.mean().unwrap(), expected_mean, epsilon = f64::EPSILON);
         abs_diff_eq!(a.harmonic_mean().unwrap(), expected_harmonic_mean, epsilon = f64::EPSILON);
         abs_diff_eq!(a.geometric_mean().unwrap(), expected_geometric_mean, epsilon = f64::EPSILON);
+    }
+
+    #[test]
+    fn test_central_order_moment_with_empty_array_of_floats() {
+        let a: Array1<f64> = array![];
+        assert!(a.nth_central_order_moment(1).is_none());
     }
 }
