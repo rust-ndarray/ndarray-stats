@@ -154,7 +154,6 @@ mod tests {
 
     #[test]
     fn test_zeroth_central_order_moment_is_one() {
-        let a: Array1<f64> = array![];
         let n = 50;
         let bound: f64 = 200.;
         let a = Array::random(
@@ -166,7 +165,6 @@ mod tests {
 
     #[test]
     fn test_first_central_order_moment_is_zero() {
-        let a: Array1<f64> = array![];
         let n = 50;
         let bound: f64 = 200.;
         let a = Array::random(
@@ -174,5 +172,22 @@ mod tests {
             Uniform::new(-bound.abs(), bound.abs())
         );
         assert_eq!(a.nth_central_order_moment(1).unwrap(), 0.);
+    }
+
+    #[test]
+    fn test_second_central_order_moment() {
+        let a: Array1<f64> = array![
+            0.07820559, 0.5026185 , 0.80935324, 0.39384033, 0.9483038,
+            0.62516215, 0.90772261, 0.87329831, 0.60267392, 0.2960298,
+            0.02810356, 0.31911966, 0.86705506, 0.96884832, 0.2222465,
+            0.42162446, 0.99909868, 0.47619762, 0.91696979, 0.9972741,
+            0.09891734, 0.76934818, 0.77566862, 0.7692585 , 0.2235759,
+            0.44821286, 0.79732186, 0.04804275, 0.87863238, 0.1111003,
+            0.6653943 , 0.44386445, 0.2133176 , 0.39397086, 0.4374617,
+            0.95896624, 0.57850146, 0.29301706, 0.02329879, 0.2123203,
+            0.62005503, 0.996492  , 0.5342986 , 0.97822099, 0.5028445,
+            0.6693834 , 0.14256682, 0.52724704, 0.73482372, 0.1809703,
+        ];
+        assert_eq!(a.nth_central_order_moment(2).unwrap(), 0.09339920262960291);
     }
 }
