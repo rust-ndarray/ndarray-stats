@@ -71,9 +71,13 @@ where
     ///
     /// If the array is empty, `None` is returned.
     ///
+    /// The *n*-th central moment is computed using a corrected two-pass algorithm (see Section 3.5
+    /// in [Pébay et al., 2016]).
+    ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
     /// [central moment]: https://en.wikipedia.org/wiki/Central_moment
+    /// [Pébay et al., 2016]: https://www.osti.gov/pages/servlets/purl/1427275
     fn central_moment(&self, order: usize) -> Option<A>
     where
         A: Float + FromPrimitive;
