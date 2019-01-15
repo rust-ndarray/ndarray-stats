@@ -31,10 +31,17 @@ where
     }
 
     fn geometric_mean(&self) -> Option<A>
-        where
-            A: Float + FromPrimitive,
+    where
+        A: Float + FromPrimitive,
     {
         self.map(|x| x.ln()).mean().map(|x| x.exp())
+    }
+
+    fn nth_central_order_moment(&self, n: usize) -> Option<A>
+    where
+        A: Float + FromPrimitive
+    {
+        unimplemented!()
     }
 }
 
