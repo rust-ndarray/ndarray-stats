@@ -61,10 +61,38 @@ where
     where
         A: Float + FromPrimitive;
 
+    /// Returns the [kurtosis] `Kurt[X]` of all elements in the array:
+    ///
+    /// ```text
+    /// Kurt[X] = μ₄ / σ⁴
+    /// ```
+    ///
+    /// where μ₄ is the fourth central moment and σ is the standard deviation of
+    /// the elements in the array.
+    ///
+    /// If the array is empty, `None` is returned.
+    ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    ///
+    /// [kurtosis]: https://en.wikipedia.org/wiki/Kurtosis
     fn kurtosis(&self) -> Option<A>
     where
         A: Float + FromPrimitive;
 
+    /// Returns the [Pearson's moment coefficient of skewness] γ₁ of all elements in the array:
+    ///
+    /// ```text
+    /// γ₁ = μ₃ / σ³
+    /// ```
+    ///
+    /// where μ₃ is the third central moment and σ is the standard deviation of
+    /// the elements in the array.
+    ///
+    /// If the array is empty, `None` is returned.
+    ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    ///
+    /// [Pearson's moment coefficient of skewness]: https://en.wikipedia.org/wiki/Skewness
     fn skewness(&self) -> Option<A>
     where
         A: Float + FromPrimitive;
@@ -102,7 +130,7 @@ where
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
     /// [central moments]: https://en.wikipedia.org/wiki/Central_moment
-    /// [central moment]:
+    /// [central moment]: #tymethod.central_moment
     fn central_moments(&self, order: usize) -> Option<Vec<A>>
     where
         A: Float + FromPrimitive;
