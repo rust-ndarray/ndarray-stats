@@ -251,6 +251,7 @@ mod tests {
     fn test_central_order_moment_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
         assert!(a.central_moment(1).is_none());
+        assert!(a.central_moments(1).is_none());
     }
 
     #[test]
@@ -296,6 +297,22 @@ mod tests {
         ];
         for (order, expected_moment) in expected_moments.iter().enumerate() {
             abs_diff_eq!(a.central_moment(order).unwrap(), expected_moment, epsilon = f64::EPSILON);
+        }
+    }
+
+    #[test]
+    fn test_bulk_central_order_moments() {
+        // Test that the bulk method is coherent with the non-bulk method
+        let n = 50;
+        let bound: f64 = 200.;
+        let a = Array::random(
+            n,
+            Uniform::new(-bound.abs(), bound.abs())
+        );
+        let order = 10;
+        let central_moments = a.central_moments(order).unwrap();
+        for i in 0..=order {
+            assert_eq!(a.central_moment(i).unwrap(), central_moments[i]);
         }
     }
 }
