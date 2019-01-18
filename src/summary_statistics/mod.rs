@@ -61,6 +61,14 @@ where
     where
         A: Float + FromPrimitive;
 
+    fn kurtosis(&self) -> Option<A>
+    where
+        A: Float + FromPrimitive;
+
+    fn skewness(&self) -> Option<A>
+    where
+        A: Float + FromPrimitive;
+
     /// Returns the *p*-th [central moment] of all elements in the array, μₚ:
     ///
     /// ```text

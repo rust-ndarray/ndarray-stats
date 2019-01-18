@@ -37,6 +37,26 @@ where
         self.map(|x| x.ln()).mean().map(|x| x.exp())
     }
 
+    fn kurtosis(&self) -> Option<A>
+    where
+        A: Float + FromPrimitive
+    {
+        let central_moments = self.central_moments(4);
+        central_moments.map(
+            |moments| moments[4] / moments[2].powi(2)
+        )
+    }
+
+    fn skewness(&self) -> Option<A>
+    where
+        A: Float + FromPrimitive
+    {
+        let central_moments = self.central_moments(4);
+        central_moments.map(
+            |moments| moments[3] / moments[2].sqrt().powi(3)
+        )
+    }
+
     fn central_moment(&self, order: usize) -> Option<A>
     where
         A: Float + FromPrimitive
