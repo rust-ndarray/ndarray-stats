@@ -96,8 +96,8 @@ where
     /// [central moments]: https://en.wikipedia.org/wiki/Central_moment
     /// [central moment]:
     fn central_moments(&self, order: usize) -> Option<Vec<A>>
-        where
-            A: Float + FromPrimitive;
+    where
+        A: Float + FromPrimitive;
 }
 
 mod means;
