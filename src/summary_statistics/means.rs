@@ -335,4 +335,37 @@ mod tests {
             assert_eq!(a.central_moment(i).unwrap(), central_moments[i]);
         }
     }
+
+    #[test]
+    fn test_kurtosis_and_skewness_is_none_with_empty_array_of_floats() {
+        let a: Array1<f64> = array![];
+        assert!(a.skewness().is_none());
+        assert!(a.kurtosis().is_none());
+    }
+
+    #[test]
+    fn test_kurtosis_and_skewness() {
+        let a: Array1<f64> = array![
+            0.33310096, 0.98757449, 0.9789796 , 0.96738114, 0.43545674,
+            0.06746873, 0.23706562, 0.04241815, 0.38961714, 0.52421271,
+            0.93430327, 0.33911604, 0.05112372, 0.5013455 , 0.05291507,
+            0.62511183, 0.20749633, 0.22132433, 0.14734804, 0.51960608,
+            0.00449208, 0.4093339 , 0.2237519 , 0.28070469, 0.7887231 ,
+            0.92224523, 0.43454188, 0.18335111, 0.08646856, 0.87979847,
+            0.25483457, 0.99975627, 0.52712442, 0.41163279, 0.85162594,
+            0.52618733, 0.75815023, 0.30640695, 0.14205781, 0.59695813,
+            0.851331  , 0.39524328, 0.73965373, 0.4007615 , 0.02133069,
+            0.92899207, 0.79878191, 0.38947334, 0.22042183, 0.77768353,
+        ];
+        // Computed using scipy.stats.kurtosis
+        let expected_kurtosis = -1.1780662914793822;
+        // Computed using scipy.stats.skew
+        let expected_skewness = 0.2604785422878771;
+
+        let kurtosis = a.kurtosis().unwrap();
+        let skewness = a.skewness().unwrap();
+
+        abs_diff_eq!(kurtosis, expected_kurtosis, epsilon = f64::EPSILON);
+        abs_diff_eq!(skewness, expected_skewness, epsilon = f64::EPSILON);
+    }
 }
