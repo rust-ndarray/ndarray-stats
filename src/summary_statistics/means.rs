@@ -74,6 +74,13 @@ where
             }
         }
     }
+
+    fn central_moments(&self, order: usize) -> Option<Vec<A>>
+        where
+            A: Float + FromPrimitive
+    {
+        unimplemented!()
+    }
 }
 
 /// Returns the binomial coefficient "n over k".

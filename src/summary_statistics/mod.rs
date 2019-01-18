@@ -61,7 +61,7 @@ where
     where
         A: Float + FromPrimitive;
 
-    /// Returns the *n*-th [central moment] of all elements in the array, μₚ:
+    /// Returns the *p*-th [central moment] of all elements in the array, μₚ:
     ///
     /// ```text
     ///      1  n
@@ -71,8 +71,8 @@ where
     ///
     /// If the array is empty, `None` is returned.
     ///
-    /// The *n*-th central moment is computed using a corrected two-pass algorithm (see Section 3.5
-    /// in [Pébay et al., 2016]). Complexity is *O(N(p+1))* when *N >> p*, *p > 1*.
+    /// The *p*-th central moment is computed using a corrected two-pass algorithm (see Section 3.5
+    /// in [Pébay et al., 2016]). Complexity is *O(np)* when *n >> p*, *p > 1*.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
@@ -81,6 +81,23 @@ where
     fn central_moment(&self, order: usize) -> Option<A>
     where
         A: Float + FromPrimitive;
+
+    /// Returns the first *p* [central moments] of all elements in the array, see [central moment]
+    /// for more details.
+    ///
+    /// If the array is empty, `None` is returned.
+    ///
+    /// This method reuses the intermediate steps for the *k*-th moment to compute the *(k+1)*-th,
+    /// being thus more efficient than repeated calls to [central moment] if the computation
+    /// of central moments of multiple orders is required.
+    ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    ///
+    /// [central moments]: https://en.wikipedia.org/wiki/Central_moment
+    /// [central moment]:
+    fn central_moments(&self, order: usize) -> Option<A>
+        where
+            A: Float + FromPrimitive;
 }
 
 mod means;
