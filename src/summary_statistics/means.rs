@@ -49,25 +49,11 @@ where
                     0 => Some(A::one()),
                     1 => Some(A::zero()),
                     n => {
-                        let n_elements = A::from_usize(self.len()).
-                            expect("Converting number of elements to `A` must not fail");
                         let shifted_array = self.map(|x| x.clone() - mean);
-                        let correction_term = -shifted_array.sum() / n_elements;
+                        let shifted_moments = moments(shifted_array, n);
+                        let correction_term = -shifted_moments[1].clone();
 
-                        let mut coefficients: Vec<A> = (0..n-1).map(
-                            |k| A::from_usize(binomial_coefficient(n, k)).unwrap() *
-                                shifted_array.map(|x| x.powi((n - k) as i32)).sum() / n_elements
-                        ).collect();
-                        // When k=n-1, we can reuse the already computed correction_term, by
-                        // flipping its sign
-                        coefficients.push(
-                            A::from_usize(binomial_coefficient(n, n-1)).unwrap() *
-                                (-correction_term)
-                        );
-                        // When k=n, we are raising each element to the 0th power
-                        // No need to waste CPU cycles going through the array
-                        coefficients.push(A::one());
-
+                        let coefficients = central_moment_coefficients(&shifted_moments);
                         Some(horner_method(coefficients, correction_term))
                     }
                 }
@@ -81,6 +67,57 @@ where
     {
         unimplemented!()
     }
+}
+
+/// Returns a vector containing all moments of the array elements up to
+/// *order*, where the *p*-th moment is defined as:
+///
+/// ```text
+/// 1  n
+/// ―  ∑ xᵢᵖ
+/// n i=1
+/// ```
+///
+/// The returned moments are ordered by power magnitude: 0th moment, 1st moment, etc.
+///
+/// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+fn moments<A, S, D>(a: ArrayBase<S, D>, order: usize) -> Vec<A>
+where
+    A: Float + FromPrimitive,
+    S: Data<Elem=A>,
+    D: Dimension,
+{
+    let n_elements = A::from_usize(a.len())
+        .expect("Converting number of elements to `A` must not fail");
+
+    // When k=0, we are raising each element to the 0th power
+    // No need to waste CPU cycles going through the array
+    let mut moments = vec![A::one()];
+
+    if order >=1 {
+        // When k=1, we don't need to raise elements to the 1th power (identity)
+        moments.push(a.sum() / n_elements)
+    }
+
+    for k in 2..=order {
+        moments.push(a.map(|x| x.powi(k as i32)).sum() / n_elements)
+    }
+    moments
+}
+
+/// Returns the coefficients in the polynomial expression to compute the *p*th
+/// central moment as a function of the sample mean.
+///
+/// It takes as input all moments up to order *p*, ordered by power magnitude - *p* is
+/// inferred to be the length of the *moments* array.
+fn central_moment_coefficients<A>(moments: &[A]) -> Vec<A>
+where
+    A: Float + FromPrimitive,
+{
+    let order = moments.len();
+    moments.iter().rev().enumerate().map(
+        |(k, moment)| A::from_usize(binomial_coefficient(order, k)).unwrap() * *moment
+    ).collect()
 }
 
 /// Returns the binomial coefficient "n over k".
