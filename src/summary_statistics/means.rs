@@ -211,7 +211,7 @@ where
 mod tests {
     use super::SummaryStatisticsExt;
     use std::f64;
-    use approx::abs_diff_eq;
+    use approx::assert_abs_diff_eq;
     use noisy_float::types::N64;
     use ndarray::{array, Array, Array1};
     use ndarray_rand::RandomExt;
@@ -262,9 +262,9 @@ mod tests {
         // Computed using SciPy
         let expected_geometric_mean = 0.4345897639796527;
 
-        abs_diff_eq!(a.mean().unwrap(), expected_mean, epsilon = f64::EPSILON);
-        abs_diff_eq!(a.harmonic_mean().unwrap(), expected_harmonic_mean, epsilon = f64::EPSILON);
-        abs_diff_eq!(a.geometric_mean().unwrap(), expected_geometric_mean, epsilon = f64::EPSILON);
+        assert_abs_diff_eq!(a.mean().unwrap(), expected_mean, epsilon = 1e-6);
+        assert_abs_diff_eq!(a.harmonic_mean().unwrap(), expected_harmonic_mean, epsilon = 1e-6);
+        assert_abs_diff_eq!(a.geometric_mean().unwrap(), expected_geometric_mean, epsilon = 1e-6);
     }
 
     #[test]
@@ -316,7 +316,7 @@ mod tests {
             0.015403769257729755, -0.001204176487006564, 0.002976822584939186,
         ];
         for (order, expected_moment) in expected_moments.iter().enumerate() {
-            abs_diff_eq!(a.central_moment(order).unwrap(), expected_moment, epsilon = f64::EPSILON);
+            assert_abs_diff_eq!(a.central_moment(order).unwrap(), expected_moment, epsilon = 1e-6);
         }
     }
 
@@ -365,7 +365,7 @@ mod tests {
         let kurtosis = a.kurtosis().unwrap();
         let skewness = a.skewness().unwrap();
 
-        abs_diff_eq!(kurtosis, expected_kurtosis, epsilon = f64::EPSILON);
-        abs_diff_eq!(skewness, expected_skewness, epsilon = f64::EPSILON);
+        assert_abs_diff_eq!(kurtosis, expected_kurtosis, epsilon = 1e-6);
+        assert_abs_diff_eq!(skewness, expected_skewness, epsilon = 1e-6);
     }
 }
