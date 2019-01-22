@@ -60,7 +60,7 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
                     }
                 }
             ).sum();
-            Some(entropy)
+            Some(-entropy)
         }
     }
 }
@@ -98,8 +98,8 @@ mod tests {
             0.60681015, 0.45062613, 0.83282631, 0.77114486, 0.35229367,
             0.36383337, 0.78485847, 0.56853643, 0.80326787, 0.04409981,
         ];
-        // Computed using scipy.stats.entropy
-        let expected_entropy = 3.7371557453896727;
+        // Computed using scipy.stats.entropy, sign has been reversed
+        let expected_entropy = -3.7371557453896727;
 
         abs_diff_eq!(a.entropy().unwrap(), expected_entropy, epsilon = f64::EPSILON);
     }
