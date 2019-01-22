@@ -1,7 +1,6 @@
 //! Summary statistics (e.g. mean, variance, etc.).
 use ndarray::{ArrayBase, Data, Dimension};
-use num_traits::{FromPrimitive, Float, Zero};
-use std::ops::{Add, Div};
+use num_traits::{FromPrimitive, Float};
 
 /// Extension trait for `ArrayBase` providing methods
 /// to compute information theory quantities
