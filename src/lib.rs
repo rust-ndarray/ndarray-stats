@@ -43,10 +43,12 @@ pub use sort::Sort1dExt;
 pub use correlation::CorrelationExt;
 pub use histogram::HistogramExt;
 pub use summary_statistics::SummaryStatisticsExt;
+pub use entropy::EntropyExt;
 
 mod maybe_nan;
 mod quantile;
 mod sort;
 mod correlation;
+mod entropy;
 mod summary_statistics;
 pub mod histogram;
