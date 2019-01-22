@@ -51,7 +51,7 @@ where
     where
         A: Float + FromPrimitive
     {
-        let central_moments = self.central_moments(4);
+        let central_moments = self.central_moments(3);
         central_moments.map(
             |moments| moments[3] / moments[2].sqrt().powi(3)
         )
