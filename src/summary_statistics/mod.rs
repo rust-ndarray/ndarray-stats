@@ -70,6 +70,9 @@ where
     /// where μ₄ is the fourth central moment and σ is the standard deviation of
     /// the elements in the array.
     ///
+    /// This is sometimes referred to as _Pearson's kurtosis_. Fisher's kurtosis can be
+    /// computed by subtracting 3 from Pearson's kurtosis.
+    ///
     /// If the array is empty, `None` is returned.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
