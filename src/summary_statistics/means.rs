@@ -357,8 +357,8 @@ mod tests {
             0.851331  , 0.39524328, 0.73965373, 0.4007615 , 0.02133069,
             0.92899207, 0.79878191, 0.38947334, 0.22042183, 0.77768353,
         ];
-        // Computed using scipy.stats.kurtosis
-        let expected_kurtosis = -1.1780662914793822;
+        // Computed using scipy.stats.kurtosis(a, fisher=False)
+        let expected_kurtosis = 1.821933711687523;
         // Computed using scipy.stats.skew
         let expected_skewness = 0.2604785422878771;
 
