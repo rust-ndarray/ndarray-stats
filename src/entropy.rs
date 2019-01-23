@@ -36,6 +36,40 @@ pub trait EntropyExt<A, S, D>
     fn entropy(&self) -> Option<A>
     where
         A: Float;
+
+    /// Computes the [cross entropy] *H(p,q)* between two arrays,
+    /// where `self`=*p*.
+    ///
+    /// The cross entropy is defined as:
+    ///
+    /// ```text
+    ///            n
+    /// H(p,q) = - ∑ pᵢ ln(qᵢ)
+    ///           i=1
+    /// ```
+    ///
+    /// If the arrays are empty or their lenghts are not equal, `None` is returned.
+    ///
+    /// **Panics** if any element in *q* is negative.
+    ///
+    /// ## Remarks
+    ///
+    /// The cross entropy is a measure used in [Information Theory]
+    /// to describe the relationship between two probability distribution: it only make sense
+    /// when each array sums to 1 with entries between 0 and 1 (extremes included).
+    ///
+    /// The cross entropy is often used as an objective/loss function in
+    /// [optimization problems], including [machine learning].
+    ///
+    /// By definition, *pᵢ ln(qᵢ)* is set to 0 if *pᵢ* is 0.
+    ///
+    /// [cross entropy]: https://en.wikipedia.org/wiki/Cross-entropy
+    /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
+    /// [optimization problems]: https://en.wikipedia.org/wiki/Cross-entropy_method
+    /// [machine learning]: https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_error_function_and_logistic_regression
+    fn cross_entropy(&self, q: &Self) -> Option<A>
+    where
+        A: Float;
 }
 
 
@@ -62,6 +96,13 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
             ).sum();
             Some(-entropy)
         }
+    }
+
+    fn cross_entropy(&self, q: &Self) -> Option<A>
+        where
+            A: Float
+    {
+        unimplemented!()
     }
 }
 
