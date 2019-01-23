@@ -48,7 +48,7 @@ pub trait EntropyExt<A, S, D>
     ///           i=1
     /// ```
     ///
-    /// If the arrays are empty or their lenghts are not equal, `None` is returned.
+    /// If the arrays are empty or their lengths are not equal, `None` is returned.
     ///
     /// **Panics** if any element in *q* is negative.
     ///
