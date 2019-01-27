@@ -50,7 +50,8 @@ pub trait EntropyExt<A, S, D>
     ///
     /// If the arrays are empty or their lengths are not equal, `None` is returned.
     ///
-    /// **Panics** if any element in *q* is negative.
+    /// **Panics** if any element in *q* is negative and taking the logarithm of a negative number
+    /// is a panic cause for `A`.
     ///
     /// ## Remarks
     ///
@@ -124,6 +125,7 @@ mod tests {
     use super::EntropyExt;
     use std::f64;
     use approx::assert_abs_diff_eq;
+    use noisy_float::types::n64;
     use ndarray::{array, Array1};
 
     #[test]
@@ -183,10 +185,25 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
     fn test_cross_entropy_with_negative_qs() {
-        let p = array![2., 1., 5.];
-        let q = array![2., -1., 5.];
-        assert!(p.cross_entropy(&q).is_none());
+        let p = array![1.];
+        let q = array![-1.];
+        let cross_entropy: f64 = p.cross_entropy(&q).unwrap();
+        assert!(cross_entropy.is_nan());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_cross_entropy_with_noisy_negative_qs() {
+        let p = array![n64(1.)];
+        let q = array![n64(-1.)];
+        p.cross_entropy(&q);
+    }
+
+    #[test]
+    fn test_cross_entropy_with_zeroes_p() {
+        let p = array![0., 0.];
+        let q = array![0.5, 0.5];
+        assert_eq!(p.cross_entropy(&q).unwrap(), 0.);
     }
 }
