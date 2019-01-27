@@ -212,34 +212,41 @@ mod tests {
     }
 
     #[test]
-    fn test_cross_entropy_with_nan_values() {
+    fn test_cross_entropy_and_kl_with_nan_values() {
         let a = array![f64::NAN, 1.];
         let b = array![2., 1.];
         assert!(a.cross_entropy(&b).unwrap().is_nan());
         assert!(b.cross_entropy(&a).unwrap().is_nan());
+        assert!(a.kullback_leibler_divergence(&b).unwrap().is_nan());
+        assert!(b.kullback_leibler_divergence(&a).unwrap().is_nan());
     }
 
     #[test]
-    fn test_cross_entropy_with_dimension_mismatch() {
+    fn test_cross_entropy_and_kl_with_dimension_mismatch() {
         let p = array![f64::NAN, 1.];
         let q = array![2., 1., 5.];
         assert!(q.cross_entropy(&p).is_none());
         assert!(p.cross_entropy(&q).is_none());
+        assert!(q.kullback_leibler_divergence(&p).is_none());
+        assert!(p.kullback_leibler_divergence(&q).is_none());
     }
 
     #[test]
-    fn test_cross_entropy_with_empty_array_of_floats() {
+    fn test_cross_entropy_and_kl_with_empty_array_of_floats() {
         let p: Array1<f64> = array![];
         let q: Array1<f64> = array![];
         assert!(p.cross_entropy(&q).is_none());
+        assert!(p.kullback_leibler_divergence(&q).is_none());
     }
 
     #[test]
-    fn test_cross_entropy_with_negative_qs() {
+    fn test_cross_entropy_and_kl_with_negative_qs() {
         let p = array![1.];
         let q = array![-1.];
         let cross_entropy: f64 = p.cross_entropy(&q).unwrap();
+        let kl_divergence: f64 = p.kullback_leibler_divergence(&q).unwrap();
         assert!(cross_entropy.is_nan());
+        assert!(kl_divergence.is_nan());
     }
 
     #[test]
@@ -251,17 +258,27 @@ mod tests {
     }
 
     #[test]
-    fn test_cross_entropy_with_zeroes_p() {
-        let p = array![0., 0.];
-        let q = array![0., 0.5];
-        assert_eq!(p.cross_entropy(&q).unwrap(), 0.);
+    #[should_panic]
+    fn test_kl_with_noisy_negative_qs() {
+        let p = array![n64(1.)];
+        let q = array![n64(-1.)];
+        p.kullback_leibler_divergence(&q);
     }
 
     #[test]
-    fn test_cross_entropy_with_zeroes_q() {
+    fn test_cross_entropy_and_kl_with_zeroes_p() {
+        let p = array![0., 0.];
+        let q = array![0., 0.5];
+        assert_eq!(p.cross_entropy(&q).unwrap(), 0.);
+        assert_eq!(p.kullback_leibler_divergence(&q).unwrap(), 0.);
+    }
+
+    #[test]
+    fn test_cross_entropy_and_kl_with_zeroes_q() {
         let p = array![0.5, 0.5];
         let q = array![0.5, 0.];
         assert_eq!(p.cross_entropy(&q).unwrap(), f64::INFINITY);
+        assert_eq!(p.kullback_leibler_divergence(&q).unwrap(), f64::INFINITY);
     }
 
     #[test]
@@ -285,5 +302,38 @@ mod tests {
         let expected_cross_entropy = 3.385347705020779;
 
         assert_abs_diff_eq!(p.cross_entropy(&q).unwrap(), expected_cross_entropy, epsilon = 1e-6);
+    }
+
+    #[test]
+    fn test_kl() {
+        // Arrays of probability values - normalized and positive.
+        let p: Array1<f64> = array![
+            0.00150472, 0.01388706, 0.03495376, 0.03264211, 0.03067355,
+            0.02183501, 0.00137516, 0.02213802, 0.02745017, 0.02163975,
+            0.0324602 , 0.03622766, 0.00782343, 0.00222498, 0.03028156,
+            0.02346124, 0.00071105, 0.00794496, 0.0127609 , 0.02899124,
+            0.01281487, 0.0230803 , 0.01531864, 0.00518158, 0.02233383,
+            0.0220279 , 0.03196097, 0.03710063, 0.01817856, 0.03524661,
+            0.02902393, 0.00853364, 0.01255615, 0.03556958, 0.00400151,
+            0.01335932, 0.01864965, 0.02371322, 0.02026543, 0.0035375 ,
+            0.01988341, 0.02621831, 0.03564644, 0.01389121, 0.03151622,
+            0.03195532, 0.00717521, 0.03547256, 0.00371394, 0.01108706,
+        ];
+        let q: Array1<f64> = array![
+            0.02038386, 0.03143914, 0.02630206, 0.0171595 , 0.0067072 ,
+            0.00911324, 0.02635717, 0.01269113, 0.0302361 , 0.02243133,
+            0.01902902, 0.01297185, 0.02118908, 0.03309548, 0.01266687,
+            0.0184529 , 0.01830936, 0.03430437, 0.02898924, 0.02238251,
+            0.0139771 , 0.01879774, 0.02396583, 0.03019978, 0.01421278,
+            0.02078981, 0.03542451, 0.02887438, 0.01261783, 0.01014241,
+            0.03263407, 0.0095969 , 0.01923903, 0.0051315 , 0.00924686,
+            0.00148845, 0.00341391, 0.01480373, 0.01920798, 0.03519871,
+            0.03315135, 0.02099325, 0.03251755, 0.00337555, 0.03432165,
+            0.01763753, 0.02038337, 0.01923023, 0.01438769, 0.02082707,
+        ];
+        // Computed using scipy.stats.entropy(p, q)
+        let expected_kl = 0.3555862567800096;
+
+        assert_abs_diff_eq!(p.kullback_leibler_divergence(&q).unwrap(), expected_kl, epsilon = 1e-6);
     }
 }
