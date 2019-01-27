@@ -63,7 +63,7 @@ pub trait EntropyExt<A, S, D>
     ///
     /// [Kullback-Leibler divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
-    fn kullback_leibler_divergence(&self, q: &Self) -> Option<A>
+    fn kl_divergence(&self, q: &Self) -> Option<A>
         where
             A: Float;
 
@@ -129,7 +129,7 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         }
     }
 
-    fn kullback_leibler_divergence(&self, q: &Self) -> Option<A>
+    fn kl_divergence(&self, q: &Self) -> Option<A>
         where
             A: Float
     {
@@ -217,8 +217,8 @@ mod tests {
         let b = array![2., 1.];
         assert!(a.cross_entropy(&b).unwrap().is_nan());
         assert!(b.cross_entropy(&a).unwrap().is_nan());
-        assert!(a.kullback_leibler_divergence(&b).unwrap().is_nan());
-        assert!(b.kullback_leibler_divergence(&a).unwrap().is_nan());
+        assert!(a.kl_divergence(&b).unwrap().is_nan());
+        assert!(b.kl_divergence(&a).unwrap().is_nan());
     }
 
     #[test]
@@ -227,8 +227,8 @@ mod tests {
         let q = array![2., 1., 5.];
         assert!(q.cross_entropy(&p).is_none());
         assert!(p.cross_entropy(&q).is_none());
-        assert!(q.kullback_leibler_divergence(&p).is_none());
-        assert!(p.kullback_leibler_divergence(&q).is_none());
+        assert!(q.kl_divergence(&p).is_none());
+        assert!(p.kl_divergence(&q).is_none());
     }
 
     #[test]
@@ -236,7 +236,7 @@ mod tests {
         let p: Array1<f64> = array![];
         let q: Array1<f64> = array![];
         assert!(p.cross_entropy(&q).is_none());
-        assert!(p.kullback_leibler_divergence(&q).is_none());
+        assert!(p.kl_divergence(&q).is_none());
     }
 
     #[test]
@@ -244,7 +244,7 @@ mod tests {
         let p = array![1.];
         let q = array![-1.];
         let cross_entropy: f64 = p.cross_entropy(&q).unwrap();
-        let kl_divergence: f64 = p.kullback_leibler_divergence(&q).unwrap();
+        let kl_divergence: f64 = p.kl_divergence(&q).unwrap();
         assert!(cross_entropy.is_nan());
         assert!(kl_divergence.is_nan());
     }
@@ -262,7 +262,7 @@ mod tests {
     fn test_kl_with_noisy_negative_qs() {
         let p = array![n64(1.)];
         let q = array![n64(-1.)];
-        p.kullback_leibler_divergence(&q);
+        p.kl_divergence(&q);
     }
 
     #[test]
@@ -270,7 +270,7 @@ mod tests {
         let p = array![0., 0.];
         let q = array![0., 0.5];
         assert_eq!(p.cross_entropy(&q).unwrap(), 0.);
-        assert_eq!(p.kullback_leibler_divergence(&q).unwrap(), 0.);
+        assert_eq!(p.kl_divergence(&q).unwrap(), 0.);
     }
 
     #[test]
@@ -278,7 +278,7 @@ mod tests {
         let p = array![0.5, 0.5];
         let q = array![0.5, 0.];
         assert_eq!(p.cross_entropy(&q).unwrap(), f64::INFINITY);
-        assert_eq!(p.kullback_leibler_divergence(&q).unwrap(), f64::INFINITY);
+        assert_eq!(p.kl_divergence(&q).unwrap(), f64::INFINITY);
     }
 
     #[test]
@@ -334,6 +334,6 @@ mod tests {
         // Computed using scipy.stats.entropy(p, q)
         let expected_kl = 0.3555862567800096;
 
-        assert_abs_diff_eq!(p.kullback_leibler_divergence(&q).unwrap(), expected_kl, epsilon = 1e-6);
+        assert_abs_diff_eq!(p.kl_divergence(&q).unwrap(), expected_kl, epsilon = 1e-6);
     }
 }
