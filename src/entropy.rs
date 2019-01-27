@@ -37,6 +37,36 @@ pub trait EntropyExt<A, S, D>
     where
         A: Float;
 
+    /// Computes the [Kullback-Leibler divergence] *Dₖₗ(p,q)* between two arrays,
+    /// where `self`=*p*.
+    ///
+    /// The Kullback-Leibler divergence is defined as:
+    ///
+    /// ```text
+    ///              n
+    /// Dₖₗ(p,q) = - ∑ pᵢ ln(qᵢ/pᵢ)
+    ///             i=1
+    /// ```
+    ///
+    /// If the arrays are empty or their lengths are not equal, `None` is returned.
+    ///
+    /// **Panics** if any element in *q* is negative and taking the logarithm of a negative number
+    /// is a panic cause for `A`.
+    ///
+    /// ## Remarks
+    ///
+    /// The Kullback-Leibler divergence is a measure used in [Information Theory]
+    /// to describe the relationship between two probability distribution: it only make sense
+    /// when each array sums to 1 with entries between 0 and 1 (extremes included).
+    ///
+    /// By definition, *pᵢ ln(qᵢ/pᵢ)* is set to 0 if *pᵢ* is 0.
+    ///
+    /// [Kullback-Leibler divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
+    /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
+    fn kullback_leibler_divergence(&self, q: &Self) -> Option<A>
+        where
+            A: Float;
+
     /// Computes the [cross entropy] *H(p,q)* between two arrays,
     /// where `self`=*p*.
     ///
@@ -96,6 +126,26 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
                 }
             ).sum();
             Some(-entropy)
+        }
+    }
+
+    fn kullback_leibler_divergence(&self, q: &Self) -> Option<A>
+        where
+            A: Float
+    {
+        if (self.len() == 0) | (self.len() != q.len()) {
+            None
+        } else {
+            let kl_divergence: A = self.iter().zip(q.iter()).map(
+                |(p, q)| {
+                    if *p == A::zero() {
+                        A::zero()
+                    } else {
+                        *p * (*q / *p).ln()
+                    }
+                }
+            ).collect::<Array1<A>>().sum();
+            Some(-kl_divergence)
         }
     }
 
