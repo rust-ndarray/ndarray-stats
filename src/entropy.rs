@@ -158,4 +158,35 @@ mod tests {
 
         assert_abs_diff_eq!(a.entropy().unwrap(), expected_entropy, epsilon = 1e-6);
     }
+
+    #[test]
+    fn test_cross_entropy_with_nan_values() {
+        let a = array![f64::NAN, 1.];
+        let b = array![2., 1.];
+        assert!(a.cross_entropy(&b).unwrap().is_nan());
+        assert!(b.cross_entropy(&a).unwrap().is_nan());
+    }
+
+    #[test]
+    fn test_cross_entropy_with_dimension_mismatch() {
+        let p = array![f64::NAN, 1.];
+        let q = array![2., 1., 5.];
+        assert!(q.cross_entropy(&p).is_none());
+        assert!(p.cross_entropy(&q).is_none());
+    }
+
+    #[test]
+    fn test_cross_entropy_with_empty_array_of_floats() {
+        let p: Array1<f64> = array![];
+        let q: Array1<f64> = array![];
+        assert!(p.cross_entropy(&q).is_none());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_cross_entropy_with_negative_qs() {
+        let p = array![2., 1., 5.];
+        let q = array![2., -1., 5.];
+        assert!(p.cross_entropy(&q).is_none());
+    }
 }
