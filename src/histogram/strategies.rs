@@ -43,9 +43,10 @@ pub trait BinsBuildingStrategy
     /// that has learned the required parameter to build a collection of [`Bins`].
     ///
     /// [`Bins`]: ../struct.Bins.html
-    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Self
+    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Option<Self>
     where
-        S: Data<Elem=Self::Elem>;
+        S: Data<Elem=Self::Elem>,
+        Self: std::marker::Sized;
 
     /// Returns a [`Bins`] instance, built accordingly to the parameters
     /// inferred from observations in [`from_array`].
@@ -181,8 +182,8 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `None` if the array is constant or if `a.len()==0`.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
         S: Data<Elem=Self::Elem>
     {
@@ -192,7 +193,7 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
         let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        Some(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -220,8 +221,8 @@ impl<T> BinsBuildingStrategy for Rice<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `None` if the array is constant or if `a.len()==0`.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
         S: Data<Elem=Self::Elem>
     {
@@ -231,7 +232,7 @@ impl<T> BinsBuildingStrategy for Rice<T>
         let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        Some(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -259,8 +260,8 @@ impl<T> BinsBuildingStrategy for Sturges<T>
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `None` if the array is constant or if `a.len()==0`.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
         S: Data<Elem=Self::Elem>
     {
@@ -270,7 +271,7 @@ impl<T> BinsBuildingStrategy for Sturges<T>
         let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        Some(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -298,8 +299,8 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0` or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `None` if `IQR==0` or if `a.len()==0`.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
         S: Data<Elem=Self::Elem>
     {
@@ -314,7 +315,7 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
         let min = a_copy.min().unwrap().clone();
         let max = a_copy.max().unwrap().clone();
         let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        Some(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -349,21 +350,32 @@ impl<T> BinsBuildingStrategy for Auto<T>
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0`, the array is constant, or `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `None` if `IQR==0` and the array is constant or `a.len()==0`.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
         S: Data<Elem=Self::Elem>
     {
         let fd_builder = FreedmanDiaconis::from_array(&a);
         let sturges_builder = Sturges::from_array(&a);
-        let builder = {
-            if fd_builder.bin_width() > sturges_builder.bin_width() {
-                SturgesOrFD::Sturges(sturges_builder)
-            } else {
-                SturgesOrFD::FreedmanDiaconis(fd_builder)
-            }
-        };
-        Self { builder }
+        match (fd_builder, sturges_builder) {
+            (None, None) => None,
+            (None, Some(sturges_builder)) => {
+                let builder = SturgesOrFD::Sturges(sturges_builder);
+                Some(Self { builder })
+            },
+            (Some(fd_builder), None) => {
+                let builder = SturgesOrFD::FreedmanDiaconis(fd_builder);
+                Some(Self { builder })
+            },
+            (Some(fd_builder), Some(sturges_builder)) => {
+                let builder = if fd_builder.bin_width() > sturges_builder.bin_width() {
+                    SturgesOrFD::Sturges(sturges_builder)
+                } else {
+                    SturgesOrFD::FreedmanDiaconis(fd_builder)
+                };
+                Some(Self { builder })
+            },
+        }
     }
 
     fn build(&self) -> Bins<T> {

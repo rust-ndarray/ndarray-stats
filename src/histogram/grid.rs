@@ -162,15 +162,15 @@ where
     ///
     /// [`Grid`]: struct.Grid.html
     /// [`strategy`]: strategies/index.html
-    pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Self
+    pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Option<Self>
     where
         S: Data<Elem=A>,
     {
-        let bin_builders = array
+        let bin_builders: Option<Vec<B>> = array
             .axis_iter(Axis(1))
             .map(|data| B::from_array(&data))
             .collect();
-        Self { bin_builders }
+        bin_builders.map(|b| Self { bin_builders: b})
     }
 
     /// Returns a [`Grid`] instance, built accordingly to the specified [`strategy`]
