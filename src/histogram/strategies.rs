@@ -440,16 +440,14 @@ mod sqrt_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
     }
 
-    #[should_panic]
     #[test]
     fn empty_arrays_cause_panic() {
-        let _: Sqrt<usize> = Sqrt::from_array(&array![]);
+        assert!(Sqrt::<usize>::from_array(&array![]).is_none());
     }
 }
 
@@ -458,16 +456,14 @@ mod rice_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
     }
 
-    #[should_panic]
     #[test]
     fn empty_arrays_cause_panic() {
-        let _: Rice<usize> = Rice::from_array(&array![]);
+        assert!(Rice::<usize>::from_array(&array![]).is_none());
     }
 }
 
@@ -476,16 +472,14 @@ mod sturges_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
     }
 
-    #[should_panic]
     #[test]
     fn empty_arrays_cause_panic() {
-        let _: Sturges<usize> = Sturges::from_array(&array![]);
+        assert!(Sturges::<usize>::from_array(&array![]).is_none());
     }
 }
 
@@ -494,22 +488,23 @@ mod fd_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
     }
 
-    #[should_panic]
     #[test]
     fn zero_iqr_causes_panic() {
-        FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]);
+        assert!(
+            FreedmanDiaconis::from_array(
+                &array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]
+            ).is_none()
+        );
     }
 
-    #[should_panic]
     #[test]
     fn empty_arrays_cause_panic() {
-        let _: FreedmanDiaconis<usize> = FreedmanDiaconis::from_array(&array![]);
+        assert!(FreedmanDiaconis::<usize>::from_array(&array![]).is_none());
     }
 }
 
@@ -518,21 +513,20 @@ mod auto_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
     }
 
-    #[should_panic]
     #[test]
     fn zero_iqr_causes_panic() {
-        Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]);
+        assert!(Auto::from_array(
+            &array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]
+        ).is_none());
     }
 
-    #[should_panic]
     #[test]
     fn empty_arrays_cause_panic() {
-        let _: Auto<usize> = Auto::from_array(&array![]);
+        assert!(Auto::<usize>::from_array(&array![]).is_none());
     }
 }
