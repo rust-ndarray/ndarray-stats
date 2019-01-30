@@ -144,11 +144,14 @@ impl<T> EquiSpaced<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
-    /// **Panics** if `bin_width<=0`.
-    fn new(bin_width: T, min: T, max: T) -> Self
+    /// Returns `None` if `bin_width<=0`.
+    fn new(bin_width: T, min: T, max: T) -> Option<Self>
     {
-        assert!(bin_width > T::zero());
-        Self { bin_width, min, max }
+        if bin_width > T::zero() {
+            None
+        } else {
+            Some(Self { bin_width, min, max })
+        }
     }
 
     fn build(&self) -> Bins<T> {
@@ -193,7 +196,7 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
         let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
-        Some(Self { builder })
+        builder.map(|b| Self {builder: b})
     }
 
     fn build(&self) -> Bins<T> {
@@ -232,7 +235,7 @@ impl<T> BinsBuildingStrategy for Rice<T>
         let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
-        Some(Self { builder })
+        builder.map(|b| Self {builder: b})
     }
 
     fn build(&self) -> Bins<T> {
@@ -271,7 +274,7 @@ impl<T> BinsBuildingStrategy for Sturges<T>
         let max = a.max().unwrap().clone();
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
         let builder = EquiSpaced::new(bin_width, min, max);
-        Some(Self { builder })
+        builder.map(|b| Self {builder: b})
     }
 
     fn build(&self) -> Bins<T> {
@@ -315,7 +318,7 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
         let min = a_copy.min().unwrap().clone();
         let max = a_copy.max().unwrap().clone();
         let builder = EquiSpaced::new(bin_width, min, max);
-        Some(Self { builder })
+        builder.map(|b| Self {builder: b})
     }
 
     fn build(&self) -> Bins<T> {
