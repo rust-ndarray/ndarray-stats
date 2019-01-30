@@ -317,6 +317,9 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
         S: Data<Elem=Self::Elem>
     {
         let n_points = a.len();
+        if n_points == 0 {
+            return None
+        }
 
         let mut a_copy = a.to_owned();
         let first_quartile = a_copy.quantile_mut::<Nearest>(0.25).unwrap();
@@ -324,10 +327,13 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
         let iqr = third_quartile - first_quartile;
 
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
-        let min = a_copy.min().unwrap().clone();
-        let max = a_copy.max().unwrap().clone();
-        let builder = EquiSpaced::new(bin_width, min, max);
-        builder.map(|b| Self {builder: b})
+        match (a.min(), a.max()) {
+            (Some(min), Some(max)) => {
+                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
+                builder.map(|b| Self { builder: b })
+            },
+            _ => None,
+        }
     }
 
     fn build(&self) -> Bins<T> {
