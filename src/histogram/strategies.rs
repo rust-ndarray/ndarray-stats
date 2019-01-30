@@ -62,6 +62,7 @@ pub trait BinsBuildingStrategy
     fn n_bins(&self) -> usize;
 }
 
+#[derive(Debug)]
 struct EquiSpaced<T> {
     bin_width: T,
     min: T,
@@ -74,6 +75,7 @@ struct EquiSpaced<T> {
 /// Let `n` be the number of observations. Then
 ///
 /// `n_bins` = `sqrt(n)`
+#[derive(Debug)]
 pub struct Sqrt<T> {
     builder: EquiSpaced<T>,
 }
@@ -87,6 +89,7 @@ pub struct Sqrt<T> {
 ///
 /// `n_bins` is only proportional to cube root of `n`. It tends to overestimate
 /// the `n_bins` and it does not take into account data variability.
+#[derive(Debug)]
 pub struct Rice<T> {
     builder: EquiSpaced<T>,
 }
@@ -99,6 +102,7 @@ pub struct Rice<T> {
 /// is too conservative for larger, non-normal datasets.
 ///
 /// This is the default method in R’s hist method.
+#[derive(Debug)]
 pub struct Sturges<T> {
     builder: EquiSpaced<T>,
 }
@@ -117,10 +121,12 @@ pub struct Sturges<T> {
 /// The [`IQR`] is very robust to outliers.
 ///
 /// [`IQR`]: https://en.wikipedia.org/wiki/Interquartile_range
+#[derive(Debug)]
 pub struct FreedmanDiaconis<T> {
     builder: EquiSpaced<T>,
 }
 
+#[derive(Debug)]
 enum SturgesOrFD<T> {
     Sturges(Sturges<T>),
     FreedmanDiaconis(FreedmanDiaconis<T>),
@@ -136,6 +142,7 @@ enum SturgesOrFD<T> {
 ///
 /// [`Sturges`]: struct.Sturges.html
 /// [`FreedmanDiaconis`]: struct.FreedmanDiaconis.html
+#[derive(Debug)]
 pub struct Auto<T> {
     builder: SturgesOrFD<T>,
 }
@@ -537,10 +544,10 @@ mod auto_tests {
     }
 
     #[test]
-    fn zero_iqr_causes_panic() {
+    fn zero_iqr_is_handled_by_sturged() {
         assert!(Auto::from_array(
             &array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]
-        ).is_none());
+        ).is_some());
     }
 
     #[test]
