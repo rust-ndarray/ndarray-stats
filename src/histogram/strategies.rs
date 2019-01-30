@@ -453,10 +453,14 @@ where
 mod equispaced_tests {
     use super::*;
 
-    #[should_panic]
     #[test]
     fn bin_width_has_to_be_positive() {
-        EquiSpaced::new(0, 0, 200);
+        assert!(EquiSpaced::new(0, 0, 200).is_none());
+    }
+
+    #[test]
+    fn min_has_to_be_strictly_smaller_than_max() {
+        assert!(EquiSpaced::new(10, 0, 0).is_none());
     }
 }
 
