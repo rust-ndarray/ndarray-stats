@@ -123,7 +123,7 @@ pub trait HistogramExt<A, S>
     ///     [n64(-1.), n64(-0.5)],
     ///     [n64(0.5), n64(-1.)]
     /// ];
-    /// let grid = GridBuilder::<Sqrt<N64>>::from_array(&observations).build();
+    /// let grid = GridBuilder::<Sqrt<N64>>::from_array(&observations).unwrap().build();
     /// let expected_grid = Grid::from(
     ///     vec![
     ///         Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.), n64(2.)])),

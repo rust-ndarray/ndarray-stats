@@ -54,7 +54,7 @@ use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
 ///
 /// // The optimal grid layout is inferred from the data,
 /// // specifying a strategy (Auto in this case)
-/// let grid = GridBuilder::<Auto<usize>>::from_array(&observations).build();
+/// let grid = GridBuilder::<Auto<usize>>::from_array(&observations).unwrap().build();
 /// let expected_grid = Grid::from(vec![Bins::new(Edges::from(vec![1, 20, 39, 58, 77, 96, 115]))]);
 /// assert_eq!(grid, expected_grid);
 ///
