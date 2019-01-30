@@ -147,7 +147,7 @@ impl<T> EquiSpaced<T>
     /// Returns `None` if `bin_width<=0` or `min` >= `max`.
     fn new(bin_width: T, min: T, max: T) -> Option<Self>
     {
-        if (bin_width > T::zero()) | (min < max) {
+        if (bin_width <= T::zero()) | (min >= max) {
             None
         } else {
             Some(Self { bin_width, min, max })
