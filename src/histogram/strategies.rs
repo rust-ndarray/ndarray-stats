@@ -144,10 +144,10 @@ impl<T> EquiSpaced<T>
     where
         T: Ord + Clone + FromPrimitive + NumOps + Zero
 {
-    /// Returns `None` if `bin_width<=0`.
+    /// Returns `None` if `bin_width<=0` or `min` >= `max`.
     fn new(bin_width: T, min: T, max: T) -> Option<Self>
     {
-        if bin_width > T::zero() {
+        if (bin_width > T::zero()) | (min < max) {
             None
         } else {
             Some(Self { bin_width, min, max })
@@ -192,11 +192,14 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
-        let min = a.min().unwrap().clone();
-        let max = a.max().unwrap().clone();
-        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-        let builder = EquiSpaced::new(bin_width, min, max);
-        builder.map(|b| Self {builder: b})
+        match (a.min(), a.max()) {
+            (Some(min), Some(max)) => {
+                let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
+                builder.map(|b| Self { builder: b })
+            },
+            _ => None,
+        }
     }
 
     fn build(&self) -> Bins<T> {
@@ -231,11 +234,14 @@ impl<T> BinsBuildingStrategy for Rice<T>
     {
         let n_elems = a.len();
         let n_bins = (2. * (n_elems as f64).powf(1./3.)).round() as usize;
-        let min = a.min().unwrap().clone();
-        let max = a.max().unwrap().clone();
-        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-        let builder = EquiSpaced::new(bin_width, min, max);
-        builder.map(|b| Self {builder: b})
+        match (a.min(), a.max()) {
+            (Some(min), Some(max)) => {
+                let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
+                builder.map(|b| Self { builder: b })
+            },
+            _ => None,
+        }
     }
 
     fn build(&self) -> Bins<T> {
@@ -270,11 +276,14 @@ impl<T> BinsBuildingStrategy for Sturges<T>
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
-        let min = a.min().unwrap().clone();
-        let max = a.max().unwrap().clone();
-        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-        let builder = EquiSpaced::new(bin_width, min, max);
-        builder.map(|b| Self {builder: b})
+        match (a.min(), a.max()) {
+            (Some(min), Some(max)) => {
+                let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
+                builder.map(|b| Self { builder: b })
+            },
+            _ => None,
+        }
     }
 
     fn build(&self) -> Bins<T> {
