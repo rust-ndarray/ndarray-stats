@@ -43,7 +43,7 @@ pub trait BinsBuildingStrategy
     /// that has learned the required parameter to build a collection of [`Bins`].
     ///
     /// It returns `None` if it is not possible to build a collection of [`Bins`] given
-    /// the observed data.
+    /// the observed data according to the chosen strategy.
     ///
     /// [`Bins`]: ../struct.Bins.html
     fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Option<Self>
