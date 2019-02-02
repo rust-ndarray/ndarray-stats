@@ -160,6 +160,9 @@ where
     /// it returns a `GridBuilder` instance that has learned the required parameter
     /// to build a [`Grid`] according to the specified [`strategy`].
     ///
+    /// It returns `None` if it is not possible to build a [`Grid`] given
+    /// the observed data according to the chosen [`strategy`].
+    ///
     /// [`Grid`]: struct.Grid.html
     /// [`strategy`]: strategies/index.html
     pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Option<Self>
