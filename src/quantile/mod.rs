@@ -1,5 +1,5 @@
 use self::interpolate::Interpolate;
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeSet};
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis, Slice};
 use std::cmp;
@@ -274,12 +274,12 @@ where
     {
         assert!((0. <= q) && (q <= 1.));
         let axis_len = self.len_of(axis);
-        let mut searched_indexes: Vec<usize> = vec![];
+        let mut searched_indexes = BTreeSet::new();
         if I::needs_lower(q, axis_len) {
-            searched_indexes.push(I::lower_index(q, axis_len));
+            searched_indexes.insert(I::lower_index(q, axis_len));
         }
         if I::needs_higher(q, axis_len) {
-            searched_indexes.push(I::higher_index(q, axis_len));
+            searched_indexes.insert(I::higher_index(q, axis_len));
         }
 
         let mut quantiles = HashMap::new();
