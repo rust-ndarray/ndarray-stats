@@ -164,6 +164,13 @@ where
         S: DataMut,
         I: Interpolate<A>;
 
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[f64]) -> Vec<Array<A, D::Smaller>>
+        where
+            D: RemoveAxis,
+            A: Ord + Clone,
+            S: DataMut,
+            I: Interpolate<A>;
+
     /// Return the `q`th quantile of the data along the specified axis, skipping NaN values.
     ///
     /// See [`quantile_axis_mut`](##tymethod.quantile_axis_mut) for details.
@@ -265,21 +272,28 @@ where
         }))
     }
 
-    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
-    where
-        D: RemoveAxis,
-        A: Ord + Clone,
-        S: DataMut,
-        I: Interpolate<A>,
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[f64]) -> Vec<Array<A, D::Smaller>>
+        where
+            D: RemoveAxis,
+            A: Ord + Clone,
+            S: DataMut,
+            I: Interpolate<A>,
     {
-        assert!((0. <= q) && (q <= 1.));
+        assert!(qs.iter().all(|x| (0. <= *x) && (*x <= 1.)));
+
+        let mut deduped_qs: Vec<f64> = qs.to_vec();
+        deduped_qs.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        deduped_qs.dedup();
+
         let axis_len = self.len_of(axis);
         let mut searched_indexes = BTreeSet::new();
-        if I::needs_lower(q, axis_len) {
-            searched_indexes.insert(I::lower_index(q, axis_len));
-        }
-        if I::needs_higher(q, axis_len) {
-            searched_indexes.insert(I::higher_index(q, axis_len));
+        for q in deduped_qs.iter() {
+            if I::needs_lower(*q, axis_len) {
+                searched_indexes.insert(I::lower_index(*q, axis_len));
+            }
+            if I::needs_higher(*q, axis_len) {
+                searched_indexes.insert(I::higher_index(*q, axis_len));
+            }
         }
 
         let mut quantiles = HashMap::new();
@@ -289,7 +303,7 @@ where
             let relative_index = index - previous_index;
             let quantile = Some(
                 search_space.map_axis_mut(
-                    axis, 
+                    axis,
                     |mut x| x.sorted_get_mut(relative_index))
             );
             quantiles.insert(index, quantile);
@@ -297,18 +311,33 @@ where
             search_space.slice_axis_inplace(axis, Slice::from(relative_index..));
         }
 
-        I::interpolate(
-            match I::needs_lower(q, axis_len) {
-                true => quantiles.get(&I::lower_index(q, axis_len)).unwrap().clone(),
-                false => None,
-            },
-            match I::needs_higher(q, axis_len) {
-                true => quantiles.get(&I::higher_index(q, axis_len)).unwrap().clone(),
-                false => None,
-            },
-            q,
-            axis_len
-        )
+        let mut results = vec![];
+        for q in qs {
+            let result = I::interpolate(
+                match I::needs_lower(*q, axis_len) {
+                    true => quantiles.get(&I::lower_index(*q, axis_len)).unwrap().clone(),
+                    false => None,
+                },
+                match I::needs_higher(*q, axis_len) {
+                    true => quantiles.get(&I::higher_index(*q, axis_len)).unwrap().clone(),
+                    false => None,
+                },
+                *q,
+                axis_len
+            );
+            results.push(result);
+        }
+        results
+    }
+
+    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    where
+        D: RemoveAxis,
+        A: Ord + Clone,
+        S: DataMut,
+        I: Interpolate<A>,
+    {
+        self.quantiles_axis_mut::<I>(axis, &[q]).into_iter().next().unwrap()
     }
 
     fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
