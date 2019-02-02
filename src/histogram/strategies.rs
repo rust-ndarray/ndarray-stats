@@ -42,6 +42,9 @@ pub trait BinsBuildingStrategy
     /// Given some observations in a 1-dimensional array it returns a `BinsBuildingStrategy`
     /// that has learned the required parameter to build a collection of [`Bins`].
     ///
+    /// It returns `None` if it is not possible to build a collection of [`Bins`] given
+    /// the observed data.
+    ///
     /// [`Bins`]: ../struct.Bins.html
     fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Option<Self>
     where
