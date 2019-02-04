@@ -1,5 +1,6 @@
 use ndarray::prelude::*;
 use ndarray::{s, Data, DataMut};
+use std::collections::HashMap;
 use rand::prelude::*;
 use rand::thread_rng;
 
@@ -28,6 +29,11 @@ where
     ///
     /// **Panics** if `i` is greater than or equal to `n`.
     fn sorted_get_mut(&mut self, i: usize) -> A
+    where
+        A: Ord + Clone,
+        S: DataMut;
+
+    fn sorted_get_many_mut(&mut self, is: &[usize]) -> HashMap<usize, A>
     where
         A: Ord + Clone,
         S: DataMut;
@@ -84,6 +90,20 @@ where
         }
     }
 
+    fn sorted_get_many_mut(&mut self, indexes: &[usize]) -> HashMap<usize, A>
+    where
+        A: Ord + Clone,
+        S: DataMut,
+    {
+        let mut deduped_indexes: Vec<usize> = is.to_vec();
+        deduped_indexes.sort_unstable();
+        deduped_indexes.dedup();
+
+        sorted_get_many_mut_unchecked(self, &deduped_indexes)
+    }
+
+
+
     fn partition_mut(&mut self, pivot_index: usize) -> usize
     where
         A: Ord + Clone,
@@ -121,4 +141,26 @@ where
         self.swap(0, i - 1);
         i - 1
     }
+}
+
+pub(crate) fn sorted_get_many_mut_unchecked<A, S>(
+    array: &mut ArrayBase<S, Ix1>, indexes: &[usize]) -> HashMap<usize, A>
+where
+    A: Ord + Clone,
+    S: DataMut<Elem=A>,
+{
+    let mut values = HashMap::new();
+
+    let mut previous_index = 0;
+    let mut search_space = array.view_mut();
+    for index in indexes.into_iter() {
+        let relative_index = index - previous_index;
+        let value = array.sorted_get_mut(relative_index);
+        values.insert(index, quantile);
+
+        previous_index = *index;
+        search_space.slice_axis_inplace(axis, Slice::from(relative_index..));
+    }
+
+    values
 }
