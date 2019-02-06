@@ -307,17 +307,17 @@ where
         for q in qs {
             let result = I::interpolate(
                 match I::needs_lower(*q, axis_len) {
-                    true => Some(
-                        values.map(
-                            |x| x.get(&I::lower_index(*q, axis_len)).unwrap().clone())
-                    ),
+                    true => {
+                        let lower_index = &I::lower_index(*q, axis_len);
+                        Some(values.map(|x| x.get(lower_index).unwrap().clone()))
+                    },
                     false => None,
                 },
                 match I::needs_higher(*q, axis_len) {
-                    true => Some(
-                        values.map(
-                            |x| x.get(&I::higher_index(*q, axis_len)).unwrap().clone())
-                    ),
+                    true => {
+                        let higher_index = &I::higher_index(*q, axis_len);
+                        Some(values.map(|x| x.get(higher_index).unwrap().clone()))
+                    },
                     false => None,
                 },
                 *q,
