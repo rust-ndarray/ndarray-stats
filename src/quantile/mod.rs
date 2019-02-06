@@ -1,9 +1,10 @@
 use self::interpolate::Interpolate;
-use std::collections::{HashMap, BTreeSet};
+use std::collections::BTreeSet;
 use ndarray::prelude::*;
-use ndarray::{Data, DataMut, RemoveAxis, Slice};
+use ndarray::{Data, DataMut, RemoveAxis};
 use std::cmp;
-use {MaybeNan, MaybeNanExt, Sort1dExt};
+use super::sort::sorted_get_many_mut_unchecked;
+use {MaybeNan, MaybeNanExt};
 
 /// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
@@ -295,31 +296,28 @@ where
                 searched_indexes.insert(I::higher_index(*q, axis_len));
             }
         }
+        let searched_indexes: Vec<usize> = searched_indexes.into_iter().collect();
 
-        let mut quantiles = HashMap::new();
-        let mut previous_index = 0;
-        let mut search_space = self.view_mut();
-        for index in searched_indexes.into_iter() {
-            let relative_index = index - previous_index;
-            let quantile = Some(
-                search_space.map_axis_mut(
-                    axis,
-                    |mut x| x.sorted_get_mut(relative_index))
-            );
-            quantiles.insert(index, quantile);
-            previous_index = index;
-            search_space.slice_axis_inplace(axis, Slice::from(relative_index..));
-        }
+        let values = self.map_axis_mut(
+                axis,
+                |mut x| sorted_get_many_mut_unchecked(&mut x, &searched_indexes)
+        );
 
         let mut results = vec![];
         for q in qs {
             let result = I::interpolate(
                 match I::needs_lower(*q, axis_len) {
-                    true => quantiles.get(&I::lower_index(*q, axis_len)).unwrap().clone(),
+                    true => Some(
+                        values.map(
+                            |x| x.get(&I::lower_index(*q, axis_len)).unwrap().clone())
+                    ),
                     false => None,
                 },
                 match I::needs_higher(*q, axis_len) {
-                    true => quantiles.get(&I::higher_index(*q, axis_len)).unwrap().clone(),
+                    true => Some(
+                        values.map(
+                            |x| x.get(&I::higher_index(*q, axis_len)).unwrap().clone())
+                    ),
                     false => None,
                 },
                 *q,

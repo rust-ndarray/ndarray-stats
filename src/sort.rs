@@ -95,7 +95,7 @@ where
         A: Ord + Clone,
         S: DataMut,
     {
-        let mut deduped_indexes: Vec<usize> = is.to_vec();
+        let mut deduped_indexes: Vec<usize> = indexes.to_vec();
         deduped_indexes.sort_unstable();
         deduped_indexes.dedup();
 
@@ -155,11 +155,11 @@ where
     let mut search_space = array.view_mut();
     for index in indexes.into_iter() {
         let relative_index = index - previous_index;
-        let value = array.sorted_get_mut(relative_index);
-        values.insert(index, quantile);
+        let value = search_space.sorted_get_mut(relative_index);
+        values.insert(*index, value);
 
         previous_index = *index;
-        search_space.slice_axis_inplace(axis, Slice::from(relative_index..));
+        search_space.slice_collapse(s![relative_index..]);
     }
 
     values
