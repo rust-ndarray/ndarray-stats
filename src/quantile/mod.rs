@@ -304,8 +304,8 @@ where
         let searched_indexes: Vec<usize> = searched_indexes.into_iter().collect();
 
         let values = self.map_axis_mut(
-                axis,
-                |mut x| sorted_get_many_mut_unchecked(&mut x, &searched_indexes)
+            axis,
+            |mut x| sorted_get_many_mut_unchecked(&mut x, &searched_indexes)
         );
 
         let mut results = HashMap::new();
