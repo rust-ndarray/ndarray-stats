@@ -1,10 +1,11 @@
 use self::interpolate::Interpolate;
 use super::sort::sorted_get_many_mut_unchecked;
 use std::cmp;
-use std::collections::{HashMap, BTreeSet};
+use std::collections::HashMap;
 use noisy_float::types::N64;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis};
+use indexmap::IndexSet;
 use {MaybeNan, MaybeNanExt};
 
 /// Quantile methods for `ArrayBase`.
@@ -288,7 +289,10 @@ where
         deduped_qs.dedup();
 
         let axis_len = self.len_of(axis);
-        let mut searched_indexes = BTreeSet::new();
+        // IndexSet preserves insertion order:
+        // - indexes will stay sorted;
+        // - we avoid index duplication.
+        let mut searched_indexes = IndexSet::new();
         for q in deduped_qs.iter() {
             if I::needs_lower(*q, axis_len) {
                 searched_indexes.insert(I::lower_index(*q, axis_len));
