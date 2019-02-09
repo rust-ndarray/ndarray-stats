@@ -28,12 +28,12 @@ where
     /// where n is the number of elements in the array.
     ///
     /// **Panics** if `i` is greater than or equal to `n`.
-    fn sorted_get_mut(&mut self, i: usize) -> A
+    fn get_from_sorted_mut(&mut self, i: usize) -> A
     where
         A: Ord + Clone,
         S: DataMut;
 
-    fn sorted_get_many_mut(&mut self, is: &[usize]) -> IndexMap<usize, A>
+    fn get_many_from_sorted_mut(&mut self, is: &[usize]) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
         S: DataMut;
@@ -67,7 +67,7 @@ impl<A, S> Sort1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
 {
-    fn sorted_get_mut(&mut self, i: usize) -> A
+    fn get_from_sorted_mut(&mut self, i: usize) -> A
     where
         A: Ord + Clone,
         S: DataMut,
@@ -80,17 +80,17 @@ where
             let pivot_index = rng.gen_range(0, n);
             let partition_index = self.partition_mut(pivot_index);
             if i < partition_index {
-                self.slice_mut(s![..partition_index]).sorted_get_mut(i)
+                self.slice_mut(s![..partition_index]).get_from_sorted_mut(i)
             } else if i == partition_index {
                 self[i].clone()
             } else {
                 self.slice_mut(s![partition_index + 1..])
-                    .sorted_get_mut(i - (partition_index + 1))
+                    .get_from_sorted_mut(i - (partition_index + 1))
             }
         }
     }
 
-    fn sorted_get_many_mut(&mut self, indexes: &[usize]) -> IndexMap<usize, A>
+    fn get_many_from_sorted_mut(&mut self, indexes: &[usize]) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -155,7 +155,7 @@ where
     let mut search_space = array.view_mut();
     for index in indexes.into_iter() {
         let relative_index = index - previous_index;
-        let value = search_space.sorted_get_mut(relative_index);
+        let value = search_space.get_from_sorted_mut(relative_index);
         values.insert(*index, value);
 
         previous_index = *index;

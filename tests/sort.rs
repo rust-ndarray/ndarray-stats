@@ -40,11 +40,11 @@ fn test_partition_mut() {
 #[test]
 fn test_sorted_get_mut() {
     let a = arr1(&[1, 3, 2, 10]);
-    let j = a.clone().view_mut().sorted_get_mut(2);
+    let j = a.clone().view_mut().get_from_sorted_mut(2);
     assert_eq!(j, 3);
-    let j = a.clone().view_mut().sorted_get_mut(1);
+    let j = a.clone().view_mut().get_from_sorted_mut(1);
     assert_eq!(j, 2);
-    let j = a.clone().view_mut().sorted_get_mut(3);
+    let j = a.clone().view_mut().get_from_sorted_mut(3);
     assert_eq!(j, 10);
 }
 
@@ -56,7 +56,7 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
     } else {
         let mut v = Array::from_vec(xs.clone());
         let indexes: Vec<usize> = (0..n).into_iter().collect();
-        let sorted_v: Vec<i64> = v.sorted_get_many_mut(&indexes)
+        let sorted_v: Vec<i64> = v.get_many_from_sorted_mut(&indexes)
                 .into_iter()
                 .map(|x| x.1)
                 .collect();
@@ -74,7 +74,7 @@ fn test_sorted_get_mut_as_sorting_algorithm(mut xs: Vec<i64>) -> bool {
         let mut v = Array::from_vec(xs.clone());
         let mut sorted_v = vec![];
         for i in 0..n {
-            sorted_v.push(v.sorted_get_mut(i))
+            sorted_v.push(v.get_from_sorted_mut(i))
         }
         xs.sort();
         xs == sorted_v
