@@ -1,6 +1,6 @@
 use ndarray::prelude::*;
 use ndarray::{s, Data, DataMut};
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use rand::prelude::*;
 use rand::thread_rng;
 
@@ -33,7 +33,7 @@ where
         A: Ord + Clone,
         S: DataMut;
 
-    fn sorted_get_many_mut(&mut self, is: &[usize]) -> HashMap<usize, A>
+    fn sorted_get_many_mut(&mut self, is: &[usize]) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
         S: DataMut;
@@ -90,7 +90,7 @@ where
         }
     }
 
-    fn sorted_get_many_mut(&mut self, indexes: &[usize]) -> HashMap<usize, A>
+    fn sorted_get_many_mut(&mut self, indexes: &[usize]) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -144,12 +144,12 @@ where
 }
 
 pub(crate) fn sorted_get_many_mut_unchecked<A, S>(
-    array: &mut ArrayBase<S, Ix1>, indexes: &[usize]) -> HashMap<usize, A>
+    array: &mut ArrayBase<S, Ix1>, indexes: &[usize]) -> IndexMap<usize, A>
 where
     A: Ord + Clone,
     S: DataMut<Elem=A>,
 {
-    let mut values = HashMap::new();
+    let mut values = IndexMap::new();
 
     let mut previous_index = 0;
     let mut search_space = array.view_mut();

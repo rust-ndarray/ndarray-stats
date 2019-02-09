@@ -1,11 +1,10 @@
 use self::interpolate::Interpolate;
 use super::sort::sorted_get_many_mut_unchecked;
 use std::cmp;
-use std::collections::HashMap;
 use noisy_float::types::N64;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis};
-use indexmap::IndexSet;
+use indexmap::{IndexSet, IndexMap};
 use {MaybeNan, MaybeNanExt};
 
 /// Quantile methods for `ArrayBase`.
@@ -167,7 +166,7 @@ where
         S: DataMut,
         I: Interpolate<A>;
 
-    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> HashMap<N64, Array<A, D::Smaller>>
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> IndexMap<N64, Array<A, D::Smaller>>
         where
             D: RemoveAxis,
             A: Ord + Clone,
@@ -275,7 +274,7 @@ where
         }))
     }
 
-    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> HashMap<N64, Array<A, D::Smaller>>
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> IndexMap<N64, Array<A, D::Smaller>>
         where
             D: RemoveAxis,
             A: Ord + Clone,
@@ -308,7 +307,7 @@ where
             |mut x| sorted_get_many_mut_unchecked(&mut x, &searched_indexes)
         );
 
-        let mut results = HashMap::new();
+        let mut results = IndexMap::new();
         for q in qs {
             let result = I::interpolate(
                 match I::needs_lower(*q, axis_len) {
@@ -407,7 +406,7 @@ where
         S: DataMut,
         I: Interpolate<A>;
 
-    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<HashMap<N64, A>>
+    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<IndexMap<N64, A>>
         where
             A: Ord + Clone,
             S: DataMut,
@@ -431,7 +430,7 @@ where
         }
     }
 
-    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<HashMap<N64, A>>
+    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<IndexMap<N64, A>>
         where
             A: Ord + Clone,
             S: DataMut,

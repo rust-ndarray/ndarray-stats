@@ -1,8 +1,11 @@
 extern crate ndarray;
 extern crate ndarray_stats;
+extern crate quickcheck;
+extern crate quickcheck_macros;
 
 use ndarray::prelude::*;
 use ndarray_stats::Sort1dExt;
+use quickcheck_macros::quickcheck;
 
 #[test]
 fn test_partition_mut() {
@@ -27,7 +30,7 @@ fn test_partition_mut() {
         for i in 0..partition_index {
             assert!(a[i] < pivot_value);
         }
-        assert!(a[partition_index] == pivot_value);
+        assert_eq!(a[partition_index], pivot_value);
         for j in (partition_index + 1)..n {
             assert!(pivot_value <= a[j]);
         }
@@ -43,4 +46,39 @@ fn test_sorted_get_mut() {
     assert_eq!(j, 2);
     let j = a.clone().view_mut().sorted_get_mut(3);
     assert_eq!(j, 10);
+}
+
+#[quickcheck]
+fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
+    let n = xs.len();
+    if n == 0 {
+        true
+    } else {
+        let mut v = Array::from_vec(xs.clone());
+        let indexes: Vec<usize> = (0..n).into_iter().collect();
+        let sorted_v: Vec<i64> = v.sorted_get_many_mut(&indexes)
+                .into_iter()
+                .map(|x| x.1)
+                .collect();
+        xs.sort();
+        // println!("xs: {:?}", xs);
+        // println!("sorted_v: {:?}", sorted_v);
+        xs == sorted_v
+    }
+}
+
+#[quickcheck]
+fn test_sorted_get_mut_as_sorting_algorithm(mut xs: Vec<i64>) -> bool {
+    let n = xs.len();
+    if n == 0 {
+        true
+    } else {
+        let mut v = Array::from_vec(xs.clone());
+        let mut sorted_v = vec![];
+        for i in 0..n {
+            sorted_v.push(v.sorted_get_mut(i))
+        }
+        xs.sort();
+        xs == sorted_v
+    }
 }
