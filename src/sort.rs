@@ -43,7 +43,7 @@ where
     /// **Panics** if any element in `indexes` is greater than or equal to `n`,
     /// where `n` is the length of the array..
     ///
-    /// [get_sorted_mut]:(##tymethod.get_from_sorted_mut)
+    /// [get_from_sorted_mut]: ##tymethod.get_from_sorted_mut
     fn get_many_from_sorted_mut(&mut self, indexes: &[usize]) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
@@ -163,7 +163,7 @@ where
 /// Useful when you have to call [get_many_from_sorted_mut] multiple times
 /// using the same indexes.
 ///
-/// [get_many_from_sorted_mut]:(##tymethod.get_many_from_sorted_mut)
+/// [get_many_from_sorted_mut]: ../trait.Sort1dExt.html#tymethod.get_many_from_sorted_mut
 pub(crate) fn get_many_from_sorted_mut_unchecked<A, S>(
     array: &mut ArrayBase<S, Ix1>, indexes: &[usize]) -> IndexMap<usize, A>
 where

@@ -166,6 +166,21 @@ where
         S: DataMut,
         I: Interpolate<A>;
 
+    /// A bulk version of [quantile_axis_mut], optimized to retrieve multiple
+    /// quantiles at once.
+    /// It returns an IndexMap, with (quantile index, quantile over axis) as
+    /// key-value pairs.
+    ///
+    /// The IndexMap is sorted with respect to quantile indexes in increasing order:
+    /// this ordering is preserved when you iterate over it (using `iter`/`into_iter`).
+    ///
+    /// See [quantile_axis_mut] for additional details on quantiles and the algorithm
+    /// used to retrieve them.
+    ///
+    /// **Panics** if `axis` is out of bounds, if the axis has length 0, or if
+    /// any `q` `qs` is not between `0.` and `1.` (inclusive).
+    ///
+    /// [quantile_axis_mut]: ##tymethod.quantile_axis_mut
     fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> IndexMap<N64, Array<A, D::Smaller>>
         where
             D: RemoveAxis,
@@ -421,7 +436,7 @@ where
     ///
     /// **Panics** if any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
-    /// [quantile_mut]:(##tymethod.quantile_mut)
+    /// [quantile_mut]: ##tymethod.quantile_mut
     fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<IndexMap<N64, A>>
         where
             A: Ord + Clone,
