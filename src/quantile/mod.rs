@@ -1,5 +1,5 @@
 use self::interpolate::Interpolate;
-use super::sort::sorted_get_many_mut_unchecked;
+use super::sort::get_many_from_sorted_mut_unchecked;
 use std::cmp;
 use noisy_float::types::N64;
 use ndarray::prelude::*;
@@ -304,7 +304,7 @@ where
 
         let values = self.map_axis_mut(
             axis,
-            |mut x| sorted_get_many_mut_unchecked(&mut x, &searched_indexes)
+            |mut x| get_many_from_sorted_mut_unchecked(&mut x, &searched_indexes)
         );
 
         let mut results = IndexMap::new();

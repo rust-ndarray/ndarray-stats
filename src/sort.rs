@@ -110,7 +110,7 @@ where
         deduped_indexes.sort_unstable();
         deduped_indexes.dedup();
 
-        sorted_get_many_mut_unchecked(self, &deduped_indexes)
+        get_many_from_sorted_mut_unchecked(self, &deduped_indexes)
     }
 
 
@@ -154,7 +154,17 @@ where
     }
 }
 
-pub(crate) fn sorted_get_many_mut_unchecked<A, S>(
+/// To retrieve multiple indexes from the sorted array in an optimized fashion,
+/// [get_many_from_sorted_mut] first of all sorts the `indexes` vector.
+///
+/// `get_many_from_sorted_mut_unchecked` does not perform this sorting,
+/// assuming that the user has already taken care of it.
+///
+/// Useful when you have to call [get_many_from_sorted_mut] multiple times
+/// using the same indexes.
+///
+/// [get_many_from_sorted_mut]:(##tymethod.get_many_from_sorted_mut)
+pub(crate) fn get_many_from_sorted_mut_unchecked<A, S>(
     array: &mut ArrayBase<S, Ix1>, indexes: &[usize]) -> IndexMap<usize, A>
 where
     A: Ord + Clone,
