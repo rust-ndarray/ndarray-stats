@@ -1,16 +1,18 @@
-#[macro_use(array)]
 extern crate ndarray;
 extern crate ndarray_stats;
-extern crate quickcheck;
 extern crate noisy_float;
+#[macro_use]
+extern crate quickcheck;
+extern crate quickcheck_macros;
 
-use noisy_float::types::n64;
+use noisy_float::types::{n64, N64};
 use ndarray::prelude::*;
+use ndarray::array;
 use ndarray_stats::{
-    interpolate::{Higher, Linear, Lower, Midpoint, Nearest},
+    interpolate::{Interpolate, Higher, Linear, Lower, Midpoint, Nearest},
     Quantile1dExt, QuantileExt,
 };
-use quickcheck::quickcheck;
+use quickcheck_macros::quickcheck;
 
 #[test]
 fn test_argmin() {
@@ -202,7 +204,45 @@ fn test_midpoint_overflow() {
     // Regression test
     // This triggered an overflow panic with a naive Midpoint implementation: (a+b)/2
     let mut a: Array1<u8> = array![129, 130, 130, 131];
-    let median = a.quantile_mut::<Midpoint>(0.5).unwrap();
+    let median = a.quantile_mut::<Midpoint>(n64(0.5)).unwrap();
     let expected_median = 130;
     assert_eq!(median, expected_median);
+}
+
+#[quickcheck]
+fn test_quantiles_mut(xs: Vec<i64>) -> bool {
+    let v = Array::from_vec(xs.clone());
+
+    // Unordered list of quantile indexes to look up, with a duplicate
+    let quantile_indexes = vec![
+        n64(0.75), n64(0.90), n64(0.95), n64(0.99), n64(1.),
+        n64(0.), n64(0.25), n64(0.5), n64(0.5)
+    ];
+    let mut checks = vec![];
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Linear>(v.clone(), &quantile_indexes));
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Higher>(v.clone(), &quantile_indexes));
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Lower>(v.clone(), &quantile_indexes));
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Midpoint>(v.clone(), &quantile_indexes));
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Nearest>(v.clone(), &quantile_indexes));
+    checks.into_iter().all(|x| x)
+}
+
+fn check_one_interpolation_method_for_quantiles_mut<I: Interpolate<i64>>(mut v: Array1<i64>, quantile_indexes: &[N64]) -> bool
+{
+    let bulk_quantiles = v.quantiles_mut::<I>(&quantile_indexes);
+
+    if v.len() == 0 {
+        bulk_quantiles.is_none()
+    } else {
+        let bulk_quantiles = bulk_quantiles.unwrap();
+
+        let mut checks = vec![];
+        for quantile_index in quantile_indexes.iter() {
+            let quantile = v.quantile_mut::<I>(*quantile_index).unwrap();
+            checks.push(
+                quantile == *bulk_quantiles.get(quantile_index).unwrap()
+            );
+        }
+        checks.into_iter().all(|x| x)
+    }
 }
