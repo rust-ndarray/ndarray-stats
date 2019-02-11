@@ -157,7 +157,9 @@ where
     /// - worst case: O(`m`^2);
     /// where `m` is the number of elements in the array.
     ///
-    /// **Panics** if `axis` is out of bounds, if the axis has length 0, or if
+    /// Returns `None` when the specified axis has length 0.
+    ///
+    /// **Panics** if `axis` is out of bounds or if
     /// `q` is not between `0.` and `1.` (inclusive).
     fn quantile_axis_mut<I>(&mut self, axis: Axis, q: N64) -> Option<Array<A, D::Smaller>>
     where
@@ -177,7 +179,9 @@ where
     /// See [quantile_axis_mut] for additional details on quantiles and the algorithm
     /// used to retrieve them.
     ///
-    /// **Panics** if `axis` is out of bounds, if the axis has length 0, or if
+    /// Returns `None` when the specified axis has length 0.
+    ///
+    /// **Panics** if `axis` is out of bounds or if
     /// any `q` `qs` is not between `0.` and `1.` (inclusive).
     ///
     /// [quantile_axis_mut]: ##tymethod.quantile_axis_mut
