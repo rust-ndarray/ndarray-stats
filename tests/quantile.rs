@@ -246,3 +246,66 @@ fn check_one_interpolation_method_for_quantiles_mut<I: Interpolate<i64>>(mut v: 
         checks.into_iter().all(|x| x)
     }
 }
+
+#[quickcheck]
+fn test_quantiles_axis_mut(xs: Vec<u64>) -> bool {
+    // We want a square matrix
+    let axis_length = (xs.len() as f64).sqrt().floor() as usize;
+    let xs = &xs[..axis_length.pow(2)];
+    let m = Array::from_vec(xs.to_vec())
+        .into_shape((axis_length, axis_length))
+        .unwrap();
+
+    // Unordered list of quantile indexes to look up, with a duplicate
+    let quantile_indexes = vec![
+        n64(0.75), n64(0.90), n64(0.95), n64(0.99), n64(1.),
+        n64(0.), n64(0.25), n64(0.5), n64(0.5)
+    ];
+
+    // Test out all interpolation methods
+    let mut checks = vec![];
+    checks.push(
+        check_one_interpolation_method_for_quantiles_axis_mut::<Linear>(
+            m.clone(), &quantile_indexes, Axis(0)
+        )
+    );
+    checks.push(
+        check_one_interpolation_method_for_quantiles_axis_mut::<Higher>(
+            m.clone(), &quantile_indexes, Axis(0)
+        )
+    );
+    checks.push(
+        check_one_interpolation_method_for_quantiles_axis_mut::<Lower>(
+            m.clone(), &quantile_indexes, Axis(0)
+        )
+    );
+    checks.push(
+        check_one_interpolation_method_for_quantiles_axis_mut::<Midpoint>(
+            m.clone(), &quantile_indexes, Axis(0)
+        )
+    );
+    checks.push(
+        check_one_interpolation_method_for_quantiles_axis_mut::<Nearest>(
+            m.clone(), &quantile_indexes, Axis(0)
+        )
+    );
+    checks.into_iter().all(|x| x)
+}
+
+fn check_one_interpolation_method_for_quantiles_axis_mut<I: Interpolate<u64>>(mut v: Array2<u64>, quantile_indexes: &[N64], axis: Axis) -> bool
+{
+    let bulk_quantiles = v.quantiles_axis_mut::<I>(axis, &quantile_indexes);
+
+    if v.len() == 0 {
+        true
+    } else {
+        let mut checks = vec![];
+        for quantile_index in quantile_indexes.iter() {
+            let quantile = v.quantile_axis_mut::<I>(axis, *quantile_index);
+            checks.push(
+                quantile == *bulk_quantiles.get(quantile_index).unwrap()
+            );
+        }
+        checks.into_iter().all(|x| x)
+    }
+}
