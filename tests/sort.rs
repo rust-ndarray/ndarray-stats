@@ -55,7 +55,11 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
         true
     } else {
         let mut v = Array::from_vec(xs.clone());
-        let indexes: Vec<usize> = (0..n).into_iter().collect();
+
+        // Insert each index twice, to get a set of indexes with duplicates, not sorted
+        let mut indexes: Vec<usize> = (0..n).into_iter().collect();
+        indexes.append(&mut (0..n).into_iter().collect());
+
         let sorted_v: Vec<i64> = v.get_many_from_sorted_mut(&indexes)
                 .into_iter()
                 .map(|x| x.1)
