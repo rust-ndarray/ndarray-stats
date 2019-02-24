@@ -6,6 +6,7 @@ use ndarray::prelude::*;
 use ndarray_stats::{
     interpolate::{Higher, Linear, Lower, Midpoint, Nearest},
     QuantileExt,
+    Quantile1dExt,
 };
 
 #[test]
@@ -147,4 +148,14 @@ fn test_quantile_axis_skipnan_mut_linear_opt_i32() {
     assert_eq!(q.shape(), &[2]);
     assert_eq!(q[0], Some(3));
     assert!(q[1].is_none());
+}
+
+#[test]
+fn test_midpoint_overflow() {
+    // Regression test
+    // This triggered an overflow panic with a naive Midpoint implementation: (a+b)/2
+    let mut a: Array1<u8> = array![129, 130, 130, 131];
+    let median = a.quantile_mut::<Midpoint>(0.5).unwrap();
+    let expected_median = 130;
+    assert_eq!(median, expected_median);
 }
