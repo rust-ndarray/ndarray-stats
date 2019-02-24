@@ -6,8 +6,7 @@
 //! - [`partitioning`];
 //! - [`correlation analysis`] (covariance, pearson correlation);
 //! - [`histogram computation`].
-//
-//! !
+//!
 //! Please feel free to contribute new functionality! A roadmap can be found [`here`].
 //!
 //! Our work is inspired by other existing statistical packages such as
