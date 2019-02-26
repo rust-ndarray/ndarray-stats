@@ -9,7 +9,6 @@ pub mod interpolate {
     use ndarray::azip;
     use ndarray::prelude::*;
     use num_traits::{FromPrimitive, ToPrimitive, NumOps};
-    use std::ops::{Add, Div, Sub};
 
     /// Used to provide an interpolation strategy to [`quantile_axis_mut`].
     ///
