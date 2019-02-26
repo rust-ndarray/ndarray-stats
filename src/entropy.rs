@@ -148,7 +148,7 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         A: Float,
         S2: Data<Elem=A>,
     {
-        if (self.len() == 0) | (self.len() != q.len()) {
+        if (self.len() == 0) | (self.shape() != q.shape()) {
             None
         } else {
             let kl_divergence: A = self.iter().zip(q.iter()).map(
@@ -169,7 +169,7 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         S2: Data<Elem=A>,
         A: Float,
     {
-        if (self.len() == 0) | (self.len() != q.len()) {
+        if (self.len() == 0) | (self.shape() != q.shape()) {
             None
         } else {
             let cross_entropy: A = self.iter().zip(q.iter()).map(
@@ -238,9 +238,28 @@ mod tests {
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_dimension_mismatch() {
+    fn test_cross_entropy_and_kl_with_same_n_dimension_but_different_n_elements() {
         let p = array![f64::NAN, 1.];
         let q = array![2., 1., 5.];
+        assert!(q.cross_entropy(&p).is_none());
+        assert!(p.cross_entropy(&q).is_none());
+        assert!(q.kl_divergence(&p).is_none());
+        assert!(p.kl_divergence(&q).is_none());
+    }
+
+    #[test]
+    fn test_cross_entropy_and_kl_with_different_shape_but_same_n_elements() {
+        // p: 3x2, 6 elements
+        let p = array![
+            [f64::NAN, 1.],
+            [6., 7.],
+            [10., 20.]
+        ];
+        // q: 2x3, 6 elements
+        let q = array![
+            [2., 1., 5.],
+            [1., 1., 7.],
+        ];
         assert!(q.cross_entropy(&p).is_none());
         assert!(p.cross_entropy(&q).is_none());
         assert!(q.kl_divergence(&p).is_none());
