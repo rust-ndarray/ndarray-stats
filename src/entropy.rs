@@ -145,11 +145,11 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
             None
         } else {
             let kl_divergence: A = self.iter().zip(q.iter()).map(
-                |(p, q)| {
-                    if *p == A::zero() {
+                |(&p, &q)| {
+                    if p == A::zero() {
                         A::zero()
                     } else {
-                        *p * (*q / *p).ln()
+                        p * (q / p).ln()
                     }
                 }
             ).collect::<Array1<A>>().sum();
