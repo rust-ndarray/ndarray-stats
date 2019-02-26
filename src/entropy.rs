@@ -107,8 +107,9 @@ pub trait EntropyExt<A, S, D>
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
     /// [optimization problems]: https://en.wikipedia.org/wiki/Cross-entropy_method
     /// [machine learning]: https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_error_function_and_logistic_regression
-    fn cross_entropy(&self, q: &Self) -> Option<A>
+    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
     where
+        S2: Data<Elem=A>,
         A: Float;
 }
 
@@ -159,9 +160,10 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         }
     }
 
-    fn cross_entropy(&self, q: &Self) -> Option<A>
-        where
-            A: Float
+    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    where
+        S2: Data<Elem=A>,
+        A: Float,
     {
         if (self.len() == 0) | (self.len() != q.len()) {
             None
