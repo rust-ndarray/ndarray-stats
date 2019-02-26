@@ -78,6 +78,16 @@ impl<A: Ord> Histogram<A> {
     pub fn grid(&self) -> &Grid<A> {
         &self.grid
     }
+
+    /// Returns the cumulative distribution function of a histogram. 
+    /// Equivalent to the numpy histogram function cumsum
+    pub fn cumulative_sum(&self) -> ArrayD<usize> {
+        let mut total = 0;
+        self.counts.mapv(|x| {
+            total += x;
+            total
+        })
+    }
 }
 
 /// Extension trait for `ArrayBase` providing methods to compute histograms.
@@ -161,5 +171,25 @@ impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
             let _ = histogram.add_observation(&point);
         }
         histogram
+    }
+}
+
+#[cfg(test)]
+mod auto_tests {
+    use super::*;
+    use histogram::histograms::HistogramExt;
+    use histogram::bins::{Bins, Edges};
+
+    #[test]
+    fn histogram_cdf() {
+        let data = arr2(&[[1], [2], [3], [4], [1], [1], [4], [5], [8], [8], [8]]);
+        let grid = Grid::from(vec![
+                              Bins::new(
+                                  Edges::from(vec![0,1,2,3,4,5,6,7,8,9]))]);
+
+        let histogram = data.histogram(grid);
+                       //0, 1  2  3  4  5  6  7  8
+        let cdf = arr1(&[0, 3, 4, 5, 7, 8, 8, 8, 11]).into_dyn();
+        assert_eq!(histogram.cumulative_sum(), cdf);
     }
 }
