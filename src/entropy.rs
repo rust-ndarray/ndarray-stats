@@ -1,5 +1,5 @@
 //! Summary statistics (e.g. mean, variance, etc.).
-use ndarray::{Array1, ArrayBase, Data, Dimension};
+use ndarray::{Array1, ArrayBase, Data, Dimension, Zip};
 use num_traits::Float;
 
 /// Extension trait for `ArrayBase` providing methods
@@ -151,15 +151,20 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         if (self.len() == 0) | (self.shape() != q.shape()) {
             None
         } else {
-            let kl_divergence: A = self.iter().zip(q.iter()).map(
-                |(&p, &q)| {
-                    if p == A::zero() {
-                        A::zero()
-                    } else {
-                        p * (q / p).ln()
+            let mut temp = ArrayBase::zeros(self.shape());
+            Zip::from(&mut temp)
+                .and(self)
+                .and(q)
+                .apply(|result, &p, &q| {
+                    *result = {
+                        if p == A::zero() {
+                            A::zero()
+                        } else {
+                            p * (q / p).ln()
+                        }
                     }
-                }
-            ).collect::<Array1<A>>().sum();
+                });
+            let kl_divergence = temp.sum();
             Some(-kl_divergence)
         }
     }
