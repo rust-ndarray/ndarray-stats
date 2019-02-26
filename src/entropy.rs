@@ -1,5 +1,5 @@
 //! Summary statistics (e.g. mean, variance, etc.).
-use ndarray::{Array1, ArrayBase, Data, Dimension, Zip};
+use ndarray::{Array, Array1, ArrayBase, DataOwned, Data, Dimension, Zip};
 use num_traits::Float;
 
 /// Extension trait for `ArrayBase` providing methods
@@ -151,7 +151,7 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         if (self.len() == 0) | (self.shape() != q.shape()) {
             None
         } else {
-            let mut temp = ArrayBase::zeros(self.shape());
+            let mut temp = Array::zeros(self.raw_dim());
             Zip::from(&mut temp)
                 .and(self)
                 .and(q)
