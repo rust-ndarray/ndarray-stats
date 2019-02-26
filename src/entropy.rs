@@ -124,12 +124,12 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         if self.len() == 0 {
             None
         } else {
-            let entropy = self.map(
+            let entropy = self.mapv(
                 |x| {
-                    if *x == A::zero() {
+                    if x == A::zero() {
                         A::zero()
                     } else {
-                        *x * x.ln()
+                        x * x.ln()
                     }
                 }
             ).sum();
