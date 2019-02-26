@@ -28,6 +28,9 @@ pub trait EntropyExt<A, S, D>
     /// to describe a probability distribution: it only make sense
     /// when the array values sum to 1, with each entry between
     /// 0 and 1 (extremes included).
+    /// The array values are **not** normalised by this function before
+    /// computing the entropy to avoid introducing potentially
+    /// unnecessary numerical errors (e.g. if the array were to be already normalised).
     ///
     /// By definition, *xᵢ ln(xᵢ)* is set to 0 if *xᵢ* is 0.
     ///
