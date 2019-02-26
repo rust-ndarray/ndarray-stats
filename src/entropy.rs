@@ -98,6 +98,10 @@ pub trait EntropyExt<A, S, D>
     /// to describe the relationship between two probability distribution: it only make sense
     /// when each array sums to 1 with entries between 0 and 1 (extremes included).
     ///
+    /// The array values are **not** normalised by this function before
+    /// computing the entropy to avoid introducing potentially
+    /// unnecessary numerical errors (e.g. if the array were to be already normalised).
+    ///
     /// The cross entropy is often used as an objective/loss function in
     /// [optimization problems], including [machine learning].
     ///
