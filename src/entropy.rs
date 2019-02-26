@@ -52,7 +52,7 @@ pub trait EntropyExt<A, S, D>
     ///             i=1
     /// ```
     ///
-    /// If the arrays are empty or their lengths are not equal, `None` is returned.
+    /// If the arrays are empty or their shapes are not identical, `None` is returned.
     ///
     /// **Panics** if any element in *q* is negative and taking the logarithm of a negative number
     /// is a panic cause for `A`.
@@ -87,7 +87,7 @@ pub trait EntropyExt<A, S, D>
     ///           i=1
     /// ```
     ///
-    /// If the arrays are empty or their lengths are not equal, `None` is returned.
+    /// If the arrays are empty or their shapes are not identical, `None` is returned.
     ///
     /// **Panics** if any element in *q* is negative and taking the logarithm of a negative number
     /// is a panic cause for `A`.
