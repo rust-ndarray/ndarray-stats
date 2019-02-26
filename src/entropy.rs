@@ -28,6 +28,7 @@ pub trait EntropyExt<A, S, D>
     /// to describe a probability distribution: it only make sense
     /// when the array values sum to 1, with each entry between
     /// 0 and 1 (extremes included).
+    ///
     /// The array values are **not** normalised by this function before
     /// computing the entropy to avoid introducing potentially
     /// unnecessary numerical errors (e.g. if the array were to be already normalised).
@@ -61,6 +62,10 @@ pub trait EntropyExt<A, S, D>
     /// The Kullback-Leibler divergence is a measure used in [Information Theory]
     /// to describe the relationship between two probability distribution: it only make sense
     /// when each array sums to 1 with entries between 0 and 1 (extremes included).
+    ///
+    /// The array values are **not** normalised by this function before
+    /// computing the entropy to avoid introducing potentially
+    /// unnecessary numerical errors (e.g. if the array were to be already normalised).
     ///
     /// By definition, *pᵢ ln(qᵢ/pᵢ)* is set to 0 if *pᵢ* is 0.
     ///
