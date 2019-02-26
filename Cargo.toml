@@ -22,6 +22,11 @@ rand = "0.6"
 itertools = { version = "0.7.0", default-features = false }
 
 [dev-dependencies]
+criterion = "0.2"
 quickcheck = "0.7"
 ndarray-rand = "0.9"
 approx = "0.3"
+
+[[bench]]
+name = "quantile"
+harness = false
