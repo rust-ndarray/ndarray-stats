@@ -1,5 +1,5 @@
 //! Summary statistics (e.g. mean, variance, etc.).
-use ndarray::{Array, Array1, ArrayBase, DataOwned, Data, Dimension, Zip};
+use ndarray::{Array, ArrayBase, Data, Dimension, Zip};
 use num_traits::Float;
 
 /// Extension trait for `ArrayBase` providing methods
@@ -177,15 +177,20 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         if (self.len() == 0) | (self.shape() != q.shape()) {
             None
         } else {
-            let cross_entropy: A = self.iter().zip(q.iter()).map(
-                |(p, q)| {
-                    if *p == A::zero() {
-                        A::zero()
-                    } else {
-                        *p * q.ln()
+            let mut temp = Array::zeros(self.raw_dim());
+            Zip::from(&mut temp)
+                .and(self)
+                .and(q)
+                .apply(|result, &p, &q| {
+                    *result = {
+                        if p == A::zero() {
+                            A::zero()
+                        } else {
+                            p * q.ln()
+                        }
                     }
-                }
-            ).collect::<Array1<A>>().sum();
+                });
+            let cross_entropy = temp.sum();
             Some(-cross_entropy)
         }
     }
