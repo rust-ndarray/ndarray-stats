@@ -286,11 +286,11 @@ mod tests {
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_zeroes_q() {
+    fn test_cross_entropy_and_kl_with_zeroes_q_and_different_data_ownership() {
         let p = array![0.5, 0.5];
-        let q = array![0.5, 0.];
-        assert_eq!(p.cross_entropy(&q).unwrap(), f64::INFINITY);
-        assert_eq!(p.kl_divergence(&q).unwrap(), f64::INFINITY);
+        let mut q = array![0.5, 0.];
+        assert_eq!(p.cross_entropy(&q.view_mut()).unwrap(), f64::INFINITY);
+        assert_eq!(p.kl_divergence(&q.view_mut()).unwrap(), f64::INFINITY);
     }
 
     #[test]
