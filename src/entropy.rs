@@ -71,9 +71,10 @@ pub trait EntropyExt<A, S, D>
     ///
     /// [Kullback-Leibler divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
-    fn kl_divergence(&self, q: &Self) -> Option<A>
-        where
-            A: Float;
+    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    where
+        S2: Data<Elem=A>,
+        A: Float;
 
     /// Computes the [cross entropy] *H(p,q)* between two arrays,
     /// where `self`=*p*.
