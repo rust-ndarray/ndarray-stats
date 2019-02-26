@@ -95,7 +95,7 @@ pub trait EntropyExt<A, S, D>
     /// ## Remarks
     ///
     /// The cross entropy is a measure used in [Information Theory]
-    /// to describe the relationship between two probability distribution: it only make sense
+    /// to describe the relationship between two probability distributions: it only makes sense
     /// when each array sums to 1 with entries between 0 and 1 (extremes included).
     ///
     /// The array values are **not** normalised by this function before
