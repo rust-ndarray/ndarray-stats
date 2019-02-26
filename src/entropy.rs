@@ -137,9 +137,10 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         }
     }
 
-    fn kl_divergence(&self, q: &Self) -> Option<A>
-        where
-            A: Float
+    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    where
+        A: Float,
+        S2: Data<Elem=A>,
     {
         if (self.len() == 0) | (self.len() != q.len()) {
             None
