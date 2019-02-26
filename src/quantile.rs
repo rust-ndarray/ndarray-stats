@@ -8,8 +8,7 @@ use {MaybeNan, MaybeNanExt, Sort1dExt};
 pub mod interpolate {
     use ndarray::azip;
     use ndarray::prelude::*;
-    use num_traits::{FromPrimitive, ToPrimitive};
-    use std::ops::{Add, Div};
+    use num_traits::{FromPrimitive, ToPrimitive, NumOps};
 
     /// Used to provide an interpolation strategy to [`quantile_axis_mut`].
     ///
@@ -116,7 +115,7 @@ pub mod interpolate {
 
     impl<T> Interpolate<T> for Midpoint
     where
-        T: Add<T, Output = T> + Div<T, Output = T> + Clone + FromPrimitive,
+        T: NumOps + Clone + FromPrimitive,
     {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
@@ -134,13 +133,20 @@ pub mod interpolate {
             D: Dimension,
         {
             let denom = T::from_u8(2).unwrap();
-            (lower.unwrap() + higher.unwrap()).mapv_into(|x| x / denom.clone())
+            let mut lower = lower.unwrap();
+            let higher = higher.unwrap();
+            azip!(
+                mut lower, ref higher in {
+                    *lower = lower.clone() + (higher.clone() - lower.clone()) / denom.clone()
+                }
+            );
+            lower
         }
     }
 
     impl<T> Interpolate<T> for Linear
     where
-        T: Add<T, Output = T> + Clone + FromPrimitive + ToPrimitive,
+        T: NumOps + Clone + FromPrimitive + ToPrimitive,
     {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
