@@ -82,11 +82,15 @@ impl<A: Ord> Histogram<A> {
     /// Returns the cumulative distribution function of a histogram. 
     /// Equivalent to the numpy histogram function cumsum
     pub fn cumulative_sum(&self) -> ArrayD<usize> {
-        let mut total = 0;
-        self.counts.mapv(|x| {
-            total += x;
-            total
-        })
+        let mut cdf = self.counts.clone();
+        for i in 0..self.ndim() {
+            for j in 1..cdf.shape()[i] { 
+                let temp = cdf.index_axis(Axis(i), j - 1).to_owned();
+                let mut ax = cdf.index_axis_mut(Axis(i), j);
+                ax += &temp;
+            }
+        }
+        cdf
     }
 }
 
