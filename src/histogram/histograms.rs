@@ -185,7 +185,7 @@ mod auto_tests {
     use histogram::bins::{Bins, Edges};
 
     #[test]
-    fn histogram_cdf() {
+    fn histogram_cdf_1d() {
         let data = arr2(&[[1], [2], [3], [4], [1], [1], [4], [5], [8], [8], [8]]);
         let grid = Grid::from(vec![
                               Bins::new(
@@ -194,6 +194,22 @@ mod auto_tests {
         let histogram = data.histogram(grid);
                        //0, 1  2  3  4  5  6  7  8
         let cdf = arr1(&[0, 3, 4, 5, 7, 8, 8, 8, 11]).into_dyn();
+        assert_eq!(histogram.cumulative_sum(), cdf);
+    }
+    
+    #[test]
+    fn histogram_cdf_2d() {
+        let data = arr2(&[[0, 2], [4, 4], [1, 1], [3, 3], [0, 2]]);
+        let grid = Grid::from(vec![
+                              Bins::new(Edges::from(vec![0, 1, 2, 3, 4])),
+                              Bins::new(Edges::from(vec![0, 1, 2, 3, 4]))]);
+
+        let histogram = data.histogram(grid);
+
+        let cdf = arr2(&[[0, 0, 2, 2],
+                         [0, 1, 3, 3],
+                         [0, 1, 3, 3],
+                         [0, 1, 3, 4]]).into_dyn();
         assert_eq!(histogram.cumulative_sum(), cdf);
     }
 }
