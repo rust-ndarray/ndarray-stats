@@ -1,6 +1,7 @@
 //! Summary statistics (e.g. mean, variance, etc.).
 use ndarray::{Array, ArrayBase, Data, Dimension, Zip};
 use num_traits::Float;
+use crate::errors::ShapeMismatch;
 
 /// Extension trait for `ArrayBase` providing methods
 /// to compute information theory quantities
@@ -71,7 +72,7 @@ pub trait EntropyExt<A, S, D>
     ///
     /// [Kullback-Leibler divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
-    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Result<Option<A>, ShapeMismatch>
     where
         S2: Data<Elem=A>,
         A: Float;
@@ -111,7 +112,7 @@ pub trait EntropyExt<A, S, D>
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
     /// [optimization problems]: https://en.wikipedia.org/wiki/Cross-entropy_method
     /// [machine learning]: https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_error_function_and_logistic_regression
-    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Result<Option<A>, ShapeMismatch>
     where
         S2: Data<Elem=A>,
         A: Float;
@@ -143,56 +144,68 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         }
     }
 
-    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Result<Option<A>, ShapeMismatch>
     where
         A: Float,
         S2: Data<Elem=A>,
     {
-        if (self.len() == 0) | (self.shape() != q.shape()) {
-            None
-        } else {
-            let mut temp = Array::zeros(self.raw_dim());
-            Zip::from(&mut temp)
-                .and(self)
-                .and(q)
-                .apply(|result, &p, &q| {
-                    *result = {
-                        if p == A::zero() {
-                            A::zero()
-                        } else {
-                            p * (q / p).ln()
-                        }
-                    }
-                });
-            let kl_divergence = temp.sum();
-            Some(-kl_divergence)
+        if self.len() == 0 {
+            return Ok(None)
         }
+        if self.shape() != q.shape() {
+            return Err(ShapeMismatch {
+                first_shape: self.shape().to_vec(),
+                second_shape: q.shape().to_vec()
+            })
+        }
+
+        let mut temp = Array::zeros(self.raw_dim());
+        Zip::from(&mut temp)
+            .and(self)
+            .and(q)
+            .apply(|result, &p, &q| {
+                *result = {
+                    if p == A::zero() {
+                        A::zero()
+                    } else {
+                        p * (q / p).ln()
+                    }
+                }
+            });
+        let kl_divergence = temp.sum();
+        Ok(Some(-kl_divergence))
     }
 
-    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Result<Option<A>, ShapeMismatch>
     where
         S2: Data<Elem=A>,
         A: Float,
     {
-        if (self.len() == 0) | (self.shape() != q.shape()) {
-            None
-        } else {
-            let mut temp = Array::zeros(self.raw_dim());
-            Zip::from(&mut temp)
-                .and(self)
-                .and(q)
-                .apply(|result, &p, &q| {
-                    *result = {
-                        if p == A::zero() {
-                            A::zero()
-                        } else {
-                            p * q.ln()
-                        }
-                    }
-                });
-            let cross_entropy = temp.sum();
-            Some(-cross_entropy)
+        if self.len() == 0 {
+            return Ok(None)
         }
+        if self.shape() != q.shape() {
+            return Err(ShapeMismatch {
+                first_shape: self.shape().to_vec(),
+                second_shape: q.shape().to_vec()
+            })
+        }
+
+        let mut temp = Array::zeros(self.raw_dim());
+        Zip::from(&mut temp)
+            .and(self)
+            .and(q)
+            .apply(|result, &p, &q| {
+                *result = {
+                    if p == A::zero() {
+                        A::zero()
+                    } else {
+                        p * q.ln()
+                    }
+                }
+            });
+        let cross_entropy = temp.sum();
+        Ok(Some(-cross_entropy))
     }
 }
 
