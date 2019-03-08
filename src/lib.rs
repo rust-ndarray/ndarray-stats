@@ -29,6 +29,8 @@ extern crate noisy_float;
 extern crate num_traits;
 extern crate rand;
 extern crate itertools;
+#[macro_use]
+extern crate failure;
 
 #[cfg(test)]
 extern crate ndarray_rand;
