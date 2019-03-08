@@ -56,8 +56,8 @@ pub trait EntropyExt<A, S, D>
     /// If the arrays are empty, Ok(`None`) is returned.
     /// If the array shapes are not identical, `Err(ShapeMismatch)` is returned.
     ///
-    /// **Panics** if any element in *q* is negative and taking the logarithm of a negative number
-    /// is a panic cause for `A`.
+    /// **Panics** if for a  pair of elements *(pᵢ, qᵢ)* from *p* and *q* computing
+    /// *ln(qᵢ/pᵢ)* is a panic cause for `A`.
     ///
     /// ## Remarks
     ///
