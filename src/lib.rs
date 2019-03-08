@@ -53,4 +53,5 @@ mod sort;
 mod correlation;
 mod entropy;
 mod summary_statistics;
+pub mod errors;
 pub mod histogram;
