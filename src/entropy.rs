@@ -1,5 +1,5 @@
 //! Summary statistics (e.g. mean, variance, etc.).
-use ndarray::{Array1, ArrayBase, Data, Dimension};
+use ndarray::{Array, ArrayBase, Data, Dimension, Zip};
 use num_traits::Float;
 
 /// Extension trait for `ArrayBase` providing methods
@@ -29,6 +29,10 @@ pub trait EntropyExt<A, S, D>
     /// when the array values sum to 1, with each entry between
     /// 0 and 1 (extremes included).
     ///
+    /// The array values are **not** normalised by this function before
+    /// computing the entropy to avoid introducing potentially
+    /// unnecessary numerical errors (e.g. if the array were to be already normalised).
+    ///
     /// By definition, *xᵢ ln(xᵢ)* is set to 0 if *xᵢ* is 0.
     ///
     /// [entropy]: https://en.wikipedia.org/wiki/Entropy_(information_theory)
@@ -48,7 +52,7 @@ pub trait EntropyExt<A, S, D>
     ///             i=1
     /// ```
     ///
-    /// If the arrays are empty or their lengths are not equal, `None` is returned.
+    /// If the arrays are empty or their shapes are not identical, `None` is returned.
     ///
     /// **Panics** if any element in *q* is negative and taking the logarithm of a negative number
     /// is a panic cause for `A`.
@@ -59,13 +63,18 @@ pub trait EntropyExt<A, S, D>
     /// to describe the relationship between two probability distribution: it only make sense
     /// when each array sums to 1 with entries between 0 and 1 (extremes included).
     ///
+    /// The array values are **not** normalised by this function before
+    /// computing the entropy to avoid introducing potentially
+    /// unnecessary numerical errors (e.g. if the array were to be already normalised).
+    ///
     /// By definition, *pᵢ ln(qᵢ/pᵢ)* is set to 0 if *pᵢ* is 0.
     ///
     /// [Kullback-Leibler divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
-    fn kl_divergence(&self, q: &Self) -> Option<A>
-        where
-            A: Float;
+    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    where
+        S2: Data<Elem=A>,
+        A: Float;
 
     /// Computes the [cross entropy] *H(p,q)* between two arrays,
     /// where `self`=*p*.
@@ -78,7 +87,7 @@ pub trait EntropyExt<A, S, D>
     ///           i=1
     /// ```
     ///
-    /// If the arrays are empty or their lengths are not equal, `None` is returned.
+    /// If the arrays are empty or their shapes are not identical, `None` is returned.
     ///
     /// **Panics** if any element in *q* is negative and taking the logarithm of a negative number
     /// is a panic cause for `A`.
@@ -86,8 +95,12 @@ pub trait EntropyExt<A, S, D>
     /// ## Remarks
     ///
     /// The cross entropy is a measure used in [Information Theory]
-    /// to describe the relationship between two probability distribution: it only make sense
+    /// to describe the relationship between two probability distributions: it only makes sense
     /// when each array sums to 1 with entries between 0 and 1 (extremes included).
+    ///
+    /// The array values are **not** normalised by this function before
+    /// computing the entropy to avoid introducing potentially
+    /// unnecessary numerical errors (e.g. if the array were to be already normalised).
     ///
     /// The cross entropy is often used as an objective/loss function in
     /// [optimization problems], including [machine learning].
@@ -98,8 +111,9 @@ pub trait EntropyExt<A, S, D>
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
     /// [optimization problems]: https://en.wikipedia.org/wiki/Cross-entropy_method
     /// [machine learning]: https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_error_function_and_logistic_regression
-    fn cross_entropy(&self, q: &Self) -> Option<A>
+    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
     where
+        S2: Data<Elem=A>,
         A: Float;
 }
 
@@ -116,12 +130,12 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         if self.len() == 0 {
             None
         } else {
-            let entropy = self.map(
+            let entropy = self.mapv(
                 |x| {
-                    if *x == A::zero() {
+                    if x == A::zero() {
                         A::zero()
                     } else {
-                        *x * x.ln()
+                        x * x.ln()
                     }
                 }
             ).sum();
@@ -129,42 +143,54 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
         }
     }
 
-    fn kl_divergence(&self, q: &Self) -> Option<A>
-        where
-            A: Float
+    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    where
+        A: Float,
+        S2: Data<Elem=A>,
     {
-        if (self.len() == 0) | (self.len() != q.len()) {
+        if (self.len() == 0) | (self.shape() != q.shape()) {
             None
         } else {
-            let kl_divergence: A = self.iter().zip(q.iter()).map(
-                |(p, q)| {
-                    if *p == A::zero() {
-                        A::zero()
-                    } else {
-                        *p * (*q / *p).ln()
+            let mut temp = Array::zeros(self.raw_dim());
+            Zip::from(&mut temp)
+                .and(self)
+                .and(q)
+                .apply(|result, &p, &q| {
+                    *result = {
+                        if p == A::zero() {
+                            A::zero()
+                        } else {
+                            p * (q / p).ln()
+                        }
                     }
-                }
-            ).collect::<Array1<A>>().sum();
+                });
+            let kl_divergence = temp.sum();
             Some(-kl_divergence)
         }
     }
 
-    fn cross_entropy(&self, q: &Self) -> Option<A>
-        where
-            A: Float
+    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Option<A>
+    where
+        S2: Data<Elem=A>,
+        A: Float,
     {
-        if (self.len() == 0) | (self.len() != q.len()) {
+        if (self.len() == 0) | (self.shape() != q.shape()) {
             None
         } else {
-            let cross_entropy: A = self.iter().zip(q.iter()).map(
-                |(p, q)| {
-                    if *p == A::zero() {
-                        A::zero()
-                    } else {
-                        *p * q.ln()
+            let mut temp = Array::zeros(self.raw_dim());
+            Zip::from(&mut temp)
+                .and(self)
+                .and(q)
+                .apply(|result, &p, &q| {
+                    *result = {
+                        if p == A::zero() {
+                            A::zero()
+                        } else {
+                            p * q.ln()
+                        }
                     }
-                }
-            ).collect::<Array1<A>>().sum();
+                });
+            let cross_entropy = temp.sum();
             Some(-cross_entropy)
         }
     }
@@ -222,9 +248,28 @@ mod tests {
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_dimension_mismatch() {
+    fn test_cross_entropy_and_kl_with_same_n_dimension_but_different_n_elements() {
         let p = array![f64::NAN, 1.];
         let q = array![2., 1., 5.];
+        assert!(q.cross_entropy(&p).is_none());
+        assert!(p.cross_entropy(&q).is_none());
+        assert!(q.kl_divergence(&p).is_none());
+        assert!(p.kl_divergence(&q).is_none());
+    }
+
+    #[test]
+    fn test_cross_entropy_and_kl_with_different_shape_but_same_n_elements() {
+        // p: 3x2, 6 elements
+        let p = array![
+            [f64::NAN, 1.],
+            [6., 7.],
+            [10., 20.]
+        ];
+        // q: 2x3, 6 elements
+        let q = array![
+            [2., 1., 5.],
+            [1., 1., 7.],
+        ];
         assert!(q.cross_entropy(&p).is_none());
         assert!(p.cross_entropy(&q).is_none());
         assert!(q.kl_divergence(&p).is_none());
@@ -274,11 +319,11 @@ mod tests {
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_zeroes_q() {
+    fn test_cross_entropy_and_kl_with_zeroes_q_and_different_data_ownership() {
         let p = array![0.5, 0.5];
-        let q = array![0.5, 0.];
-        assert_eq!(p.cross_entropy(&q).unwrap(), f64::INFINITY);
-        assert_eq!(p.kl_divergence(&q).unwrap(), f64::INFINITY);
+        let mut q = array![0.5, 0.];
+        assert_eq!(p.cross_entropy(&q.view_mut()).unwrap(), f64::INFINITY);
+        assert_eq!(p.kl_divergence(&q.view_mut()).unwrap(), f64::INFINITY);
     }
 
     #[test]
