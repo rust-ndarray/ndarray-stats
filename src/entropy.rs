@@ -216,6 +216,7 @@ mod tests {
     use approx::assert_abs_diff_eq;
     use noisy_float::types::n64;
     use ndarray::{array, Array1};
+    use errors::ShapeMismatch;
 
     #[test]
     fn test_entropy_with_nan_values() {
@@ -251,23 +252,24 @@ mod tests {
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_nan_values() {
+    fn test_cross_entropy_and_kl_with_nan_values() -> Result<(), ShapeMismatch> {
         let a = array![f64::NAN, 1.];
         let b = array![2., 1.];
-        assert!(a.cross_entropy(&b).unwrap().is_nan());
-        assert!(b.cross_entropy(&a).unwrap().is_nan());
-        assert!(a.kl_divergence(&b).unwrap().is_nan());
-        assert!(b.kl_divergence(&a).unwrap().is_nan());
+        assert!(a.cross_entropy(&b)?.unwrap().is_nan());
+        assert!(b.cross_entropy(&a)?.unwrap().is_nan());
+        assert!(a.kl_divergence(&b)?.unwrap().is_nan());
+        assert!(b.kl_divergence(&a)?.unwrap().is_nan());
+        Ok(())
     }
 
     #[test]
     fn test_cross_entropy_and_kl_with_same_n_dimension_but_different_n_elements() {
         let p = array![f64::NAN, 1.];
         let q = array![2., 1., 5.];
-        assert!(q.cross_entropy(&p).is_none());
-        assert!(p.cross_entropy(&q).is_none());
-        assert!(q.kl_divergence(&p).is_none());
-        assert!(p.kl_divergence(&q).is_none());
+        assert!(q.cross_entropy(&p).is_err());
+        assert!(p.cross_entropy(&q).is_err());
+        assert!(q.kl_divergence(&p).is_err());
+        assert!(p.kl_divergence(&q).is_err());
     }
 
     #[test]
@@ -283,28 +285,30 @@ mod tests {
             [2., 1., 5.],
             [1., 1., 7.],
         ];
-        assert!(q.cross_entropy(&p).is_none());
-        assert!(p.cross_entropy(&q).is_none());
-        assert!(q.kl_divergence(&p).is_none());
-        assert!(p.kl_divergence(&q).is_none());
+        assert!(q.cross_entropy(&p).is_err());
+        assert!(p.cross_entropy(&q).is_err());
+        assert!(q.kl_divergence(&p).is_err());
+        assert!(p.kl_divergence(&q).is_err());
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_empty_array_of_floats() {
+    fn test_cross_entropy_and_kl_with_empty_array_of_floats() -> Result<(), ShapeMismatch> {
         let p: Array1<f64> = array![];
         let q: Array1<f64> = array![];
-        assert!(p.cross_entropy(&q).is_none());
-        assert!(p.kl_divergence(&q).is_none());
+        assert!(p.cross_entropy(&q)?.is_none());
+        assert!(p.kl_divergence(&q)?.is_none());
+        Ok(())
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_negative_qs() {
+    fn test_cross_entropy_and_kl_with_negative_qs() -> Result<(), ShapeMismatch> {
         let p = array![1.];
         let q = array![-1.];
-        let cross_entropy: f64 = p.cross_entropy(&q).unwrap();
-        let kl_divergence: f64 = p.kl_divergence(&q).unwrap();
+        let cross_entropy: f64 = p.cross_entropy(&q)?.unwrap();
+        let kl_divergence: f64 = p.kl_divergence(&q)?.unwrap();
         assert!(cross_entropy.is_nan());
         assert!(kl_divergence.is_nan());
+        Ok(())
     }
 
     #[test]
@@ -312,7 +316,7 @@ mod tests {
     fn test_cross_entropy_with_noisy_negative_qs() {
         let p = array![n64(1.)];
         let q = array![n64(-1.)];
-        p.cross_entropy(&q);
+        let _ = p.cross_entropy(&q);
     }
 
     #[test]
@@ -320,27 +324,29 @@ mod tests {
     fn test_kl_with_noisy_negative_qs() {
         let p = array![n64(1.)];
         let q = array![n64(-1.)];
-        p.kl_divergence(&q);
+        let _ = p.kl_divergence(&q);
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_zeroes_p() {
+    fn test_cross_entropy_and_kl_with_zeroes_p() -> Result<(), ShapeMismatch> {
         let p = array![0., 0.];
         let q = array![0., 0.5];
-        assert_eq!(p.cross_entropy(&q).unwrap(), 0.);
-        assert_eq!(p.kl_divergence(&q).unwrap(), 0.);
+        assert_eq!(p.cross_entropy(&q)?.unwrap(), 0.);
+        assert_eq!(p.kl_divergence(&q)?.unwrap(), 0.);
+        Ok(())
     }
 
     #[test]
-    fn test_cross_entropy_and_kl_with_zeroes_q_and_different_data_ownership() {
+    fn test_cross_entropy_and_kl_with_zeroes_q_and_different_data_ownership() -> Result<(), ShapeMismatch> {
         let p = array![0.5, 0.5];
         let mut q = array![0.5, 0.];
-        assert_eq!(p.cross_entropy(&q.view_mut()).unwrap(), f64::INFINITY);
-        assert_eq!(p.kl_divergence(&q.view_mut()).unwrap(), f64::INFINITY);
+        assert_eq!(p.cross_entropy(&q.view_mut())?.unwrap(), f64::INFINITY);
+        assert_eq!(p.kl_divergence(&q.view_mut())?.unwrap(), f64::INFINITY);
+        Ok(())
     }
 
     #[test]
-    fn test_cross_entropy() {
+    fn test_cross_entropy() -> Result<(), ShapeMismatch> {
         // Arrays of probability values - normalized and positive.
         let p: Array1<f64> = array![
             0.05340169, 0.02508511, 0.03460454, 0.00352313, 0.07837615, 0.05859495,
@@ -359,11 +365,12 @@ mod tests {
         // Computed using scipy.stats.entropy(p) + scipy.stats.entropy(p, q)
         let expected_cross_entropy = 3.385347705020779;
 
-        assert_abs_diff_eq!(p.cross_entropy(&q).unwrap(), expected_cross_entropy, epsilon = 1e-6);
+        assert_abs_diff_eq!(p.cross_entropy(&q)?.unwrap(), expected_cross_entropy, epsilon = 1e-6);
+        Ok(())
     }
 
     #[test]
-    fn test_kl() {
+    fn test_kl() -> Result<(), ShapeMismatch> {
         // Arrays of probability values - normalized and positive.
         let p: Array1<f64> = array![
             0.00150472, 0.01388706, 0.03495376, 0.03264211, 0.03067355,
@@ -392,6 +399,7 @@ mod tests {
         // Computed using scipy.stats.entropy(p, q)
         let expected_kl = 0.3555862567800096;
 
-        assert_abs_diff_eq!(p.kl_divergence(&q).unwrap(), expected_kl, epsilon = 1e-6);
+        assert_abs_diff_eq!(p.kl_divergence(&q)?.unwrap(), expected_kl, epsilon = 1e-6);
+        Ok(())
     }
 }
