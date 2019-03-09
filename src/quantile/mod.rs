@@ -378,26 +378,24 @@ where
         S: DataMut,
         I: Interpolate<A::NotNan>,
     {
-        if self.len_of(axis) > 0 {
-            Some(
-                self.map_axis_mut(axis, |lane| {
-                    let mut not_nan = A::remove_nan_mut(lane);
-                    A::from_not_nan_opt(if not_nan.is_empty() {
-                        None
-                    } else {
-                        Some(
-                            not_nan
-                                .quantile_axis_mut::<I>(Axis(0), q)
-                                .unwrap()
-                                .into_raw_vec()
-                                .remove(0),
-                        )
-                    })
-                })
-            )
-        } else {
-           None
+        if self.len_of(axis) == 0 {
+            return None;
         }
+        let quantile = self.map_axis_mut(axis, |lane| {
+            let mut not_nan = A::remove_nan_mut(lane);
+            A::from_not_nan_opt(if not_nan.is_empty() {
+                None
+            } else {
+                Some(
+                    not_nan
+                        .quantile_axis_mut::<I>(Axis(0), q)
+                        .unwrap()
+                        .into_raw_vec()
+                        .remove(0),
+                )
+            })
+        });
+        Some(quantile)
     }
 }
 
