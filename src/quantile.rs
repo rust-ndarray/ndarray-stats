@@ -182,7 +182,11 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    /// Finds the indices of the minimum values along an axis.
+    /// Finds the indices of the minimum values of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
     ///
     /// Returns `None` if the array is empty.
     fn argmin(&self) -> Option<Vec<D::Pattern>>
@@ -209,6 +213,17 @@ where
     where
         A: MaybeNan,
         A::NotNan: Ord;
+
+    /// Finds the indices of the maximum values of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
+    ///
+    /// Returns `None` if the array is empty.
+    fn argmax(&self) -> Option<Vec<D::Pattern>>
+    where
+        A: PartialOrd;
 
     /// Finds the elementwise maximum of the array.
     ///
@@ -324,6 +339,22 @@ where
                 None => elem,
             })
         }))
+    }
+
+    fn argmax(&self) -> Option<Vec<D::Pattern>>
+    where
+        A: PartialOrd,
+    {
+        let max = self.max()?;
+        let mut args = Vec::<D::Pattern>::new();
+
+        self.indexed_iter().for_each(|(pattern, elem)| {
+            if elem.partial_cmp(max) == Some(cmp::Ordering::Equal) {
+                args.push(pattern)
+            }
+        });
+
+        Some(args)
     }
 
     fn max(&self) -> Option<&A>
