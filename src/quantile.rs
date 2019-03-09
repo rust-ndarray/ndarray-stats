@@ -8,7 +8,7 @@ use {MaybeNan, MaybeNanExt, Sort1dExt};
 pub mod interpolate {
     use ndarray::azip;
     use ndarray::prelude::*;
-    use num_traits::{FromPrimitive, ToPrimitive, NumOps};
+    use num_traits::{FromPrimitive, NumOps, ToPrimitive};
 
     /// Used to provide an interpolation strategy to [`quantile_axis_mut`].
     ///
@@ -384,8 +384,8 @@ where
 
 /// Quantile methods for 1-D arrays.
 pub trait Quantile1dExt<A, S>
-    where
-        S: Data<Elem = A>,
+where
+    S: Data<Elem = A>,
 {
     /// Return the qth quantile of the data.
     ///
@@ -424,8 +424,8 @@ pub trait Quantile1dExt<A, S>
 }
 
 impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
-    where
-        S: Data<Elem = A>,
+where
+    S: Data<Elem = A>,
 {
     fn quantile_mut<I>(&mut self, q: f64) -> Option<A>
     where
@@ -440,4 +440,3 @@ impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
         }
     }
 }
-

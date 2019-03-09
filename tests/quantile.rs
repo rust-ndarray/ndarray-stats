@@ -5,8 +5,7 @@ extern crate ndarray_stats;
 use ndarray::prelude::*;
 use ndarray_stats::{
     interpolate::{Higher, Linear, Lower, Midpoint, Nearest},
-    QuantileExt,
-    Quantile1dExt,
+    Quantile1dExt, QuantileExt,
 };
 
 #[test]

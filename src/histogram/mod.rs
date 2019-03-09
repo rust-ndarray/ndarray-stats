@@ -1,10 +1,10 @@
 //! Histogram functionalities.
-pub use self::histograms::{Histogram, HistogramExt};
-pub use self::bins::{Edges, Bins};
+pub use self::bins::{Bins, Edges};
 pub use self::grid::{Grid, GridBuilder};
+pub use self::histograms::{Histogram, HistogramExt};
 
-mod histograms;
 mod bins;
-pub mod strategies;
-mod grid;
 pub mod errors;
+mod grid;
+mod histograms;
+pub mod strategies;
