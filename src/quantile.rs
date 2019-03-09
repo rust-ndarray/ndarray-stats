@@ -182,6 +182,13 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    /// Finds the indices of the minimum values along an axis.
+    ///
+    /// Returns `None` if the array is empty.
+    fn argmin(&self) -> Option<Vec<D::Pattern>>
+    where
+        A: PartialOrd;
+
     /// Finds the elementwise minimum of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
@@ -278,6 +285,22 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    fn argmin(&self) -> Option<Vec<D::Pattern>>
+    where
+        A: PartialOrd,
+    {
+        let min = self.min()?;
+        let mut args = Vec::<D::Pattern>::new();
+
+        self.indexed_iter().for_each(|(pattern, elem)| {
+            if elem.partial_cmp(min) == Some(cmp::Ordering::Equal) {
+                args.push(pattern)
+            }
+        });
+
+        Some(args)
+    }
+
     fn min(&self) -> Option<&A>
     where
         A: PartialOrd,
