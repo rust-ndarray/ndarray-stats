@@ -2,7 +2,7 @@ use super::NotNone;
 use num_traits::{FromPrimitive, ToPrimitive};
 use std::cmp;
 use std::fmt;
-use std::ops::{Add, Deref, DerefMut, Div, Mul, Sub, Rem};
+use std::ops::{Add, Deref, DerefMut, Div, Mul, Rem, Sub};
 
 impl<T> Deref for NotNone<T> {
     type Target = T;
