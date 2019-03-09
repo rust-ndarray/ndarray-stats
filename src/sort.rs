@@ -49,15 +49,16 @@ where
         A: Ord + Clone,
         S: DataMut;
 
-    /// Return the index of `self[partition_index]` if `self` were to be sorted
-    /// in increasing order.
+    /// Partitions the array in increasing order based on the value initially
+    /// located at `pivot_index` and returns the new index of the value.
     ///
-    /// `self` elements are rearranged in such a way that `self[partition_index]`
-    /// is in the position it would be in an array sorted in increasing order.
-    /// All elements smaller than `self[partition_index]` are moved to its
-    /// left and all elements equal or greater than `self[partition_index]`
-    /// are moved to its right.
-    /// The ordering of the elements in the two partitions is undefined.
+    /// The elements are rearranged in such a way that the value initially
+    /// located at `pivot_index` is moved to the position it would be in an
+    /// array sorted in increasing order. The return value is the new index of
+    /// the value after rearrangement. All elements smaller than the value are
+    /// moved to its left and all elements equal or greater than the value are
+    /// moved to its right. The ordering of the elements in the two partitions
+    /// is undefined.
     ///
     /// `self` is shuffled **in place** to operate the desired partition:
     /// no copy of the array is allocated.
@@ -67,7 +68,36 @@ where
     /// Average number of element swaps: n/6 - 1/3 (see
     /// [link](https://cs.stackexchange.com/questions/11458/quicksort-partitioning-hoare-vs-lomuto/11550))
     ///
-    /// **Panics** if `partition_index` is greater than or equal to `n`.
+    /// **Panics** if `pivot_index` is greater than or equal to `n`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::Sort1dExt;
+    ///
+    /// # fn main() {
+    /// let mut data = array![3, 1, 4, 5, 2];
+    /// let pivot_index = 2;
+    /// let pivot_value = data[pivot_index];
+    ///
+    /// // Partition by the value located at `pivot_index`.
+    /// let new_index = data.partition_mut(pivot_index);
+    /// // The pivot value is now located at `new_index`.
+    /// assert_eq!(data[new_index], pivot_value);
+    /// // Elements less than that value are moved to the left.
+    /// for i in 0..new_index {
+    ///     assert!(data[i] < pivot_value);
+    /// }
+    /// // Elements greater than or equal to that value are moved to the right.
+    /// for i in (new_index + 1)..data.len() {
+    ///      assert!(data[i] >= pivot_value);
+    /// }
+    /// # }
+    /// ```
     fn partition_mut(&mut self, pivot_index: usize) -> usize
     where
         A: Ord + Clone,
