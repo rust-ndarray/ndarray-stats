@@ -5,30 +5,46 @@ use noisy_float::types::N64;
 use num_traits::{Float, FromPrimitive, ToPrimitive};
 use std::ops::{Add, Div};
 
+fn float_quantile_index(q: N64, len: usize) -> N64 {
+    q * ((len - 1) as f64)
+}
+
+/// Returns the fraction that the quantile is between the lower and higher indices.
+///
+/// This ranges from 0, where the quantile exactly corresponds the lower index,
+/// to 1, where the quantile exactly corresponds to the higher index.
+fn float_quantile_index_fraction(q: N64, len: usize) -> N64 {
+    float_quantile_index(q, len).fract()
+}
+
+/// Returns the index of the value on the lower side of the quantile.
+pub(crate) fn lower_index(q: N64, len: usize) -> usize {
+    float_quantile_index(q, len).floor().to_usize().unwrap()
+}
+
+/// Returns the index of the value on the higher side of the quantile.
+pub(crate) fn higher_index(q: N64, len: usize) -> usize {
+    float_quantile_index(q, len).ceil().to_usize().unwrap()
+}
+
 /// Used to provide an interpolation strategy to [`quantile_axis_mut`].
 ///
 /// [`quantile_axis_mut`]: ../trait.QuantileExt.html#tymethod.quantile_axis_mut
 pub trait Interpolate<T> {
-    #[doc(hidden)]
-    fn float_quantile_index(q: N64, len: usize) -> N64 {
-        q * ((len - 1) as f64)
-    }
-    #[doc(hidden)]
-    fn lower_index(q: N64, len: usize) -> usize {
-        Self::float_quantile_index(q, len).floor().to_usize().unwrap()
-    }
-    #[doc(hidden)]
-    fn higher_index(q: N64, len: usize) -> usize {
-        Self::float_quantile_index(q, len).ceil().to_usize().unwrap()
-    }
-    #[doc(hidden)]
-    fn float_quantile_index_fraction(q: N64, len: usize) -> N64 {
-        Self::float_quantile_index(q, len).fract()
-    }
+    /// Returns `true` iff the lower value is needed to compute the
+    /// interpolated value.
     #[doc(hidden)]
     fn needs_lower(q: N64, len: usize) -> bool;
+
+    /// Returns `true` iff the higher value is needed to compute the
+    /// interpolated value.
     #[doc(hidden)]
     fn needs_higher(q: N64, len: usize) -> bool;
+
+    /// Computes the interpolated value.
+    ///
+    /// **Panics** if `None` is provided for the lower value when it's needed
+    /// or if `None` is provided for the higher value when it's needed.
     #[doc(hidden)]
     fn interpolate<D>(
         lower: Option<Array<T, D>>,
@@ -89,7 +105,7 @@ impl<T> Interpolate<T> for Lower {
 
 impl<T> Interpolate<T> for Nearest {
     fn needs_lower(q: N64, len: usize) -> bool {
-        <Self as Interpolate<T>>::float_quantile_index_fraction(q, len) < 0.5
+        float_quantile_index_fraction(q, len) < 0.5
     }
     fn needs_higher(q: N64, len: usize) -> bool {
         !<Self as Interpolate<T>>::needs_lower(q, len)
@@ -151,7 +167,7 @@ impl<T> Interpolate<T> for Linear
         where
             D: Dimension,
     {
-        let fraction = <Self as Interpolate<T>>::float_quantile_index_fraction(q, len).to_f64().unwrap();
+        let fraction = float_quantile_index_fraction(q, len).to_f64().unwrap();
         let mut a = lower.unwrap();
         let b = higher.unwrap();
         azip!(mut a, ref b in {

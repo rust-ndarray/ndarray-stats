@@ -1,4 +1,4 @@
-use self::interpolate::Interpolate;
+use self::interpolate::{higher_index, lower_index, Interpolate};
 use super::sort::get_many_from_sorted_mut_unchecked;
 use std::cmp;
 use noisy_float::types::N64;
@@ -316,10 +316,10 @@ where
             let mut searched_indexes = IndexSet::new();
             for q in deduped_qs.iter() {
                 if I::needs_lower(*q, axis_len) {
-                    searched_indexes.insert(I::lower_index(*q, axis_len));
+                    searched_indexes.insert(lower_index(*q, axis_len));
                 }
                 if I::needs_higher(*q, axis_len) {
-                    searched_indexes.insert(I::higher_index(*q, axis_len));
+                    searched_indexes.insert(higher_index(*q, axis_len));
                 }
             }
             let searched_indexes: Vec<usize> = searched_indexes.into_iter().collect();
@@ -337,14 +337,14 @@ where
                 let result = I::interpolate(
                     match I::needs_lower(*q, axis_len) {
                         true => {
-                            let lower_index = &I::lower_index(*q, axis_len);
+                            let lower_index = &lower_index(*q, axis_len);
                             Some(values.map(|x| x.get(lower_index).unwrap().clone()))
                         },
                         false => None,
                     },
                     match I::needs_higher(*q, axis_len) {
                         true => {
-                            let higher_index = &I::higher_index(*q, axis_len);
+                            let higher_index = &higher_index(*q, axis_len);
                             Some(values.map(|x| x.get(higher_index).unwrap().clone()))
                         },
                         false => None,
