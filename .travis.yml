@@ -18,8 +18,11 @@ before_cache: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
     RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin
   fi
+before_script:
+- rustup component add rustfmt
 script:
 - cargo clean
+- cargo fmt --all -- --check
 - cargo build
 - cargo test
 after_success: |
