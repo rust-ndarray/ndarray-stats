@@ -335,25 +335,18 @@ where
         // get the desired quantiles
         let mut results = IndexMap::new();
         for q in qs {
-            let result = I::interpolate(
-                match I::needs_lower(*q, axis_len) {
-                    true => {
-                        let lower_index = &lower_index(*q, axis_len);
-                        Some(values.map(|x| x.get(lower_index).unwrap().clone()))
-                    },
-                    false => None,
-                },
-                match I::needs_higher(*q, axis_len) {
-                    true => {
-                        let higher_index = &higher_index(*q, axis_len);
-                        Some(values.map(|x| x.get(higher_index).unwrap().clone()))
-                    },
-                    false => None,
-                },
-                *q,
-                axis_len
-            );
-            results.insert(*q, result);
+            let lower = if I::needs_lower(*q, axis_len) {
+                Some(values.map(|x| x[&lower_index(*q, axis_len)].clone()))
+            } else {
+                None
+            };
+            let higher = if I::needs_higher(*q, axis_len) {
+                Some(values.map(|x| x[&higher_index(*q, axis_len)].clone()))
+            } else {
+                None
+            };
+            let interpolated = I::interpolate(lower, higher, *q, axis_len);
+            results.insert(*q, interpolated);
         }
         Some(results)
     }
