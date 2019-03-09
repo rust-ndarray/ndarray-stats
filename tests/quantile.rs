@@ -9,6 +9,24 @@ use ndarray_stats::{
 };
 
 #[test]
+fn test_argmin() {
+    let a = array![[1, 5, 3], [2, 0, 6]];
+    assert_eq!(a.argmin(), Some(vec![(1, 1)]));
+
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmin(), Some(vec![(1, 1)]));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin(), None);
+}
+
+#[test]
+fn test_argmin_multiple_values() {
+    let a = array![[1, 5, 3], [2, 0, 6], [0, 1, 2]];
+    assert_eq!(a.argmin(), Some(vec![(1, 1), (2, 0)]));
+}
+
+#[test]
 fn test_min() {
     let a = array![[1, 5, 3], [2, 0, 6]];
     assert_eq!(a.min(), Some(&0));
