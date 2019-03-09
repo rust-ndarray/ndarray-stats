@@ -11,19 +11,13 @@ use ndarray_stats::{
 #[test]
 fn test_argmin() {
     let a = array![[1, 5, 3], [2, 0, 6]];
-    assert_eq!(a.argmin(), Some(vec![(1, 1)]));
+    assert_eq!(a.argmin(), Some((1, 1)));
 
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.argmin(), Some(vec![(1, 1)]));
+    assert_eq!(a.argmin(), Some((1, 1)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
     assert_eq!(a.argmin(), None);
-}
-
-#[test]
-fn test_argmin_multiple_values() {
-    let a = array![[1, 5, 3], [2, 0, 6], [0, 1, 2]];
-    assert_eq!(a.argmin(), Some(vec![(1, 1), (2, 0)]));
 }
 
 #[test]
@@ -56,19 +50,13 @@ fn test_min_skipnan_all_nan() {
 #[test]
 fn test_argmax() {
     let a = array![[1, 5, 3], [2, 0, 6]];
-    assert_eq!(a.argmax(), Some(vec![(1, 2)]));
+    assert_eq!(a.argmax(), Some((1, 2)));
 
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.argmax(), Some(vec![(1, 2)]));
+    assert_eq!(a.argmax(), Some((1, 2)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
     assert_eq!(a.argmax(), None);
-}
-
-#[test]
-fn test_argmax_multiple_values() {
-    let a = array![[1, 6, 3], [2, 6, 6], [6, 1, 2]];
-    assert_eq!(a.argmax(), Some(vec![(0, 1), (1, 1), (1, 2), (2, 0)]));
 }
 
 #[test]

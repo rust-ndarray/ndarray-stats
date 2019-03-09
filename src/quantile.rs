@@ -182,14 +182,14 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    /// Finds the indices of the minimum values of the array.
+    /// Finds the first index of the minimum value of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
     /// are undefined. (For example, this occurs if there are any
     /// floating-point NaN values in the array.)
     ///
     /// Returns `None` if the array is empty.
-    fn argmin(&self) -> Option<Vec<D::Pattern>>
+    fn argmin(&self) -> Option<D::Pattern>
     where
         A: PartialOrd;
 
@@ -214,14 +214,14 @@ where
         A: MaybeNan,
         A::NotNan: Ord;
 
-    /// Finds the indices of the maximum values of the array.
+    /// Finds the first index of the maximum value of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
     /// are undefined. (For example, this occurs if there are any
     /// floating-point NaN values in the array.)
     ///
     /// Returns `None` if the array is empty.
-    fn argmax(&self) -> Option<Vec<D::Pattern>>
+    fn argmax(&self) -> Option<D::Pattern>
     where
         A: PartialOrd;
 
@@ -300,20 +300,25 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    fn argmin(&self) -> Option<Vec<D::Pattern>>
+    fn argmin(&self) -> Option<D::Pattern>
     where
         A: PartialOrd,
     {
-        let min = self.min()?;
-        let mut args = Vec::<D::Pattern>::new();
+        let min = self.first()?;
+        let mut pattern_min = self.dim();
 
-        self.indexed_iter().for_each(|(pattern, elem)| {
-            if elem.partial_cmp(min) == Some(cmp::Ordering::Equal) {
-                args.push(pattern)
-            }
-        });
+        self.indexed_iter()
+            .fold(Some(min), |acc, (pattern, elem)| {
+                match elem.partial_cmp(acc?)? {
+                    cmp::Ordering::Less => {
+                        pattern_min = pattern;
+                        Some(elem)
+                    }
+                    _ => acc,
+                }
+            })?;
 
-        Some(args)
+        Some(pattern_min)
     }
 
     fn min(&self) -> Option<&A>
@@ -341,20 +346,25 @@ where
         }))
     }
 
-    fn argmax(&self) -> Option<Vec<D::Pattern>>
+    fn argmax(&self) -> Option<D::Pattern>
     where
         A: PartialOrd,
     {
-        let max = self.max()?;
-        let mut args = Vec::<D::Pattern>::new();
+        let max = self.first()?;
+        let mut pattern_max = self.dim();
 
-        self.indexed_iter().for_each(|(pattern, elem)| {
-            if elem.partial_cmp(max) == Some(cmp::Ordering::Equal) {
-                args.push(pattern)
-            }
-        });
+        self.indexed_iter()
+            .fold(Some(max), |acc, (pattern, elem)| {
+                match elem.partial_cmp(acc?)? {
+                    cmp::Ordering::Greater => {
+                        pattern_max = pattern;
+                        Some(elem)
+                    }
+                    _ => acc,
+                }
+            })?;
 
-        Some(args)
+        Some(pattern_max)
     }
 
     fn max(&self) -> Option<&A>
