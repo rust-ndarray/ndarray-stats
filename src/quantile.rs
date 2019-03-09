@@ -305,7 +305,7 @@ where
         A: PartialOrd,
     {
         let min = self.first()?;
-        let mut pattern_min = self.dim();
+        let mut pattern_min = D::zeros(self.ndim()).into_pattern();
 
         self.indexed_iter()
             .fold(Some(min), |acc, (pattern, elem)| {
@@ -351,7 +351,7 @@ where
         A: PartialOrd,
     {
         let max = self.first()?;
-        let mut pattern_max = self.dim();
+        let mut pattern_max = D::zeros(self.ndim()).into_pattern();
 
         self.indexed_iter()
             .fold(Some(max), |acc, (pattern, elem)| {
