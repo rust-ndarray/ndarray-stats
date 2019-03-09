@@ -390,8 +390,7 @@ where
                     not_nan
                         .quantile_axis_mut::<I>(Axis(0), q)
                         .unwrap()
-                        .into_raw_vec()
-                        .remove(0),
+                        .into_scalar(),
                 )
             })
         });
