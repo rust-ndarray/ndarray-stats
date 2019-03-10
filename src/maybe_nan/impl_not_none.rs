@@ -2,7 +2,7 @@ use super::NotNone;
 use num_traits::{FromPrimitive, ToPrimitive};
 use std::cmp;
 use std::fmt;
-use std::ops::{Add, Deref, DerefMut, Div, Mul, Sub};
+use std::ops::{Add, Deref, DerefMut, Div, Mul, Rem, Sub};
 
 impl<T> Deref for NotNone<T> {
     type Target = T;
@@ -93,6 +93,14 @@ impl<T: Div> Div for NotNone<T> {
     #[inline]
     fn div(self, rhs: Self) -> Self::Output {
         self.map(|v| v.div(rhs.unwrap()))
+    }
+}
+
+impl<T: Rem> Rem for NotNone<T> {
+    type Output = NotNone<T::Output>;
+    #[inline]
+    fn rem(self, rhs: Self) -> Self::Output {
+        self.map(|v| v.rem(rhs.unwrap()))
     }
 }
 
