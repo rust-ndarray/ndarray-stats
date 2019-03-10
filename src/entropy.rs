@@ -1,4 +1,4 @@
-//! Summary statistics (e.g. mean, variance, etc.).
+//! Information theory (e.g. entropy, KL divergence, etc.).
 use ndarray::{Array, ArrayBase, Data, Dimension, Zip};
 use num_traits::Float;
 use crate::errors::ShapeMismatch;
