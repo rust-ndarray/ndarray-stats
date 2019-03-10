@@ -12,7 +12,11 @@ pub struct ShapeMismatch {
 
 impl fmt::Display for ShapeMismatch {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Array shapes do not match: {:?} and {:?}.", self.first_shape, self.second_shape)
+        write!(
+            f,
+            "Array shapes do not match: {:?} and {:?}.",
+            self.first_shape, self.second_shape
+        )
     }
 }
 
