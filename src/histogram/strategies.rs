@@ -23,8 +23,8 @@ use super::super::{Quantile1dExt, QuantileExt};
 use super::{Bins, Edges};
 use ndarray::prelude::*;
 use ndarray::Data;
-use num_traits::{FromPrimitive, NumOps, Zero};
 use noisy_float::types::n64;
+use num_traits::{FromPrimitive, NumOps, Zero};
 
 /// A trait implemented by all strategies to build [`Bins`]
 /// with parameters inferred from observations.

@@ -5,13 +5,13 @@ extern crate noisy_float;
 extern crate quickcheck;
 extern crate quickcheck_macros;
 
-use noisy_float::types::{n64, N64};
-use ndarray::prelude::*;
 use ndarray::array;
+use ndarray::prelude::*;
 use ndarray_stats::{
     interpolate::{Interpolate, Higher, Linear, Lower, Midpoint, Nearest},
     Quantile1dExt, QuantileExt,
 };
+use noisy_float::types::{n64, N64};
 use quickcheck_macros::quickcheck;
 
 #[test]
@@ -156,7 +156,9 @@ fn test_quantile_axis_mut_to_get_maximum() {
 #[test]
 fn test_quantile_axis_skipnan_mut_higher_opt_i32() {
     let mut a = arr2(&[[Some(4), Some(2), None, Some(1), Some(5)], [None; 5]]);
-    let q = a.quantile_axis_skipnan_mut::<Higher>(Axis(1), n64(0.6)).unwrap();
+    let q = a
+        .quantile_axis_skipnan_mut::<Higher>(Axis(1), n64(0.6))
+        .unwrap();
     assert_eq!(q.shape(), &[2]);
     assert_eq!(q[0], Some(4));
     assert!(q[1].is_none());
@@ -165,7 +167,9 @@ fn test_quantile_axis_skipnan_mut_higher_opt_i32() {
 #[test]
 fn test_quantile_axis_skipnan_mut_nearest_opt_i32() {
     let mut a = arr2(&[[Some(4), Some(2), None, Some(1), Some(5)], [None; 5]]);
-    let q = a.quantile_axis_skipnan_mut::<Nearest>(Axis(1), n64(0.6)).unwrap();
+    let q = a
+        .quantile_axis_skipnan_mut::<Nearest>(Axis(1), n64(0.6))
+        .unwrap();
     assert_eq!(q.shape(), &[2]);
     assert_eq!(q[0], Some(4));
     assert!(q[1].is_none());
@@ -174,7 +178,9 @@ fn test_quantile_axis_skipnan_mut_nearest_opt_i32() {
 #[test]
 fn test_quantile_axis_skipnan_mut_midpoint_opt_i32() {
     let mut a = arr2(&[[Some(4), Some(2), None, Some(1), Some(5)], [None; 5]]);
-    let q = a.quantile_axis_skipnan_mut::<Midpoint>(Axis(1), n64(0.6)).unwrap();
+    let q = a
+        .quantile_axis_skipnan_mut::<Midpoint>(Axis(1), n64(0.6))
+        .unwrap();
     assert_eq!(q.shape(), &[2]);
     assert_eq!(q[0], Some(3));
     assert!(q[1].is_none());
@@ -183,7 +189,9 @@ fn test_quantile_axis_skipnan_mut_midpoint_opt_i32() {
 #[test]
 fn test_quantile_axis_skipnan_mut_linear_f64() {
     let mut a = arr2(&[[1., 2., ::std::f64::NAN, 3.], [::std::f64::NAN; 4]]);
-    let q = a.quantile_axis_skipnan_mut::<Linear>(Axis(1), n64(0.75)).unwrap();
+    let q = a
+        .quantile_axis_skipnan_mut::<Linear>(Axis(1), n64(0.75))
+        .unwrap();
     assert_eq!(q.shape(), &[2]);
     assert!((q[0] - 2.5).abs() < 1e-12);
     assert!(q[1].is_nan());
@@ -192,7 +200,9 @@ fn test_quantile_axis_skipnan_mut_linear_f64() {
 #[test]
 fn test_quantile_axis_skipnan_mut_linear_opt_i32() {
     let mut a = arr2(&[[Some(2), Some(4), None, Some(1)], [None; 4]]);
-    let q = a.quantile_axis_skipnan_mut::<Linear>(Axis(1), n64(0.75)).unwrap();
+    let q = a
+        .quantile_axis_skipnan_mut::<Linear>(Axis(1), n64(0.75))
+        .unwrap();
     assert_eq!(q.shape(), &[2]);
     assert_eq!(q[0], Some(3));
     assert!(q[1].is_none());
@@ -214,20 +224,43 @@ fn test_quantiles_mut(xs: Vec<i64>) -> bool {
 
     // Unordered list of quantile indexes to look up, with a duplicate
     let quantile_indexes = vec![
-        n64(0.75), n64(0.90), n64(0.95), n64(0.99), n64(1.),
-        n64(0.), n64(0.25), n64(0.5), n64(0.5)
+        n64(0.75),
+        n64(0.90),
+        n64(0.95),
+        n64(0.99),
+        n64(1.),
+        n64(0.),
+        n64(0.25),
+        n64(0.5),
+        n64(0.5),
     ];
     let mut checks = vec![];
-    checks.push(check_one_interpolation_method_for_quantiles_mut::<Linear>(v.clone(), &quantile_indexes));
-    checks.push(check_one_interpolation_method_for_quantiles_mut::<Higher>(v.clone(), &quantile_indexes));
-    checks.push(check_one_interpolation_method_for_quantiles_mut::<Lower>(v.clone(), &quantile_indexes));
-    checks.push(check_one_interpolation_method_for_quantiles_mut::<Midpoint>(v.clone(), &quantile_indexes));
-    checks.push(check_one_interpolation_method_for_quantiles_mut::<Nearest>(v.clone(), &quantile_indexes));
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Linear>(
+        v.clone(),
+        &quantile_indexes,
+    ));
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Higher>(
+        v.clone(),
+        &quantile_indexes,
+    ));
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Lower>(
+        v.clone(),
+        &quantile_indexes,
+    ));
+    checks.push(
+        check_one_interpolation_method_for_quantiles_mut::<Midpoint>(v.clone(), &quantile_indexes),
+    );
+    checks.push(check_one_interpolation_method_for_quantiles_mut::<Nearest>(
+        v.clone(),
+        &quantile_indexes,
+    ));
     checks.into_iter().all(|x| x)
 }
 
-fn check_one_interpolation_method_for_quantiles_mut<I: Interpolate<i64>>(mut v: Array1<i64>, quantile_indexes: &[N64]) -> bool
-{
+fn check_one_interpolation_method_for_quantiles_mut<I: Interpolate<i64>>(
+    mut v: Array1<i64>,
+    quantile_indexes: &[N64],
+) -> bool {
     let bulk_quantiles = v.quantiles_mut::<I>(&quantile_indexes);
 
     if v.len() == 0 {
@@ -238,9 +271,7 @@ fn check_one_interpolation_method_for_quantiles_mut<I: Interpolate<i64>>(mut v: 
         let mut checks = vec![];
         for quantile_index in quantile_indexes.iter() {
             let quantile = v.quantile_mut::<I>(*quantile_index).unwrap();
-            checks.push(
-                quantile == *bulk_quantiles.get(quantile_index).unwrap()
-            );
+            checks.push(quantile == *bulk_quantiles.get(quantile_index).unwrap());
         }
         checks.into_iter().all(|x| x)
     }
@@ -257,42 +288,46 @@ fn test_quantiles_axis_mut(xs: Vec<u64>) -> bool {
 
     // Unordered list of quantile indexes to look up, with a duplicate
     let quantile_indexes = vec![
-        n64(0.75), n64(0.90), n64(0.95), n64(0.99), n64(1.),
-        n64(0.), n64(0.25), n64(0.5), n64(0.5)
+        n64(0.75),
+        n64(0.90),
+        n64(0.95),
+        n64(0.99),
+        n64(1.),
+        n64(0.),
+        n64(0.25),
+        n64(0.5),
+        n64(0.5),
     ];
 
     // Test out all interpolation methods
     let mut checks = vec![];
-    checks.push(
-        check_one_interpolation_method_for_quantiles_axis_mut::<Linear>(
-            m.clone(), &quantile_indexes, Axis(0)
-        )
-    );
-    checks.push(
-        check_one_interpolation_method_for_quantiles_axis_mut::<Higher>(
-            m.clone(), &quantile_indexes, Axis(0)
-        )
-    );
+    checks.push(check_one_interpolation_method_for_quantiles_axis_mut::<
+        Linear,
+    >(m.clone(), &quantile_indexes, Axis(0)));
+    checks.push(check_one_interpolation_method_for_quantiles_axis_mut::<
+        Higher,
+    >(m.clone(), &quantile_indexes, Axis(0)));
     checks.push(
         check_one_interpolation_method_for_quantiles_axis_mut::<Lower>(
-            m.clone(), &quantile_indexes, Axis(0)
-        )
+            m.clone(),
+            &quantile_indexes,
+            Axis(0),
+        ),
     );
-    checks.push(
-        check_one_interpolation_method_for_quantiles_axis_mut::<Midpoint>(
-            m.clone(), &quantile_indexes, Axis(0)
-        )
-    );
-    checks.push(
-        check_one_interpolation_method_for_quantiles_axis_mut::<Nearest>(
-            m.clone(), &quantile_indexes, Axis(0)
-        )
-    );
+    checks.push(check_one_interpolation_method_for_quantiles_axis_mut::<
+        Midpoint,
+    >(m.clone(), &quantile_indexes, Axis(0)));
+    checks.push(check_one_interpolation_method_for_quantiles_axis_mut::<
+        Nearest,
+    >(m.clone(), &quantile_indexes, Axis(0)));
     checks.into_iter().all(|x| x)
 }
 
-fn check_one_interpolation_method_for_quantiles_axis_mut<I: Interpolate<u64>>(mut v: Array2<u64>, quantile_indexes: &[N64], axis: Axis) -> bool
-{
+fn check_one_interpolation_method_for_quantiles_axis_mut<I: Interpolate<u64>>(
+    mut v: Array2<u64>,
+    quantile_indexes: &[N64],
+    axis: Axis,
+) -> bool {
     let bulk_quantiles = v.quantiles_axis_mut::<I>(axis, &quantile_indexes);
 
     if v.len() == 0 {
@@ -302,9 +337,7 @@ fn check_one_interpolation_method_for_quantiles_axis_mut<I: Interpolate<u64>>(mu
         let mut checks = vec![];
         for quantile_index in quantile_indexes.iter() {
             let quantile = v.quantile_axis_mut::<I>(axis, *quantile_index).unwrap();
-            checks.push(
-                quantile == *bulk_quantiles.get(quantile_index).unwrap()
-            );
+            checks.push(quantile == *bulk_quantiles.get(quantile_index).unwrap());
         }
         checks.into_iter().all(|x| x)
     }

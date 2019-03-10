@@ -60,10 +60,11 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
         let mut indexes: Vec<usize> = (0..n).into_iter().collect();
         indexes.append(&mut (0..n).into_iter().collect());
 
-        let sorted_v: Vec<i64> = v.get_many_from_sorted_mut(&indexes)
-                .into_iter()
-                .map(|x| x.1)
-                .collect();
+        let sorted_v: Vec<i64> = v
+            .get_many_from_sorted_mut(&indexes)
+            .into_iter()
+            .map(|x| x.1)
+            .collect();
         xs.sort();
         xs == sorted_v
     }

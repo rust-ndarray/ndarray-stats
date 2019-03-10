@@ -52,8 +52,8 @@ pub trait Interpolate<T> {
         q: N64,
         len: usize,
     ) -> Array<T, D>
-        where
-            D: Dimension;
+    where
+        D: Dimension;
 }
 
 /// Select the higher value.
@@ -125,8 +125,8 @@ impl<T> Interpolate<T> for Nearest {
 }
 
 impl<T> Interpolate<T> for Midpoint
-    where
-        T: Add<T, Output = T> + Div<T, Output = T> + Clone + FromPrimitive,
+where
+    T: Add<T, Output = T> + Div<T, Output = T> + Clone + FromPrimitive,
 {
     fn needs_lower(_q: N64, _len: usize) -> bool {
         true
@@ -140,8 +140,8 @@ impl<T> Interpolate<T> for Midpoint
         _q: N64,
         _len: usize,
     ) -> Array<T, D>
-        where
-            D: Dimension,
+    where
+        D: Dimension,
     {
         let denom = T::from_u8(2).unwrap();
         (lower.unwrap() + higher.unwrap()).mapv_into(|x| x / denom.clone())
@@ -149,8 +149,8 @@ impl<T> Interpolate<T> for Midpoint
 }
 
 impl<T> Interpolate<T> for Linear
-    where
-        T: Add<T, Output = T> + Clone + FromPrimitive + ToPrimitive,
+where
+    T: Add<T, Output = T> + Clone + FromPrimitive + ToPrimitive,
 {
     fn needs_lower(_q: N64, _len: usize) -> bool {
         true
@@ -164,8 +164,8 @@ impl<T> Interpolate<T> for Linear
         q: N64,
         len: usize,
     ) -> Array<T, D>
-        where
-            D: Dimension,
+    where
+        D: Dimension,
     {
         let fraction = float_quantile_index_fraction(q, len).to_f64().unwrap();
         let mut a = lower.unwrap();

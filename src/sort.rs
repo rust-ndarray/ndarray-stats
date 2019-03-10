@@ -1,6 +1,6 @@
+use indexmap::IndexMap;
 use ndarray::prelude::*;
 use ndarray::{s, Data, DataMut};
-use indexmap::IndexMap;
 use rand::prelude::*;
 use rand::thread_rng;
 
@@ -143,8 +143,6 @@ where
         get_many_from_sorted_mut_unchecked(self, &deduped_indexes)
     }
 
-
-
     fn partition_mut(&mut self, pivot_index: usize) -> usize
     where
         A: Ord + Clone,
@@ -195,10 +193,12 @@ where
 ///
 /// [get_many_from_sorted_mut]: ../trait.Sort1dExt.html#tymethod.get_many_from_sorted_mut
 pub(crate) fn get_many_from_sorted_mut_unchecked<A, S>(
-    array: &mut ArrayBase<S, Ix1>, indexes: &[usize]) -> IndexMap<usize, A>
+    array: &mut ArrayBase<S, Ix1>,
+    indexes: &[usize],
+) -> IndexMap<usize, A>
 where
     A: Ord + Clone,
-    S: DataMut<Elem=A>,
+    S: DataMut<Elem = A>,
 {
     let mut values = IndexMap::new();
 
