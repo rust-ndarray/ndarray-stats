@@ -174,8 +174,8 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
                     }
                 }
             });
-        let kl_divergence = temp.sum();
-        Ok(Some(-kl_divergence))
+        let kl_divergence = -temp.sum();
+        Ok(Some(kl_divergence))
     }
 
     fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Result<Option<A>, ShapeMismatch>
@@ -206,8 +206,8 @@ impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
                     }
                 }
             });
-        let cross_entropy = temp.sum();
-        Ok(Some(-cross_entropy))
+        let cross_entropy = -temp.sum();
+        Ok(Some(cross_entropy))
     }
 }
 
