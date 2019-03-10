@@ -20,7 +20,6 @@ noisy_float = "0.1.8"
 num-traits = "0.2"
 rand = "0.6"
 itertools = { version = "0.7.0", default-features = false }
-failure = "0.1.5"
 
 [dev-dependencies]
 quickcheck = "0.7"
