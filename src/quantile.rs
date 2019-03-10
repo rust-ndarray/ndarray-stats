@@ -189,6 +189,20 @@ where
     /// floating-point NaN values in the array.)
     ///
     /// Returns `None` if the array is empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[1., 3., 5.],
+    ///                [2., 0., 6.]];
+    /// assert_eq!(a.argmin(), Some((1, 1)));
+    /// ```
     fn argmin(&self) -> Option<D::Pattern>
     where
         A: PartialOrd;
@@ -221,6 +235,20 @@ where
     /// floating-point NaN values in the array.)
     ///
     /// Returns `None` if the array is empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[1., 3., 7.],
+    ///                [2., 5., 6.]];
+    /// assert_eq!(a.argmax(), Some((0, 2)));
+    /// ```
     fn argmax(&self) -> Option<D::Pattern>
     where
         A: PartialOrd;
