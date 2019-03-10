@@ -182,6 +182,31 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    /// Finds the first index of the minimum value of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
+    ///
+    /// Returns `None` if the array is empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[1., 3., 5.],
+    ///                [2., 0., 6.]];
+    /// assert_eq!(a.argmin(), Some((1, 1)));
+    /// ```
+    fn argmin(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd;
+
     /// Finds the elementwise minimum of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
@@ -202,6 +227,31 @@ where
     where
         A: MaybeNan,
         A::NotNan: Ord;
+
+    /// Finds the first index of the maximum value of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
+    ///
+    /// Returns `None` if the array is empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[1., 3., 7.],
+    ///                [2., 5., 6.]];
+    /// assert_eq!(a.argmax(), Some((0, 2)));
+    /// ```
+    fn argmax(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd;
 
     /// Finds the elementwise maximum of the array.
     ///
@@ -278,6 +328,23 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    fn argmin(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd,
+    {
+        let mut current_min = self.first()?;
+        let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
+
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_min)? == cmp::Ordering::Less {
+                current_pattern_min = pattern;
+                current_min = elem
+            }
+        }
+
+        Some(current_pattern_min)
+    }
+
     fn min(&self) -> Option<&A>
     where
         A: PartialOrd,
@@ -301,6 +368,23 @@ where
                 None => elem,
             })
         }))
+    }
+
+    fn argmax(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd,
+    {
+        let mut current_max = self.first()?;
+        let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
+
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_max)? == cmp::Ordering::Greater {
+                current_pattern_max = pattern;
+                current_max = elem
+            }
+        }
+
+        Some(current_pattern_max)
     }
 
     fn max(&self) -> Option<&A>
