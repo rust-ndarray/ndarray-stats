@@ -304,21 +304,17 @@ where
     where
         A: PartialOrd,
     {
-        let min = self.first()?;
-        let mut pattern_min = D::zeros(self.ndim()).into_pattern();
+        let mut current_min = self.first()?;
+        let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
 
-        self.indexed_iter()
-            .fold(Some(min), |acc, (pattern, elem)| {
-                match elem.partial_cmp(acc?)? {
-                    cmp::Ordering::Less => {
-                        pattern_min = pattern;
-                        Some(elem)
-                    }
-                    _ => acc,
-                }
-            })?;
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_min)? == cmp::Ordering::Less {
+                current_pattern_min = pattern;
+                current_min = elem
+            }
+        }
 
-        Some(pattern_min)
+        Some(current_pattern_min)
     }
 
     fn min(&self) -> Option<&A>
@@ -350,21 +346,17 @@ where
     where
         A: PartialOrd,
     {
-        let max = self.first()?;
-        let mut pattern_max = D::zeros(self.ndim()).into_pattern();
+        let mut current_max = self.first()?;
+        let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
 
-        self.indexed_iter()
-            .fold(Some(max), |acc, (pattern, elem)| {
-                match elem.partial_cmp(acc?)? {
-                    cmp::Ordering::Greater => {
-                        pattern_max = pattern;
-                        Some(elem)
-                    }
-                    _ => acc,
-                }
-            })?;
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_max)? == cmp::Ordering::Greater {
+                current_pattern_max = pattern;
+                current_max = elem
+            }
+        }
 
-        Some(pattern_max)
+        Some(current_pattern_max)
     }
 
     fn max(&self) -> Option<&A>

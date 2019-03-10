@@ -10,14 +10,17 @@ use ndarray_stats::{
 
 #[test]
 fn test_argmin() {
-    let a = array![[0, 5, 3], [2, 0, 6]];
-    assert_eq!(a.argmin(), Some((0, 0)));
+    let a = array![[1, 5, 3], [2, 0, 6]];
+    assert_eq!(a.argmin(), Some((1, 1)));
 
     let a = array![[1., 5., 3.], [2., 0., 6.]];
     assert_eq!(a.argmin(), Some((1, 1)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
     assert_eq!(a.argmin(), None);
+
+    let a = array![[1, 0, 3], [2, 0, 6]];
+    assert_eq!(a.argmin(), Some((0, 1)));
 }
 
 #[test]
@@ -49,14 +52,17 @@ fn test_min_skipnan_all_nan() {
 
 #[test]
 fn test_argmax() {
-    let a = array![[7, 5, 3], [2, 0, 6]];
-    assert_eq!(a.argmax(), Some((0, 0)));
+    let a = array![[1, 5, 3], [2, 0, 6]];
+    assert_eq!(a.argmax(), Some((1, 2)));
 
     let a = array![[1., 5., 3.], [2., 0., 6.]];
     assert_eq!(a.argmax(), Some((1, 2)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
     assert_eq!(a.argmax(), None);
+
+    let a = array![[1, 5, 6], [2, 0, 6]];
+    assert_eq!(a.argmax(), Some((0, 2)));
 }
 
 #[test]
