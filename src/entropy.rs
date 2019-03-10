@@ -21,7 +21,7 @@ pub trait EntropyExt<A, S, D>
     ///
     /// If the array is empty, `None` is returned.
     ///
-    /// **Panics** if any element in the array is negative.
+    /// **Panics** if `ln` of any element in the array panics (which can occur for negative values for some `A`).
     ///
     /// ## Remarks
     ///
