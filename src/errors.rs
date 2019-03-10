@@ -1,3 +1,4 @@
+//! Custom errors returned from our methods and functions.
 use std::error::Error;
 use std::fmt;
 
