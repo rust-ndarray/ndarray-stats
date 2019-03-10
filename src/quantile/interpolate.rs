@@ -2,7 +2,7 @@
 use ndarray::azip;
 use ndarray::prelude::*;
 use noisy_float::types::N64;
-use num_traits::{Float, FromPrimitive, ToPrimitive};
+use num_traits::{Float, FromPrimitive, NumOps, ToPrimitive};
 use std::ops::{Add, Div};
 
 fn float_quantile_index(q: N64, len: usize) -> N64 {
@@ -144,7 +144,14 @@ where
         D: Dimension,
     {
         let denom = T::from_u8(2).unwrap();
-        (lower.unwrap() + higher.unwrap()).mapv_into(|x| x / denom.clone())
+        let mut lower = lower.unwrap();
+        let higher = higher.unwrap();
+        azip!(
+            mut lower, ref higher in {
+                *lower = lower.clone() + (higher.clone() - lower.clone()) / denom.clone()
+            }
+        );
+        lower
     }
 }
 
