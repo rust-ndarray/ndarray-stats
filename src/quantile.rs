@@ -211,7 +211,7 @@ where
     where
         A: PartialOrd;
 
-    /// Finds the first index of the minimum value of the array ignoring nan values.
+    /// Finds the first index of the minimum value of the array skipping NaN values.
     ///
     /// Returns `None` if the array is empty.
     ///
@@ -234,7 +234,7 @@ where
     fn argmin_skipnan(&self) -> Option<D::Pattern>
     where
         A: MaybeNan,
-        A::NotNan: Ord + std::fmt::Debug;
+        A::NotNan: Ord;
 
     /// Finds the elementwise minimum of the array.
     ///
@@ -293,6 +293,31 @@ where
     fn argmax(&self) -> Option<D::Pattern>
     where
         A: PartialOrd;
+
+    /// Finds the first index of the maximum value of the array skipping NaN values.
+    ///
+    /// Returns `None` if the array is empty.
+    ///
+    /// **Warning** This method will return a None value if none of the values
+    /// in the array are non-NaN values.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[::std::f64::NAN, 3., 5.],
+    ///                [2., 0., 6.]];
+    /// assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+    /// ```
+    fn argmax_skipnan(&self) -> Option<D::Pattern>
+    where
+        A: MaybeNan,
+        A::NotNan: Ord;
 
     /// Finds the elementwise maximum of the array.
     ///
@@ -397,7 +422,7 @@ where
     fn argmin_skipnan(&self) -> Option<D::Pattern>
     where
         A: MaybeNan,
-        A::NotNan: Ord + std::fmt::Debug,
+        A::NotNan: Ord,
     {
         let mut current_min = self.first().and_then(|v| v.try_as_not_nan());
         let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
@@ -454,6 +479,26 @@ where
         }
 
         Some(current_pattern_max)
+    }
+
+    fn argmax_skipnan(&self) -> Option<D::Pattern>
+    where
+        A: MaybeNan,
+        A::NotNan: Ord,
+    {
+        let mut current_max = self.first().and_then(|v| v.try_as_not_nan());
+        let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
+        for (pattern, elem) in self.indexed_iter() {
+            let elem_not_nan = elem.try_as_not_nan();
+            if elem_not_nan.is_some()
+                && (current_max.is_none()
+                    || elem_not_nan.partial_cmp(&current_max) == Some(cmp::Ordering::Greater))
+            {
+                current_pattern_max = pattern;
+                current_max = elem_not_nan;
+            }
+        }
+        current_max.map({ |_| current_pattern_max })
     }
 
     fn max(&self) -> Option<&A>

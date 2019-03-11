@@ -46,10 +46,7 @@ fn test_argmin_skipnan() {
     let a: Array2<f64> = array![[], []];
     assert_eq!(a.argmin_skipnan(), None);
 
-    let a = array![
-        [::std::f64::NAN, ::std::f64::NAN],
-        [::std::f64::NAN, ::std::f64::NAN]
-    ];
+    let a = arr2(&[[::std::f64::NAN; 2]; 2]);
     assert_eq!(a.argmin_skipnan(), None);
 }
 
@@ -100,6 +97,27 @@ quickcheck! {
         let a = Array1::from(data);
         a.argmax().map(|i| a[i]) == a.max().cloned()
     }
+}
+
+#[test]
+fn test_argmax_skipnan() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, ::std::f64::NAN]];
+    assert_eq!(a.argmax_skipnan(), Some((0, 1)));
+
+    let a = array![
+        [::std::f64::NAN, ::std::f64::NAN, 3.],
+        [2., ::std::f64::NAN, 6.]
+    ];
+    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+
+    let a: Array2<f64> = array![[], []];
+    assert_eq!(a.argmax_skipnan(), None);
+
+    let a = arr2(&[[::std::f64::NAN; 2]; 2]);
+    assert_eq!(a.argmax_skipnan(), None);
 }
 
 #[test]
