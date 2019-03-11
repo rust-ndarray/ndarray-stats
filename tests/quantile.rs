@@ -20,7 +20,8 @@ fn test_argmin() {
     assert_eq!(a.argmin(), None);
 
     let a = array![[1, 0, 3], [2, 0, 6]];
-    assert_eq!(a.argmin(), Some((0, 1)));
+    let argmin = a.argmin();
+    assert!(argmin == Some((0, 1)) || argmin == Some((1, 1)));
 
     let a: Array2<i32> = array![[], []];
     assert_eq!(a.argmin(), None);
@@ -65,7 +66,8 @@ fn test_argmax() {
     assert_eq!(a.argmax(), None);
 
     let a = array![[1, 5, 6], [2, 0, 6]];
-    assert_eq!(a.argmax(), Some((0, 2)));
+    let argmax = a.argmax();
+    assert!(argmax == Some((0, 2)) || argmax == Some((1, 2)));
 
     let a: Array2<i32> = array![[], []];
     assert_eq!(a.argmax(), None);
