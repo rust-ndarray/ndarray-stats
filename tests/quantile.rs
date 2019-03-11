@@ -33,6 +33,27 @@ quickcheck! {
 }
 
 #[test]
+fn test_argmin_skipnan() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((0, 0)));
+
+    let a = array![[::std::f64::NAN, 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((1, 0)));
+
+    let a: Array2<f64> = array![[], []];
+    assert_eq!(a.argmin_skipnan(), None);
+
+    let a = array![
+        [::std::f64::NAN, ::std::f64::NAN],
+        [::std::f64::NAN, ::std::f64::NAN]
+    ];
+    assert_eq!(a.argmin_skipnan(), None);
+}
+
+#[test]
 fn test_min() {
     let a = array![[1, 5, 3], [2, 0, 6]];
     assert_eq!(a.min(), Some(&0));

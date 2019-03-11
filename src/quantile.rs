@@ -211,6 +211,31 @@ where
     where
         A: PartialOrd;
 
+    /// Finds the first index of the minimum value of the array ignoring nan values.
+    ///
+    /// Returns `None` if the array is empty.
+    ///
+    /// **Warning** This method will return a None value if none of the values
+    /// in the array are non-NaN values.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[::std::f64::NAN, 3., 5.],
+    ///                [2., 0., 6.]];
+    /// assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+    /// ```
+    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    where
+        A: MaybeNan,
+        A::NotNan: Ord + std::fmt::Debug;
+
     /// Finds the elementwise minimum of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
@@ -367,6 +392,26 @@ where
         }
 
         Some(current_pattern_min)
+    }
+
+    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    where
+        A: MaybeNan,
+        A::NotNan: Ord + std::fmt::Debug,
+    {
+        let mut current_min = self.first().and_then(|v| v.try_as_not_nan());
+        let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
+        for (pattern, elem) in self.indexed_iter() {
+            let elem_not_nan = elem.try_as_not_nan();
+            if elem_not_nan.is_some()
+                && (current_min.is_none()
+                    || elem_not_nan.partial_cmp(&current_min) == Some(cmp::Ordering::Less))
+            {
+                current_pattern_min = pattern;
+                current_min = elem_not_nan;
+            }
+        }
+        current_min.map({ |_| current_pattern_min })
     }
 
     fn min(&self) -> Option<&A>
