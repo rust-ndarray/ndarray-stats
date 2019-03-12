@@ -66,6 +66,7 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
             .map(|x| x.1)
             .collect();
         xs.sort();
+        println!("Sorted: {:?}. Truth: {:?}", sorted_v, xs);
         xs == sorted_v
     }
 }

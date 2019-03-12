@@ -140,7 +140,13 @@ where
         deduped_indexes.sort_unstable();
         deduped_indexes.dedup();
 
-        get_many_from_sorted_mut_unchecked(self, &deduped_indexes)
+        let values = log_version(self, &deduped_indexes);
+
+        let mut result = IndexMap::new();
+        for (index, value) in deduped_indexes.into_iter().zip(values.into_iter()) {
+            result.insert(index, value);
+        }
+        result
     }
 
     fn partition_mut(&mut self, pivot_index: usize) -> usize
@@ -214,4 +220,58 @@ where
     }
 
     values
+}
+
+pub(crate) fn log_version<A, S>(
+    array: &mut ArrayBase<S, Ix1>,
+    indexes: &[usize],
+) -> Vec<A>
+where
+    A: Ord + Clone,
+    S: DataMut<Elem = A>,
+{
+    let n = array.len();
+
+    if n == 0 {
+        return vec![]
+    }
+
+    if n == 1 {
+        let value = array[0].clone();
+        return vec![value; indexes.len()]
+    }
+
+    let mut rng = thread_rng();
+    let pivot_index = rng.gen_range(0, n);
+    let partition_index = array.partition_mut(pivot_index);
+    match indexes.binary_search(&partition_index) {
+        Ok(quantile_index) => {
+            let smaller_indexes = &indexes[..quantile_index];
+            let mut smaller_quantiles = log_version(
+                &mut array.slice_mut(s![..quantile_index]), smaller_indexes
+            );
+
+            smaller_quantiles.push(array[quantile_index].clone());
+
+            let bigger_indexes: Vec<usize> = indexes[(quantile_index+1)..].into_iter().map(|x| x - quantile_index - 1).collect();
+            let mut bigger_quantiles = log_version(
+                &mut array.slice_mut(s![(quantile_index+1)..]), &bigger_indexes
+            );
+            smaller_quantiles.append(&mut bigger_quantiles);
+            smaller_quantiles
+        },
+        Err(quantile_index) => {
+            let smaller_indexes = &indexes[..quantile_index];
+            let mut smaller_quantiles = log_version(
+                &mut array.slice_mut(s![..quantile_index]), smaller_indexes
+            );
+
+            let bigger_indexes: Vec<usize> = indexes[quantile_index..].into_iter().map(|x| x - quantile_index).collect();
+            let mut bigger_quantiles = log_version(
+                &mut array.slice_mut(s![(quantile_index+1)..]), &bigger_indexes
+            );
+            smaller_quantiles.append(&mut bigger_quantiles);
+            smaller_quantiles
+        }
+    }
 }
