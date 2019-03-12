@@ -211,12 +211,14 @@ where
     where
         A: PartialOrd;
 
-    /// Finds the first index of the minimum value of the array skipping NaN values.
+    /// Finds the index of the minimum value of the array skipping NaN values.
     ///
-    /// Returns `None` if the array is empty.
+    /// Returns `None` if the array is empty or none of the values in the array
+    /// are non-NaN values.
     ///
-    /// **Warning** This method will return a None value if none of the values
-    /// in the array are non-NaN values.
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
     ///
     /// # Example
     ///
@@ -294,12 +296,14 @@ where
     where
         A: PartialOrd;
 
-    /// Finds the first index of the maximum value of the array skipping NaN values.
+    /// Finds the index of the maximum value of the array skipping NaN values.
     ///
-    /// Returns `None` if the array is empty.
+    /// Returns `None` if the array is empty or none of the values in the array
+    /// are non-NaN values.
     ///
-    /// **Warning** This method will return a None value if none of the values
-    /// in the array are non-NaN values.
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
     ///
     /// # Example
     ///
