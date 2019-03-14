@@ -182,13 +182,17 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    /// Finds the first index of the minimum value of the array.
+    /// Finds the index of the minimum value of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
     /// are undefined. (For example, this occurs if there are any
     /// floating-point NaN values in the array.)
     ///
     /// Returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
     ///
     /// # Example
     ///
@@ -214,11 +218,19 @@ where
     /// floating-point NaN values in the array.)
     ///
     /// Additionally, returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
     fn min(&self) -> Option<&A>
     where
         A: PartialOrd;
 
     /// Finds the elementwise minimum of the array, skipping NaN values.
+    ///
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
     ///
     /// **Warning** This method will return a NaN value if none of the values
     /// in the array are non-NaN values. Note that the NaN value might not be
@@ -228,13 +240,17 @@ where
         A: MaybeNan,
         A::NotNan: Ord;
 
-    /// Finds the first index of the maximum value of the array.
+    /// Finds the index of the maximum value of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
     /// are undefined. (For example, this occurs if there are any
     /// floating-point NaN values in the array.)
     ///
     /// Returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
     ///
     /// # Example
     ///
@@ -260,11 +276,19 @@ where
     /// floating-point NaN values in the array.)
     ///
     /// Additionally, returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
     fn max(&self) -> Option<&A>
     where
         A: PartialOrd;
 
     /// Finds the elementwise maximum of the array, skipping NaN values.
+    ///
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
     ///
     /// **Warning** This method will return a NaN value if none of the values
     /// in the array are non-NaN values. Note that the NaN value might not be

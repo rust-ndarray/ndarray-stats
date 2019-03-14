@@ -1,12 +1,14 @@
 #[macro_use(array)]
 extern crate ndarray;
 extern crate ndarray_stats;
+extern crate quickcheck;
 
 use ndarray::prelude::*;
 use ndarray_stats::{
     interpolate::{Higher, Linear, Lower, Midpoint, Nearest},
     Quantile1dExt, QuantileExt,
 };
+use quickcheck::quickcheck;
 
 #[test]
 fn test_argmin() {
@@ -19,11 +21,15 @@ fn test_argmin() {
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
     assert_eq!(a.argmin(), None);
 
-    let a = array![[1, 0, 3], [2, 0, 6]];
-    assert_eq!(a.argmin(), Some((0, 1)));
-
     let a: Array2<i32> = array![[], []];
     assert_eq!(a.argmin(), None);
+}
+
+quickcheck! {
+    fn argmin_matches_min(data: Vec<f32>) -> bool {
+        let a = Array1::from(data);
+        a.argmin().map(|i| a[i]) == a.min().cloned()
+    }
 }
 
 #[test]
@@ -64,11 +70,15 @@ fn test_argmax() {
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
     assert_eq!(a.argmax(), None);
 
-    let a = array![[1, 5, 6], [2, 0, 6]];
-    assert_eq!(a.argmax(), Some((0, 2)));
-
     let a: Array2<i32> = array![[], []];
     assert_eq!(a.argmax(), None);
+}
+
+quickcheck! {
+    fn argmax_matches_max(data: Vec<f32>) -> bool {
+        let a = Array1::from(data);
+        a.argmax().map(|i| a[i]) == a.max().cloned()
+    }
 }
 
 #[test]
