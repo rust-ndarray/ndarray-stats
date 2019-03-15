@@ -230,7 +230,7 @@ where
             // Search recursively for the values corresponding to strictly smaller indexes
             // to the left of partition_index
             let smaller_indexes = &indexes[..partition_index];
-            let smaller_values = log_version(
+            let smaller_values = get_many_from_sorted_mut_unchecked(
                 &mut array.slice_mut(s![..partition_index]), smaller_indexes
             );
 
@@ -242,7 +242,7 @@ where
             // Search recursively for the values corresponding to strictly bigger indexes
             // to the right of partition_index+1
             let bigger_indexes: Vec<usize> = indexes[(partition_index+1)..].into_iter().map(|x| x - partition_index - 1).collect();
-            let mut bigger_values = log_version(
+            let mut bigger_values = get_many_from_sorted_mut_unchecked(
                 &mut array.slice_mut(s![(partition_index+1)..]), &bigger_indexes
             );
 
@@ -256,7 +256,7 @@ where
             // Search recursively for the values corresponding to strictly smaller indexes
             // to the left of partition_index
             let smaller_indexes = &indexes[..partition_index];
-            let smaller_values = log_version(
+            let smaller_values = get_many_from_sorted_mut_unchecked(
                 &mut array.slice_mut(s![..partition_index]), smaller_indexes
             );
 
@@ -265,8 +265,8 @@ where
             // Search recursively for the values corresponding to strictly bigger indexes
             // to the right of partition_index
             let bigger_indexes: Vec<usize> = indexes[partition_index..].into_iter().map(|x| x - partition_index).collect();
-            let mut bigger_values = log_version(
-                &mut array.slice_mut(s![(partition_index+1)..]), &bigger_indexes
+            let mut bigger_values = get_many_from_sorted_mut_unchecked(
+                &mut array.slice_mut(s![partition_index..]), &bigger_indexes
             );
 
             results.append(&mut bigger_values);
