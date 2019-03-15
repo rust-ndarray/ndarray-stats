@@ -440,7 +440,12 @@ where
                 current_min = elem_not_nan;
             }
         }
-        current_min.map({ |_| current_pattern_min })
+
+        if current_min == None {
+            None
+        } else {
+            Some(current_pattern_min)
+        }
     }
 
     fn min(&self) -> Option<&A>
@@ -502,7 +507,12 @@ where
                 current_max = elem_not_nan;
             }
         }
-        current_max.map({ |_| current_pattern_max })
+
+        if current_max == None {
+            None
+        } else {
+            Some(current_pattern_max)
+        }
     }
 
     fn max(&self) -> Option<&A>
