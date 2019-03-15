@@ -50,6 +50,13 @@ fn test_argmin_skipnan() {
     assert_eq!(a.argmin_skipnan(), None);
 }
 
+quickcheck! {
+    fn argmin_skipnan_matches_min(data: Vec<f32>) -> bool {
+        let a = Array1::from(data);
+        a.argmin_skipnan().map(|i| a[i]) == a.min().cloned()
+    }
+}
+
 #[test]
 fn test_min() {
     let a = array![[1, 5, 3], [2, 0, 6]];
@@ -118,6 +125,13 @@ fn test_argmax_skipnan() {
 
     let a = arr2(&[[::std::f64::NAN; 2]; 2]);
     assert_eq!(a.argmax_skipnan(), None);
+}
+
+quickcheck! {
+    fn argmax_skipnan_matches_max(data: Vec<f32>) -> bool {
+        let a = Array1::from(data);
+        a.argmax_skipnan().map(|i| a[i]) == a.max().cloned()
+    }
 }
 
 #[test]
