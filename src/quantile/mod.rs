@@ -182,7 +182,7 @@ where
     /// Returns `None` when the specified axis has length 0.
     ///
     /// **Panics** if `axis` is out of bounds or if
-    /// any `q` `qs` is not between `0.` and `1.` (inclusive).
+    /// any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
     /// [quantile_axis_mut]: ##tymethod.quantile_axis_mut
     fn quantiles_axis_mut<I>(
