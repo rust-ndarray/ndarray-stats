@@ -3,7 +3,6 @@ use ndarray::azip;
 use ndarray::prelude::*;
 use noisy_float::types::N64;
 use num_traits::{Float, FromPrimitive, NumOps, ToPrimitive};
-use std::ops::{Add, Div};
 
 fn float_quantile_index(q: N64, len: usize) -> N64 {
     q * ((len - 1) as f64)
@@ -126,7 +125,7 @@ impl<T> Interpolate<T> for Nearest {
 
 impl<T> Interpolate<T> for Midpoint
 where
-    T: Add<T, Output = T> + Div<T, Output = T> + Clone + FromPrimitive,
+    T: NumOps + Clone + FromPrimitive,
 {
     fn needs_lower(_q: N64, _len: usize) -> bool {
         true
@@ -157,7 +156,7 @@ where
 
 impl<T> Interpolate<T> for Linear
 where
-    T: Add<T, Output = T> + Clone + FromPrimitive + ToPrimitive,
+    T: NumOps + Clone + FromPrimitive + ToPrimitive,
 {
     fn needs_lower(_q: N64, _len: usize) -> bool {
         true
