@@ -8,7 +8,7 @@ extern crate quickcheck_macros;
 use ndarray::array;
 use ndarray::prelude::*;
 use ndarray_stats::{
-    interpolate::{Interpolate, Higher, Linear, Lower, Midpoint, Nearest},
+    interpolate::{Higher, Interpolate, Linear, Lower, Midpoint, Nearest},
     Quantile1dExt, QuantileExt,
 };
 use noisy_float::types::{n64, N64};
