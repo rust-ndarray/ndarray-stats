@@ -428,23 +428,29 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        let mut current_min = self.first().and_then(|v| v.try_as_not_nan());
-        let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
-        for (pattern, elem) in self.indexed_iter() {
-            let elem_not_nan = elem.try_as_not_nan();
-            if elem_not_nan.is_some()
-                && (current_min.is_none()
-                    || elem_not_nan.partial_cmp(&current_min) == Some(cmp::Ordering::Less))
-            {
-                current_pattern_min = pattern;
-                current_min = elem_not_nan;
-            }
-        }
+        let first = self.first().and_then(|v| v.try_as_not_nan());
+        let mut pattern_min = D::zeros(self.ndim()).into_pattern();
 
-        if current_min == None {
+        let min = self
+            .indexed_iter()
+            .fold(first, |current_min, (pattern, elem)| {
+                let elem_not_nan = elem.try_as_not_nan();
+
+                if elem_not_nan.is_some()
+                    && (current_min.is_none()
+                        || elem_not_nan.cmp(&current_min) == cmp::Ordering::Less)
+                {
+                    pattern_min = pattern;
+                    elem_not_nan
+                } else {
+                    current_min
+                }
+            });
+
+        if min == None {
             None
         } else {
-            Some(current_pattern_min)
+            Some(pattern_min)
         }
     }
 
@@ -495,23 +501,29 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        let mut current_max = self.first().and_then(|v| v.try_as_not_nan());
-        let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
-        for (pattern, elem) in self.indexed_iter() {
-            let elem_not_nan = elem.try_as_not_nan();
-            if elem_not_nan.is_some()
-                && (current_max.is_none()
-                    || elem_not_nan.partial_cmp(&current_max) == Some(cmp::Ordering::Greater))
-            {
-                current_pattern_max = pattern;
-                current_max = elem_not_nan;
-            }
-        }
+        let first = self.first().and_then(|v| v.try_as_not_nan());
+        let mut pattern_max = D::zeros(self.ndim()).into_pattern();
 
-        if current_max == None {
+        let max = self
+            .indexed_iter()
+            .fold(first, |current_max, (pattern, elem)| {
+                let elem_not_nan = elem.try_as_not_nan();
+
+                if elem_not_nan.is_some()
+                    && (current_max.is_none()
+                        || elem_not_nan.cmp(&current_max) == cmp::Ordering::Greater)
+                {
+                    pattern_max = pattern;
+                    elem_not_nan
+                } else {
+                    current_max
+                }
+            });
+
+        if max == None {
             None
         } else {
-            Some(current_pattern_max)
+            Some(pattern_max)
         }
     }
 
