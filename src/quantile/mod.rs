@@ -334,6 +334,8 @@ where
         let searched_indexes: Vec<usize> = searched_indexes.into_iter().collect();
 
         // Retrieve the values corresponding to each index for each slice along the specified axis
+        // For each 1-dimensional slice along the specified axis we get back an IndexMap
+        // which can be used to retrieve the desired values using searched_indexes
         let values = self.map_axis_mut(axis, |mut x| {
             get_many_from_sorted_mut_unchecked(&mut x, &searched_indexes)
         });
