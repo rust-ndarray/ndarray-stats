@@ -200,7 +200,10 @@ where
     A: Ord + Clone,
     S: DataMut<Elem = A>,
 {
+    // The actual routine
     let values = _get_many_from_sorted_mut_unchecked(array, indexes);
+
+    // We convert the vector to a more search-friendly IndexMap
     let mut result = IndexMap::new();
     for (index, value) in indexes.into_iter().zip(values.into_iter()) {
         result.insert(*index, value);
@@ -218,28 +221,34 @@ where
 {
     let n = array.len();
 
-    if indexes.len() == 0 {
+    // Nothing to do in this case
+    if indexes.len() == 0 || n == 0 {
         return vec![];
     }
 
-    if n == 0 {
-        return vec![];
-    }
-
+    // We can only reach this point with indexes.len() == 1
+    // So it's safe to return a vector with a single value
     if n == 1 {
         let value = array[0].clone();
         return vec![value];
     }
 
-    // Pick a random index
+    // We pick a random pivot index: the corresponding element is the pivot value
     let mut rng = thread_rng();
     let pivot_index = rng.gen_range(0, n);
-    // Partition the array with respect to the pivot value
+
+    // We partition the array with respect to the pivot value
+    // The pivot value moves to `array_partition_index`
+    // Elements strictly smaller than the pivot value have indexes < `array_partition_index`
+    // Elements greater or equal to the pivot value have indexes > `array_partition_index`
     let array_partition_index = array.partition_mut(pivot_index);
+
+    // We can use a divide et impera strategy, splitting the indexes we are searching
+    // in two chunks with respect to array_partition_index
     match indexes.binary_search(&array_partition_index) {
-        // The partition_index is one of indexes we are looking for
+        // Option 1: The partition_index is one of the indexes we are looking for
         Ok(index_split) => {
-            // Search recursively for the values corresponding to strictly smaller indexes
+            // We search recursively for the values corresponding to strictly smaller indexes
             // to the left of partition_index
             let smaller_indexes = &indexes[..index_split];
             let smaller_values = _get_many_from_sorted_mut_unchecked(
@@ -247,10 +256,11 @@ where
                 smaller_indexes,
             );
 
-            // Search recursively for the values corresponding to strictly bigger indexes
+            // We search recursively for the values corresponding to strictly bigger indexes
             // to the right of partition_index+1
             let bigger_indexes: Vec<usize> = indexes[(index_split + 1)..]
                 .into_iter()
+                // We need to rebase the indexes
                 .map(|x| x - array_partition_index - 1)
                 .collect();
             let mut bigger_values = _get_many_from_sorted_mut_unchecked(
@@ -265,7 +275,7 @@ where
             results.append(&mut bigger_values);
             results
         }
-        // The partition_index is not one of indexes we are looking for
+        // Option 2: The partition_index is not one of indexes we are looking for
         Err(index_split) => {
             // Search recursively for the values corresponding to strictly smaller indexes
             // to the left of partition_index
@@ -278,6 +288,7 @@ where
             // to the right of partition_index
             let bigger_indexes: Vec<usize> = indexes[index_split..]
                 .into_iter()
+                // We need to rebase the indexes
                 .map(|x| x - array_partition_index - 1)
                 .collect();
             let mut bigger_values = _get_many_from_sorted_mut_unchecked(
