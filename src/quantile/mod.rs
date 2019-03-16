@@ -343,12 +343,12 @@ where
         let mut results = IndexMap::new();
         for q in qs {
             let lower = if I::needs_lower(*q, axis_len) {
-                Some(values.map(|x| x[lower_index(*q, axis_len)].clone()))
+                Some(values.map(|x| x.get(&lower_index(*q, axis_len)).unwrap().clone()))
             } else {
                 None
             };
             let higher = if I::needs_higher(*q, axis_len) {
-                Some(values.map(|x| x[higher_index(*q, axis_len)].clone()))
+                Some(values.map(|x| x.get(&higher_index(*q, axis_len)).unwrap().clone()))
             } else {
                 None
             };
