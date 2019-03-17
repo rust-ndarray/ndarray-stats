@@ -51,9 +51,15 @@ fn test_argmin_skipnan() {
 }
 
 quickcheck! {
-    fn argmin_skipnan_matches_min(data: Vec<f32>) -> bool {
+    fn argmin_skipnan_matches_min_skipnan(data: Vec<Option<i32>>) -> bool {
         let a = Array1::from(data);
-        a.argmin_skipnan().map(|i| a[i]) == a.min().cloned()
+        let min = a.min_skipnan();
+        let argmin = a.argmin_skipnan();
+        if min.is_none() {
+            argmin == None
+        } else {
+            a[argmin.unwrap()] == *min
+        }
     }
 }
 
@@ -128,9 +134,15 @@ fn test_argmax_skipnan() {
 }
 
 quickcheck! {
-    fn argmax_skipnan_matches_max(data: Vec<f32>) -> bool {
+    fn argmax_skipnan_matches_max_skipnan(data: Vec<Option<i32>>) -> bool {
         let a = Array1::from(data);
-        a.argmax_skipnan().map(|i| a[i]) == a.max().cloned()
+        let max = a.max_skipnan();
+        let argmax = a.argmax_skipnan();
+        if max.is_none() {
+            argmax == None
+        } else {
+            a[argmax.unwrap()] == *max
+        }
     }
 }
 
