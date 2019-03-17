@@ -438,7 +438,11 @@ where
                 }
             })
         });
-        min.map(|_| pattern_min)
+        if min.is_some() {
+            Some(pattern_min)
+        } else {
+            None
+        }
     }
 
     fn min(&self) -> Option<&A>
@@ -498,7 +502,11 @@ where
                 }
             })
         });
-        max.map(|_| pattern_max)
+        if max.is_some() {
+            Some(pattern_max)
+        } else {
+            None
+        }
     }
 
     fn max(&self) -> Option<&A>
