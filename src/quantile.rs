@@ -428,30 +428,17 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        let first = self.first().and_then(|v| v.try_as_not_nan());
         let mut pattern_min = D::zeros(self.ndim()).into_pattern();
-
-        let min = self
-            .indexed_iter()
-            .fold(first, |current_min, (pattern, elem)| {
-                let elem_not_nan = elem.try_as_not_nan();
-
-                if elem_not_nan.is_some()
-                    && (current_min.is_none()
-                        || elem_not_nan.cmp(&current_min) == cmp::Ordering::Less)
-                {
+        let min = self.indexed_fold_skipnan(None, |current_min, (pattern, elem)| {
+            Some(match current_min {
+                Some(m) if m <= elem => m,
+                _ => {
                     pattern_min = pattern;
-                    elem_not_nan
-                } else {
-                    current_min
+                    elem
                 }
-            });
-
-        if min == None {
-            None
-        } else {
-            Some(pattern_min)
-        }
+            })
+        });
+        min.map(|_| pattern_min)
     }
 
     fn min(&self) -> Option<&A>
@@ -501,30 +488,17 @@ where
         A: MaybeNan,
         A::NotNan: Ord,
     {
-        let first = self.first().and_then(|v| v.try_as_not_nan());
         let mut pattern_max = D::zeros(self.ndim()).into_pattern();
-
-        let max = self
-            .indexed_iter()
-            .fold(first, |current_max, (pattern, elem)| {
-                let elem_not_nan = elem.try_as_not_nan();
-
-                if elem_not_nan.is_some()
-                    && (current_max.is_none()
-                        || elem_not_nan.cmp(&current_max) == cmp::Ordering::Greater)
-                {
+        let max = self.indexed_fold_skipnan(None, |current_max, (pattern, elem)| {
+            Some(match current_max {
+                Some(m) if m >= elem => m,
+                _ => {
                     pattern_max = pattern;
-                    elem_not_nan
-                } else {
-                    current_max
+                    elem
                 }
-            });
-
-        if max == None {
-            None
-        } else {
-            Some(pattern_max)
-        }
+            })
+        });
+        max.map(|_| pattern_max)
     }
 
     fn max(&self) -> Option<&A>
