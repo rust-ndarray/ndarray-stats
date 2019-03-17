@@ -245,61 +245,40 @@ where
 
     // We can use a divide et impera strategy, splitting the indexes we are searching
     // in two chunks with respect to array_partition_index
-    match indexes.binary_search(&array_partition_index) {
-        // Option 1: The partition_index is one of the indexes we are looking for
-        Ok(index_split) => {
-            // We search recursively for the values corresponding to strictly smaller indexes
-            // to the left of partition_index
-            let smaller_indexes = &indexes[..index_split];
-            let smaller_values = _get_many_from_sorted_mut_unchecked(
-                &mut array.slice_mut(s![..array_partition_index]),
-                smaller_indexes,
-            );
+    let index_split = indexes.binary_search(&array_partition_index);
+    let (smaller_indexes, bigger_indexes) = match index_split {
+        Ok(index_split) => (&indexes[..index_split], &indexes[(index_split+1)..]),
+        Err(index_split) => (&indexes[..index_split], &indexes[index_split..]),
+    };
+    // We are using a recursive search - to look for bigger_indexes in the right
+    // slice of the array we need to shift the indexes
+    let bigger_indexes: Vec<usize> = bigger_indexes
+        .into_iter()
+        .map(|x| x - array_partition_index - 1)
+        .collect();
 
-            // We search recursively for the values corresponding to strictly bigger indexes
-            // to the right of partition_index+1
-            let bigger_indexes: Vec<usize> = indexes[(index_split + 1)..]
-                .into_iter()
-                // We need to rebase the indexes
-                .map(|x| x - array_partition_index - 1)
-                .collect();
-            let mut bigger_values = _get_many_from_sorted_mut_unchecked(
-                &mut array.slice_mut(s![(array_partition_index + 1)..]),
-                &bigger_indexes,
-            );
+    // We search recursively for the values corresponding to strictly smaller indexes
+    // to the left of partition_index
+    let smaller_values = _get_many_from_sorted_mut_unchecked(
+        &mut array.slice_mut(s![..array_partition_index]),
+        smaller_indexes,
+    );
 
-            let mut results: Vec<A>;
-            results = smaller_values;
-            // Get the value associated to partition index
-            results.push(array[array_partition_index].clone());
-            results.append(&mut bigger_values);
-            results
-        }
-        // Option 2: The partition_index is not one of indexes we are looking for
-        Err(index_split) => {
-            // Search recursively for the values corresponding to strictly smaller indexes
-            // to the left of partition_index
-            let smaller_indexes = &indexes[..index_split];
-            let smaller_values = _get_many_from_sorted_mut_unchecked(
-                &mut array.slice_mut(s![..array_partition_index]),
-                smaller_indexes,
-            );
-            // Search recursively for the values corresponding to strictly bigger indexes
-            // to the right of partition_index
-            let bigger_indexes: Vec<usize> = indexes[index_split..]
-                .into_iter()
-                // We need to rebase the indexes
-                .map(|x| x - array_partition_index - 1)
-                .collect();
-            let mut bigger_values = _get_many_from_sorted_mut_unchecked(
-                &mut array.slice_mut(s![(array_partition_index + 1)..]),
-                &bigger_indexes,
-            );
+    // We search recursively for the values corresponding to strictly bigger indexes
+    // to the right of partition_index+1
+    let mut bigger_values = _get_many_from_sorted_mut_unchecked(
+        &mut array.slice_mut(s![(array_partition_index + 1)..]),
+        &bigger_indexes,
+    );
 
-            let mut results: Vec<A>;
-            results = smaller_values;
-            results.append(&mut bigger_values);
-            results
-        }
+    // We merge the results together, in the correct order
+    let mut results: Vec<A>;
+
+    results = smaller_values;
+    if index_split.is_ok() {
+        // Get the value associated to partition index
+        results.push(array[array_partition_index].clone());
     }
+    results.append(&mut bigger_values);
+    results
 }
