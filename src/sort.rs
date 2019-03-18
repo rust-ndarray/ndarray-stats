@@ -247,7 +247,7 @@ where
     // in two chunks with respect to array_partition_index
     let index_split = indexes.binary_search(&array_partition_index);
     let (smaller_indexes, bigger_indexes) = match index_split {
-        Ok(index_split) => (&indexes[..index_split], &indexes[(index_split+1)..]),
+        Ok(index_split) => (&indexes[..index_split], &indexes[(index_split + 1)..]),
         Err(index_split) => (&indexes[..index_split], &indexes[index_split..]),
     };
     // We are using a recursive search - to look for bigger_indexes in the right
