@@ -431,7 +431,7 @@ where
         let mut pattern_min = D::zeros(self.ndim()).into_pattern();
         let min = self.indexed_fold_skipnan(None, |current_min, (pattern, elem)| {
             Some(match current_min {
-                Some(m) if m <= elem => m,
+                Some(m) if (m <= elem) => m,
                 _ => {
                     pattern_min = pattern;
                     elem
