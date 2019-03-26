@@ -21,6 +21,7 @@
 use super::super::interpolate::Nearest;
 use super::super::{Quantile1dExt, QuantileExt};
 use super::{Bins, Edges};
+use super::errors::StrategyError;
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps, Zero};
@@ -44,7 +45,7 @@ pub trait BinsBuildingStrategy {
     /// the observed data according to the chosen strategy.
     ///
     /// [`Bins`]: ../struct.Bins.html
-    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Option<Self>
+    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
     where
         S: Data<Elem = Self::Elem>,
         Self: std::marker::Sized;
@@ -152,12 +153,13 @@ impl<T> EquiSpaced<T>
 where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
-    /// Returns `None` if `bin_width<=0` or `min` >= `max`.
-    fn new(bin_width: T, min: T, max: T) -> Option<Self> {
+    /// Returns `Err(StrategyError)` if `bin_width<=0` or `min` >= `max`.
+    /// Returns `Ok(Self)` otherwise.
+    fn new(bin_width: T, min: T, max: T) -> Result<Self, StrategyError> {
         if (bin_width <= T::zero()) | (min >= max) {
-            None
+            Err(StrategyError)
         } else {
-            Some(Self {
+            Ok(Self {
                 bin_width,
                 min,
                 max,
@@ -196,8 +198,10 @@ where
 {
     type Elem = T;
 
-    /// Returns `None` if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
+    /// Returns `Err(StrategyError)` if the array is constant.
+    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
     where
         S: Data<Elem = Self::Elem>,
     {
@@ -206,10 +210,10 @@ where
         match (a.min(), a.max()) {
             (Some(min), Some(max)) => {
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
-                builder.map(|b| Self { builder: b })
+                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+                Self { builder }
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 
@@ -238,8 +242,10 @@ where
 {
     type Elem = T;
 
-    /// Returns `None` if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
+    /// Returns `Err(StrategyError)` if the array is constant.
+    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
     where
         S: Data<Elem = Self::Elem>,
     {
@@ -248,10 +254,10 @@ where
         match (a.min(), a.max()) {
             (Some(min), Some(max)) => {
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
-                builder.map(|b| Self { builder: b })
+                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+                Self { builder }
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 
