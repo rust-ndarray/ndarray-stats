@@ -33,7 +33,6 @@ pub struct Edges<A: Ord> {
 }
 
 impl<A: Ord> From<Vec<A>> for Edges<A> {
-
     /// Get an `Edges` instance from a `Vec<A>`:
     /// the vector will be sorted in increasing order
     /// using an unstable sorting algorithm and duplicates
@@ -89,7 +88,7 @@ impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
     }
 }
 
-impl<A: Ord> Index<usize> for Edges<A>{
+impl<A: Ord> Index<usize> for Edges<A> {
     type Output = A;
 
     /// Get the `i`-th edge.
@@ -182,13 +181,11 @@ impl<A: Ord> Edges<A> {
         match self.edges.binary_search(value) {
             Ok(i) if i == n_edges - 1 => None,
             Ok(i) => Some((i, i + 1)),
-            Err(i) => {
-                match i {
-                    0 => None,
-                    j if j == n_edges => None,
-                    j => Some((j - 1, j)),
-                }
-            }
+            Err(i) => match i {
+                0 => None,
+                j if j == n_edges => None,
+                j => Some((j - 1, j)),
+            },
         }
     }
 
@@ -309,18 +306,14 @@ impl<A: Ord> Bins<A> {
     /// );
     /// ```
     pub fn range_of(&self, value: &A) -> Option<Range<A>>
-        where
-            A: Clone,
+    where
+        A: Clone,
     {
         let edges_indexes = self.edges.indices_of(value);
-        edges_indexes.map(
-            |(left, right)| {
-                Range {
-                    start: self.edges[left].clone(),
-                    end: self.edges[right].clone(),
-                }
-            }
-        )
+        edges_indexes.map(|(left, right)| Range {
+            start: self.edges[left].clone(),
+            end: self.edges[right].clone(),
+        })
     }
 
     /// Get the `i`-th bin.
@@ -341,7 +334,7 @@ impl<A: Ord> Bins<A> {
     /// );
     /// ```
     pub fn index(&self, index: usize) -> Range<A>
-        where
+    where
         A: Clone,
     {
         // It was not possible to implement this functionality
@@ -350,7 +343,7 @@ impl<A: Ord> Bins<A> {
         // Index, in fact, forces you to return a reference.
         Range {
             start: self.edges[index].clone(),
-            end: self.edges[index+1].clone(),
+            end: self.edges[index + 1].clone(),
         }
     }
 }

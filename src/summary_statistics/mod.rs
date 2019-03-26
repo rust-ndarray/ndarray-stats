@@ -1,6 +1,6 @@
 //! Summary statistics (e.g. mean, variance, etc.).
 use ndarray::{Data, Dimension};
-use num_traits::{FromPrimitive, Float, Zero};
+use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, Div};
 
 /// Extension trait for `ArrayBase` providing methods
@@ -25,7 +25,7 @@ where
     /// [`arithmetic mean`]: https://en.wikipedia.org/wiki/Arithmetic_mean
     fn mean(&self) -> Option<A>
     where
-        A: Clone + FromPrimitive + Add<Output=A> + Div<Output=A> + Zero;
+        A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero;
 
     /// Returns the [`harmonic mean`] `HM(X)` of all elements in the array:
     ///

@@ -131,14 +131,15 @@ where
     {
         let observation_axis = Axis(1);
         let n_observations = A::from_usize(self.len_of(observation_axis)).unwrap();
-        let dof =
-            if ddof >= n_observations {
-                panic!("`ddof` needs to be strictly smaller than the \
-                        number of observations provided for each \
-                        random variable!")
-            } else {
-                n_observations - ddof
-            };
+        let dof = if ddof >= n_observations {
+            panic!(
+                "`ddof` needs to be strictly smaller than the \
+                 number of observations provided for each \
+                 random variable!"
+            )
+        } else {
+            n_observations - ddof
+        };
         let mean = self.mean_axis(observation_axis);
         let denoised = self - &mean.insert_axis(observation_axis);
         let covariance = denoised.dot(&denoised.t());
@@ -156,7 +157,9 @@ where
         // observation per random variable (or no observations at all)
         let ddof = -A::one();
         let cov = self.cov(ddof);
-        let std = self.std_axis(observation_axis, ddof).insert_axis(observation_axis);
+        let std = self
+            .std_axis(observation_axis, ddof)
+            .insert_axis(observation_axis);
         let std_matrix = std.dot(&std.t());
         // element-wise division
         cov / std_matrix
@@ -167,10 +170,10 @@ where
 mod cov_tests {
     use super::*;
     use ndarray::array;
+    use ndarray_rand::RandomExt;
     use quickcheck::quickcheck;
     use rand;
     use rand::distributions::Uniform;
-    use ndarray_rand::RandomExt;
 
     quickcheck! {
         fn constant_random_variables_have_zero_covariance_matrix(value: f64) -> bool {
@@ -200,10 +203,7 @@ mod cov_tests {
     fn test_invalid_ddof() {
         let n_random_variables = 3;
         let n_observations = 4;
-        let a = Array::random(
-            (n_random_variables, n_observations),
-            Uniform::new(0., 10.)
-        );
+        let a = Array::random((n_random_variables, n_observations), Uniform::new(0., 10.));
         let invalid_ddof = (n_observations as f64) + rand::random::<f64>().abs();
         a.cov(invalid_ddof);
     }
@@ -235,45 +235,36 @@ mod cov_tests {
     #[test]
     fn test_covariance_for_random_array() {
         let a = array![
-            [ 0.72009497,  0.12568055,  0.55705966,  0.5959984 ,  0.69471457],
-            [ 0.56717131,  0.47619486,  0.21526298,  0.88915366,  0.91971245],
-            [ 0.59044195,  0.10720363,  0.76573717,  0.54693675,  0.95923036],
-            [ 0.24102952,  0.131347,  0.11118028,  0.21451351,  0.30515539],
-            [ 0.26952473,  0.93079841,  0.8080893 ,  0.42814155,  0.24642258]
+            [0.72009497, 0.12568055, 0.55705966, 0.5959984, 0.69471457],
+            [0.56717131, 0.47619486, 0.21526298, 0.88915366, 0.91971245],
+            [0.59044195, 0.10720363, 0.76573717, 0.54693675, 0.95923036],
+            [0.24102952, 0.131347, 0.11118028, 0.21451351, 0.30515539],
+            [0.26952473, 0.93079841, 0.8080893, 0.42814155, 0.24642258]
         ];
         let numpy_covariance = array![
-            [ 0.05786248,  0.02614063,  0.06446215,  0.01285105, -0.06443992],
-            [ 0.02614063,  0.08733569,  0.02436933,  0.01977437, -0.06715555],
-            [ 0.06446215,  0.02436933,  0.10052129,  0.01393589, -0.06129912],
-            [ 0.01285105,  0.01977437,  0.01393589,  0.00638795, -0.02355557],
-            [-0.06443992, -0.06715555, -0.06129912, -0.02355557,  0.09909855]
+            [0.05786248, 0.02614063, 0.06446215, 0.01285105, -0.06443992],
+            [0.02614063, 0.08733569, 0.02436933, 0.01977437, -0.06715555],
+            [0.06446215, 0.02436933, 0.10052129, 0.01393589, -0.06129912],
+            [0.01285105, 0.01977437, 0.01393589, 0.00638795, -0.02355557],
+            [
+                -0.06443992,
+                -0.06715555,
+                -0.06129912,
+                -0.02355557,
+                0.09909855
+            ]
         ];
         assert_eq!(a.ndim(), 2);
-        assert!(
-            a.cov(1.).all_close(
-                &numpy_covariance,
-                1e-8
-            )
-        );
+        assert!(a.cov(1.).all_close(&numpy_covariance, 1e-8));
     }
 
     #[test]
     #[should_panic]
     // We lose precision, hence the failing assert
     fn test_covariance_for_badly_conditioned_array() {
-        let a: Array2<f64> = array![
-            [ 1e12 + 1.,  1e12 - 1.],
-            [ 1e-6 + 1e-12,  1e-6 - 1e-12],
-        ];
-        let expected_covariance = array![
-            [2., 2e-12], [2e-12, 2e-24]
-        ];
-        assert!(
-            a.cov(1.).all_close(
-                &expected_covariance,
-                1e-24
-            )
-        );
+        let a: Array2<f64> = array![[1e12 + 1., 1e12 - 1.], [1e-6 + 1e-12, 1e-6 - 1e-12],];
+        let expected_covariance = array![[2., 2e-12], [2e-12, 2e-24]];
+        assert!(a.cov(1.).all_close(&expected_covariance, 1e-24));
     }
 }
 
@@ -281,9 +272,9 @@ mod cov_tests {
 mod pearson_correlation_tests {
     use super::*;
     use ndarray::array;
+    use ndarray_rand::RandomExt;
     use quickcheck::quickcheck;
     use rand::distributions::Uniform;
-    use ndarray_rand::RandomExt;
 
     quickcheck! {
         fn output_matrix_is_symmetric(bound: f64) -> bool {
@@ -337,19 +328,14 @@ mod pearson_correlation_tests {
             [0.26979716, 0.20887228, 0.95454999, 0.96290785]
         ];
         let numpy_corrcoeff = array![
-            [ 1.        ,  0.38089376,  0.08122504, -0.59931623,  0.1365648 ],
-            [ 0.38089376,  1.        ,  0.80918429, -0.52615195,  0.38954398],
-            [ 0.08122504,  0.80918429,  1.        ,  0.07134906, -0.17324776],
-            [-0.59931623, -0.52615195,  0.07134906,  1.        , -0.8743213 ],
-            [ 0.1365648 ,  0.38954398, -0.17324776, -0.8743213 ,  1.        ]
+            [1., 0.38089376, 0.08122504, -0.59931623, 0.1365648],
+            [0.38089376, 1., 0.80918429, -0.52615195, 0.38954398],
+            [0.08122504, 0.80918429, 1., 0.07134906, -0.17324776],
+            [-0.59931623, -0.52615195, 0.07134906, 1., -0.8743213],
+            [0.1365648, 0.38954398, -0.17324776, -0.8743213, 1.]
         ];
         assert_eq!(a.ndim(), 2);
-        assert!(
-            a.pearson_correlation().all_close(
-                &numpy_corrcoeff,
-                1e-7
-            )
-        );
+        assert!(a.pearson_correlation().all_close(&numpy_corrcoeff, 1e-7));
     }
 
 }
