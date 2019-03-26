@@ -20,8 +20,8 @@
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use super::super::interpolate::Nearest;
 use super::super::{Quantile1dExt, QuantileExt};
-use super::{Bins, Edges};
 use super::errors::StrategyError;
+use super::{Bins, Edges};
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps, Zero};
@@ -417,7 +417,7 @@ where
             (Err(_), Err(_)) => Err(StrategyError),
             (Ok(None), Ok(None)) => Ok(None),
             // Unreachable
-            (Err(_), Ok(None)) | (Ok(None), Err(_)) => Err(StrategyError)
+            (Err(_), Ok(None)) | (Ok(None), Err(_)) => Err(StrategyError),
         }
     }
 
@@ -544,7 +544,7 @@ mod fd_tests {
     }
 
     #[test]
-    fn zero_iqr_is_bad(){
+    fn zero_iqr_is_bad() {
         assert!(
             FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20])
                 .is_err()
