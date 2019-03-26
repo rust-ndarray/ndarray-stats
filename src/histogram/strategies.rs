@@ -570,7 +570,7 @@ mod auto_tests {
 
     #[test]
     fn zero_iqr_is_handled_by_sturged() {
-        assert!(Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]).is_err());
+        assert!(Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]).is_ok());
     }
 
     #[test]
