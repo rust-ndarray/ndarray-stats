@@ -398,8 +398,6 @@ where
         let fd_builder = FreedmanDiaconis::from_array(&a);
         let sturges_builder = Sturges::from_array(&a);
         match (fd_builder, sturges_builder) {
-            (Err(_), Err(_)) => Err(StrategyError),
-            (Ok(None), Ok(None)) => Ok(None),
             (Ok(None), Ok(Some(sturges_builder))) | (Err(_), Ok(Some(sturges_builder))) => {
                 let builder = SturgesOrFD::Sturges(sturges_builder);
                 Ok(Some(Self { builder }))
@@ -416,6 +414,10 @@ where
                 };
                 Ok(Some(Self { builder }))
             }
+            (Err(_), Err(_)) => Err(StrategyError),
+            (Ok(None), Ok(None)) => Ok(None),
+            // Unreachable
+            (Err(_), Ok(None)) | (Ok(None), Err(_)) => Err(StrategyError)
         }
     }
 

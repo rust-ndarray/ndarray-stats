@@ -180,7 +180,12 @@ where
     {
         let bin_builders: Option<Vec<B>> = array
             .axis_iter(Axis(1))
-            .map(|data| B::from_array(&data))
+            .map(|data| {
+                match B::from_array(&data) {
+                    Ok(Some(builder)) => Some(builder),
+                    _ => None
+                }
+            })
             .collect();
         bin_builders.map(|b| Self { bin_builders: b })
     }
