@@ -330,8 +330,10 @@ where
 {
     type Elem = T;
 
-    /// Returns `None` if `IQR==0` or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
+    /// Returns `Err(StrategyError)` if `IQR==0`.
+    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
     where
         S: Data<Elem = Self::Elem>,
     {
@@ -348,10 +350,10 @@ where
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
         match (a.min(), a.max()) {
             (Some(min), Some(max)) => {
-                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
-                builder.map(|b| Self { builder: b })
+                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+                Self { builder }
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 
