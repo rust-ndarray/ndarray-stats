@@ -26,7 +26,7 @@ impl fmt::Display for StrategyError {
     }
 }
 
-impl error::Error for StrategyError{
+impl error::Error for StrategyError {
     fn description(&self) -> &str {
         "The strategy failed to determine a non-zero bin width."
     }
