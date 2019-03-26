@@ -211,7 +211,7 @@ where
             (Some(min), Some(max)) => {
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Self { builder }
+                Ok(Some(Self { builder }))
             }
             _ => Ok(None),
         }
@@ -255,7 +255,7 @@ where
             (Some(min), Some(max)) => {
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Self { builder }
+                Ok(Some(Self { builder }))
             }
             _ => Ok(None),
         }
@@ -299,9 +299,9 @@ where
             (Some(min), Some(max)) => {
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Self { builder }
+                Ok(Some(Self { builder }))
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 
@@ -339,7 +339,7 @@ where
     {
         let n_points = a.len();
         if n_points == 0 {
-            return None;
+            return Ok(None);
         }
 
         let mut a_copy = a.to_owned();
@@ -351,7 +351,7 @@ where
         match (a.min(), a.max()) {
             (Some(min), Some(max)) => {
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Self { builder }
+                Ok(Some(Self { builder }))
             }
             _ => Ok(None),
         }
@@ -388,30 +388,33 @@ where
 {
     type Elem = T;
 
-    /// Returns `None` if `IQR==0` and the array is constant or `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
+    /// Returns `Err(StrategyError)` if `IQR==0`.
+    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let fd_builder = FreedmanDiaconis::from_array(&a);
         let sturges_builder = Sturges::from_array(&a);
         match (fd_builder, sturges_builder) {
-            (None, None) => None,
-            (None, Some(sturges_builder)) => {
+            (Err(_), Err(_)) => Err(StrategyError),
+            (Ok(None), Ok(None)) => Ok(None),
+            (Ok(None), Ok(Some(sturges_builder))) | (Err(_), Ok(Some(sturges_builder))) => {
                 let builder = SturgesOrFD::Sturges(sturges_builder);
-                Some(Self { builder })
+                Ok(Some(Self { builder }))
             }
-            (Some(fd_builder), None) => {
+            (Ok(Some(fd_builder)), Ok(None)) | (Ok(Some(fd_builder)), Err(_)) => {
                 let builder = SturgesOrFD::FreedmanDiaconis(fd_builder);
-                Some(Self { builder })
+                Ok(Some(Self { builder }))
             }
-            (Some(fd_builder), Some(sturges_builder)) => {
+            (Ok(Some(fd_builder)), Ok(Some(sturges_builder))) => {
                 let builder = if fd_builder.bin_width() > sturges_builder.bin_width() {
                     SturgesOrFD::Sturges(sturges_builder)
                 } else {
                     SturgesOrFD::FreedmanDiaconis(fd_builder)
                 };
-                Some(Self { builder })
+                Ok(Some(Self { builder }))
             }
         }
     }
