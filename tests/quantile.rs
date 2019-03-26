@@ -1,12 +1,67 @@
 #[macro_use(array)]
 extern crate ndarray;
 extern crate ndarray_stats;
+extern crate quickcheck;
 
 use ndarray::prelude::*;
 use ndarray_stats::{
     interpolate::{Higher, Linear, Lower, Midpoint, Nearest},
-    QuantileExt,
+    Quantile1dExt, QuantileExt,
 };
+use quickcheck::quickcheck;
+
+#[test]
+fn test_argmin() {
+    let a = array![[1, 5, 3], [2, 0, 6]];
+    assert_eq!(a.argmin(), Some((1, 1)));
+
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmin(), Some((1, 1)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin(), None);
+
+    let a: Array2<i32> = array![[], []];
+    assert_eq!(a.argmin(), None);
+}
+
+quickcheck! {
+    fn argmin_matches_min(data: Vec<f32>) -> bool {
+        let a = Array1::from(data);
+        a.argmin().map(|i| a[i]) == a.min().cloned()
+    }
+}
+
+#[test]
+fn test_argmin_skipnan() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((0, 0)));
+
+    let a = array![[::std::f64::NAN, 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((1, 0)));
+
+    let a: Array2<f64> = array![[], []];
+    assert_eq!(a.argmin_skipnan(), None);
+
+    let a = arr2(&[[::std::f64::NAN; 2]; 2]);
+    assert_eq!(a.argmin_skipnan(), None);
+}
+
+quickcheck! {
+    fn argmin_skipnan_matches_min_skipnan(data: Vec<Option<i32>>) -> bool {
+        let a = Array1::from(data);
+        let min = a.min_skipnan();
+        let argmin = a.argmin_skipnan();
+        if min.is_none() {
+            argmin == None
+        } else {
+            a[argmin.unwrap()] == *min
+        }
+    }
+}
 
 #[test]
 fn test_min() {
@@ -33,6 +88,62 @@ fn test_min_skipnan() {
 fn test_min_skipnan_all_nan() {
     let a = arr2(&[[::std::f64::NAN; 3]; 2]);
     assert!(a.min_skipnan().is_nan());
+}
+
+#[test]
+fn test_argmax() {
+    let a = array![[1, 5, 3], [2, 0, 6]];
+    assert_eq!(a.argmax(), Some((1, 2)));
+
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmax(), Some((1, 2)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmax(), None);
+
+    let a: Array2<i32> = array![[], []];
+    assert_eq!(a.argmax(), None);
+}
+
+quickcheck! {
+    fn argmax_matches_max(data: Vec<f32>) -> bool {
+        let a = Array1::from(data);
+        a.argmax().map(|i| a[i]) == a.max().cloned()
+    }
+}
+
+#[test]
+fn test_argmax_skipnan() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, ::std::f64::NAN]];
+    assert_eq!(a.argmax_skipnan(), Some((0, 1)));
+
+    let a = array![
+        [::std::f64::NAN, ::std::f64::NAN, 3.],
+        [2., ::std::f64::NAN, 6.]
+    ];
+    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+
+    let a: Array2<f64> = array![[], []];
+    assert_eq!(a.argmax_skipnan(), None);
+
+    let a = arr2(&[[::std::f64::NAN; 2]; 2]);
+    assert_eq!(a.argmax_skipnan(), None);
+}
+
+quickcheck! {
+    fn argmax_skipnan_matches_max_skipnan(data: Vec<Option<i32>>) -> bool {
+        let a = Array1::from(data);
+        let max = a.max_skipnan();
+        let argmax = a.argmax_skipnan();
+        if max.is_none() {
+            argmax == None
+        } else {
+            a[argmax.unwrap()] == *max
+        }
+    }
 }
 
 #[test]
@@ -147,4 +258,14 @@ fn test_quantile_axis_skipnan_mut_linear_opt_i32() {
     assert_eq!(q.shape(), &[2]);
     assert_eq!(q[0], Some(3));
     assert!(q[1].is_none());
+}
+
+#[test]
+fn test_midpoint_overflow() {
+    // Regression test
+    // This triggered an overflow panic with a naive Midpoint implementation: (a+b)/2
+    let mut a: Array1<u8> = array![129, 130, 130, 131];
+    let median = a.quantile_mut::<Midpoint>(0.5).unwrap();
+    let expected_median = 130;
+    assert_eq!(median, expected_median);
 }
