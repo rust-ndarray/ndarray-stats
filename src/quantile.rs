@@ -8,8 +8,7 @@ use {MaybeNan, MaybeNanExt, Sort1dExt};
 pub mod interpolate {
     use ndarray::azip;
     use ndarray::prelude::*;
-    use num_traits::{FromPrimitive, ToPrimitive};
-    use std::ops::{Add, Div};
+    use num_traits::{FromPrimitive, NumOps, ToPrimitive};
 
     /// Used to provide an interpolation strategy to [`quantile_axis_mut`].
     ///
@@ -116,7 +115,7 @@ pub mod interpolate {
 
     impl<T> Interpolate<T> for Midpoint
     where
-        T: Add<T, Output = T> + Div<T, Output = T> + Clone + FromPrimitive,
+        T: NumOps + Clone + FromPrimitive,
     {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
@@ -134,13 +133,20 @@ pub mod interpolate {
             D: Dimension,
         {
             let denom = T::from_u8(2).unwrap();
-            (lower.unwrap() + higher.unwrap()).mapv_into(|x| x / denom.clone())
+            let mut lower = lower.unwrap();
+            let higher = higher.unwrap();
+            azip!(
+                mut lower, ref higher in {
+                    *lower = lower.clone() + (higher.clone() - lower.clone()) / denom.clone()
+                }
+            );
+            lower
         }
     }
 
     impl<T> Interpolate<T> for Linear
     where
-        T: Add<T, Output = T> + Clone + FromPrimitive + ToPrimitive,
+        T: NumOps + Clone + FromPrimitive + ToPrimitive,
     {
         fn needs_lower(_q: f64, _len: usize) -> bool {
             true
@@ -176,6 +182,62 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    /// Finds the index of the minimum value of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
+    ///
+    /// Returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[1., 3., 5.],
+    ///                [2., 0., 6.]];
+    /// assert_eq!(a.argmin(), Some((1, 1)));
+    /// ```
+    fn argmin(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd;
+
+    /// Finds the index of the minimum value of the array skipping NaN values.
+    ///
+    /// Returns `None` if the array is empty or none of the values in the array
+    /// are non-NaN values.
+    ///
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[::std::f64::NAN, 3., 5.],
+    ///                [2., 0., 6.]];
+    /// assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+    /// ```
+    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    where
+        A: MaybeNan,
+        A::NotNan: Ord;
+
     /// Finds the elementwise minimum of the array.
     ///
     /// Returns `None` if any of the pairwise orderings tested by the function
@@ -183,16 +245,80 @@ where
     /// floating-point NaN values in the array.)
     ///
     /// Additionally, returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
     fn min(&self) -> Option<&A>
     where
         A: PartialOrd;
 
     /// Finds the elementwise minimum of the array, skipping NaN values.
     ///
+    /// Even if there are multiple (equal) elements that are minima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
+    ///
     /// **Warning** This method will return a NaN value if none of the values
     /// in the array are non-NaN values. Note that the NaN value might not be
     /// in the array.
     fn min_skipnan(&self) -> &A
+    where
+        A: MaybeNan,
+        A::NotNan: Ord;
+
+    /// Finds the index of the maximum value of the array.
+    ///
+    /// Returns `None` if any of the pairwise orderings tested by the function
+    /// are undefined. (For example, this occurs if there are any
+    /// floating-point NaN values in the array.)
+    ///
+    /// Returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[1., 3., 7.],
+    ///                [2., 5., 6.]];
+    /// assert_eq!(a.argmax(), Some((0, 2)));
+    /// ```
+    fn argmax(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd;
+
+    /// Finds the index of the maximum value of the array skipping NaN values.
+    ///
+    /// Returns `None` if the array is empty or none of the values in the array
+    /// are non-NaN values.
+    ///
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// index is returned. (Which one is returned is unspecified and may depend
+    /// on the memory layout of the array.)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// extern crate ndarray;
+    /// extern crate ndarray_stats;
+    ///
+    /// use ndarray::array;
+    /// use ndarray_stats::QuantileExt;
+    ///
+    /// let a = array![[::std::f64::NAN, 3., 5.],
+    ///                [2., 0., 6.]];
+    /// assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+    /// ```
+    fn argmax_skipnan(&self) -> Option<D::Pattern>
     where
         A: MaybeNan,
         A::NotNan: Ord;
@@ -204,11 +330,19 @@ where
     /// floating-point NaN values in the array.)
     ///
     /// Additionally, returns `None` if the array is empty.
+    ///
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
     fn max(&self) -> Option<&A>
     where
         A: PartialOrd;
 
     /// Finds the elementwise maximum of the array, skipping NaN values.
+    ///
+    /// Even if there are multiple (equal) elements that are maxima, only one
+    /// is returned. (Which one is returned is unspecified and may depend on
+    /// the memory layout of the array.)
     ///
     /// **Warning** This method will return a NaN value if none of the values
     /// in the array are non-NaN values. Note that the NaN value might not be
@@ -272,6 +406,45 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
+    fn argmin(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd,
+    {
+        let mut current_min = self.first()?;
+        let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
+
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_min)? == cmp::Ordering::Less {
+                current_pattern_min = pattern;
+                current_min = elem
+            }
+        }
+
+        Some(current_pattern_min)
+    }
+
+    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    where
+        A: MaybeNan,
+        A::NotNan: Ord,
+    {
+        let mut pattern_min = D::zeros(self.ndim()).into_pattern();
+        let min = self.indexed_fold_skipnan(None, |current_min, (pattern, elem)| {
+            Some(match current_min {
+                Some(m) if (m <= elem) => m,
+                _ => {
+                    pattern_min = pattern;
+                    elem
+                }
+            })
+        });
+        if min.is_some() {
+            Some(pattern_min)
+        } else {
+            None
+        }
+    }
+
     fn min(&self) -> Option<&A>
     where
         A: PartialOrd,
@@ -295,6 +468,45 @@ where
                 None => elem,
             })
         }))
+    }
+
+    fn argmax(&self) -> Option<D::Pattern>
+    where
+        A: PartialOrd,
+    {
+        let mut current_max = self.first()?;
+        let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
+
+        for (pattern, elem) in self.indexed_iter() {
+            if elem.partial_cmp(current_max)? == cmp::Ordering::Greater {
+                current_pattern_max = pattern;
+                current_max = elem
+            }
+        }
+
+        Some(current_pattern_max)
+    }
+
+    fn argmax_skipnan(&self) -> Option<D::Pattern>
+    where
+        A: MaybeNan,
+        A::NotNan: Ord,
+    {
+        let mut pattern_max = D::zeros(self.ndim()).into_pattern();
+        let max = self.indexed_fold_skipnan(None, |current_max, (pattern, elem)| {
+            Some(match current_max {
+                Some(m) if m >= elem => m,
+                _ => {
+                    pattern_max = pattern;
+                    elem
+                }
+            })
+        });
+        if max.is_some() {
+            Some(pattern_max)
+        } else {
+            None
+        }
     }
 
     fn max(&self) -> Option<&A>
