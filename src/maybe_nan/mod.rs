@@ -241,6 +241,15 @@ where
         A: 'a,
         F: FnMut(B, &'a A::NotNan) -> B;
 
+    /// Traverse the non-NaN elements and their indices and apply a fold,
+    /// returning the resulting value.
+    ///
+    /// Elements are visited in arbitrary order.
+    fn indexed_fold_skipnan<'a, F, B>(&'a self, init: B, f: F) -> B
+    where
+        A: 'a,
+        F: FnMut(B, (D::Pattern, &'a A::NotNan)) -> B;
+
     /// Visit each non-NaN element in the array by calling `f` on each element.
     ///
     /// Elements are visited in arbitrary order.
@@ -296,6 +305,20 @@ where
         self.fold(init, |acc, elem| {
             if let Some(not_nan) = elem.try_as_not_nan() {
                 f(acc, not_nan)
+            } else {
+                acc
+            }
+        })
+    }
+
+    fn indexed_fold_skipnan<'a, F, B>(&'a self, init: B, mut f: F) -> B
+    where
+        A: 'a,
+        F: FnMut(B, (D::Pattern, &'a A::NotNan)) -> B,
+    {
+        self.indexed_iter().fold(init, |acc, (idx, elem)| {
+            if let Some(not_nan) = elem.try_as_not_nan() {
+                f(acc, (idx, not_nan))
             } else {
                 acc
             }

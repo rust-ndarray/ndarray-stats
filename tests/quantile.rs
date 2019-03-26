@@ -37,6 +37,37 @@ quickcheck! {
 }
 
 #[test]
+fn test_argmin_skipnan() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((0, 0)));
+
+    let a = array![[::std::f64::NAN, 5., 3.], [2., ::std::f64::NAN, 6.]];
+    assert_eq!(a.argmin_skipnan(), Some((1, 0)));
+
+    let a: Array2<f64> = array![[], []];
+    assert_eq!(a.argmin_skipnan(), None);
+
+    let a = arr2(&[[::std::f64::NAN; 2]; 2]);
+    assert_eq!(a.argmin_skipnan(), None);
+}
+
+quickcheck! {
+    fn argmin_skipnan_matches_min_skipnan(data: Vec<Option<i32>>) -> bool {
+        let a = Array1::from(data);
+        let min = a.min_skipnan();
+        let argmin = a.argmin_skipnan();
+        if min.is_none() {
+            argmin == None
+        } else {
+            a[argmin.unwrap()] == *min
+        }
+    }
+}
+
+#[test]
 fn test_min() {
     let a = array![[1, 5, 3], [2, 0, 6]];
     assert_eq!(a.min(), Some(&0));
@@ -82,6 +113,40 @@ quickcheck! {
     fn argmax_matches_max(data: Vec<f32>) -> bool {
         let a = Array1::from(data);
         a.argmax().map(|i| a[i]) == a.max().cloned()
+    }
+}
+
+#[test]
+fn test_argmax_skipnan() {
+    let a = array![[1., 5., 3.], [2., 0., 6.]];
+    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+
+    let a = array![[1., 5., 3.], [2., ::std::f64::NAN, ::std::f64::NAN]];
+    assert_eq!(a.argmax_skipnan(), Some((0, 1)));
+
+    let a = array![
+        [::std::f64::NAN, ::std::f64::NAN, 3.],
+        [2., ::std::f64::NAN, 6.]
+    ];
+    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+
+    let a: Array2<f64> = array![[], []];
+    assert_eq!(a.argmax_skipnan(), None);
+
+    let a = arr2(&[[::std::f64::NAN; 2]; 2]);
+    assert_eq!(a.argmax_skipnan(), None);
+}
+
+quickcheck! {
+    fn argmax_skipnan_matches_max_skipnan(data: Vec<Option<i32>>) -> bool {
+        let a = Array1::from(data);
+        let max = a.max_skipnan();
+        let argmax = a.argmax_skipnan();
+        if max.is_none() {
+            argmax == None
+        } else {
+            a[argmax.unwrap()] == *max
+        }
     }
 }
 
