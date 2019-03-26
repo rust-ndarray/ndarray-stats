@@ -473,12 +473,12 @@ mod equispaced_tests {
 
     #[test]
     fn bin_width_has_to_be_positive() {
-        assert!(EquiSpaced::new(0, 0, 200).is_none());
+        assert!(EquiSpaced::new(0, 0, 200).is_err());
     }
 
     #[test]
     fn min_has_to_be_strictly_smaller_than_max() {
-        assert!(EquiSpaced::new(10, 0, 0).is_none());
+        assert!(EquiSpaced::new(10, 0, 0).is_err());
     }
 }
 
@@ -489,12 +489,13 @@ mod sqrt_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
+        assert!(Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
     }
 
     #[test]
-    fn empty_arrays_cause_panic() {
-        assert!(Sqrt::<usize>::from_array(&array![]).is_none());
+    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
+        assert!(Sqrt::<usize>::from_array(&array![])?.is_none());
+        Ok(())
     }
 }
 
@@ -505,12 +506,13 @@ mod rice_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
+        assert!(Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
     }
 
     #[test]
-    fn empty_arrays_cause_panic() {
-        assert!(Rice::<usize>::from_array(&array![]).is_none());
+    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
+        assert!(Rice::<usize>::from_array(&array![])?.is_none());
+        Ok(())
     }
 }
 
@@ -521,12 +523,13 @@ mod sturges_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
+        assert!(Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
     }
 
     #[test]
-    fn empty_arrays_cause_panic() {
-        assert!(Sturges::<usize>::from_array(&array![]).is_none());
+    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
+        assert!(Sturges::<usize>::from_array(&array![])?.is_none());
+        Ok(())
     }
 }
 
@@ -537,20 +540,21 @@ mod fd_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
+        assert!(FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
     }
 
     #[test]
-    fn zero_iqr_causes_panic() {
+    fn zero_iqr_is_bad(){
         assert!(
             FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20])
-                .is_none()
+                .is_err()
         );
     }
 
     #[test]
-    fn empty_arrays_cause_panic() {
-        assert!(FreedmanDiaconis::<usize>::from_array(&array![]).is_none());
+    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
+        assert!(FreedmanDiaconis::<usize>::from_array(&array![])?.is_none());
+        Ok(())
     }
 }
 
@@ -561,16 +565,17 @@ mod auto_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_none());
+        assert!(Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
     }
 
     #[test]
     fn zero_iqr_is_handled_by_sturged() {
-        assert!(Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]).is_some());
+        assert!(Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]).is_err());
     }
 
     #[test]
-    fn empty_arrays_cause_panic() {
-        assert!(Auto::<usize>::from_array(&array![]).is_none());
+    fn empty_arrays_cause_panic() -> Result<(), StrategyError> {
+        assert!(Auto::<usize>::from_array(&array![])?.is_none());
+        Ok(())
     }
 }
