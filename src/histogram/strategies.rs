@@ -18,13 +18,12 @@
 //! [`Grid`]: ../struct.Grid.html
 //! [`GridBuilder`]: ../struct.GridBuilder.html
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
+use super::super::interpolate::Nearest;
+use super::super::{Quantile1dExt, QuantileExt};
+use super::{Bins, Edges};
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{FromPrimitive, NumOps, Zero};
-use super::super::{QuantileExt, Quantile1dExt};
-use super::super::interpolate::Nearest;
-use super::{Edges, Bins};
-
 
 /// A trait implemented by all strategies to build [`Bins`]
 /// with parameters inferred from observations.
@@ -36,8 +35,7 @@ use super::{Edges, Bins};
 /// [`Bins`]: ../struct.Bins.html
 /// [`Grid`]: ../struct.Grid.html
 /// [`GridBuilder`]: ../struct.GridBuilder.html
-pub trait BinsBuildingStrategy
-{
+pub trait BinsBuildingStrategy {
     type Elem: Ord;
     /// Given some observations in a 1-dimensional array it returns a `BinsBuildingStrategy`
     /// that has learned the required parameter to build a collection of [`Bins`].
@@ -48,7 +46,7 @@ pub trait BinsBuildingStrategy
     /// [`Bins`]: ../struct.Bins.html
     fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Option<Self>
     where
-        S: Data<Elem=Self::Elem>,
+        S: Data<Elem = Self::Elem>,
         Self: std::marker::Sized;
 
     /// Returns a [`Bins`] instance, built accordingly to the parameters
@@ -151,24 +149,27 @@ pub struct Auto<T> {
 }
 
 impl<T> EquiSpaced<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     /// Returns `None` if `bin_width<=0` or `min` >= `max`.
-    fn new(bin_width: T, min: T, max: T) -> Option<Self>
-    {
+    fn new(bin_width: T, min: T, max: T) -> Option<Self> {
         if (bin_width <= T::zero()) | (min >= max) {
             None
         } else {
-            Some(Self { bin_width, min, max })
+            Some(Self {
+                bin_width,
+                min,
+                max,
+            })
         }
     }
 
     fn build(&self) -> Bins<T> {
         let n_bins = self.n_bins();
         let mut edges: Vec<T> = vec![];
-        for i in 0..(n_bins+1) {
-            let edge = self.min.clone() + T::from_usize(i).unwrap()*self.bin_width.clone();
+        for i in 0..(n_bins + 1) {
+            let edge = self.min.clone() + T::from_usize(i).unwrap() * self.bin_width.clone();
             edges.push(edge);
         }
         Bins::new(Edges::from(edges))
@@ -181,7 +182,7 @@ impl<T> EquiSpaced<T>
             max_edge = max_edge + self.bin_width.clone();
             n_bins += 1;
         }
-        return n_bins
+        return n_bins;
     }
 
     fn bin_width(&self) -> T {
@@ -190,15 +191,15 @@ impl<T> EquiSpaced<T>
 }
 
 impl<T> BinsBuildingStrategy for Sqrt<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
     /// Returns `None` if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
-        S: Data<Elem=Self::Elem>
+        S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
@@ -207,7 +208,7 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
                 builder.map(|b| Self { builder: b })
-            },
+            }
             _ => None,
         }
     }
@@ -222,8 +223,8 @@ impl<T> BinsBuildingStrategy for Sqrt<T>
 }
 
 impl<T> Sqrt<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -232,24 +233,24 @@ impl<T> Sqrt<T>
 }
 
 impl<T> BinsBuildingStrategy for Rice<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
     /// Returns `None` if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
-        S: Data<Elem=Self::Elem>
+        S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
-        let n_bins = (2. * (n_elems as f64).powf(1./3.)).round() as usize;
+        let n_bins = (2. * (n_elems as f64).powf(1. / 3.)).round() as usize;
         match (a.min(), a.max()) {
             (Some(min), Some(max)) => {
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
                 builder.map(|b| Self { builder: b })
-            },
+            }
             _ => None,
         }
     }
@@ -264,8 +265,8 @@ impl<T> BinsBuildingStrategy for Rice<T>
 }
 
 impl<T> Rice<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -274,15 +275,15 @@ impl<T> Rice<T>
 }
 
 impl<T> BinsBuildingStrategy for Sturges<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
     /// Returns `None` if the array is constant or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
-        S: Data<Elem=Self::Elem>
+        S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
@@ -291,7 +292,7 @@ impl<T> BinsBuildingStrategy for Sturges<T>
                 let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
                 builder.map(|b| Self { builder: b })
-            },
+            }
             _ => None,
         }
     }
@@ -306,8 +307,8 @@ impl<T> BinsBuildingStrategy for Sturges<T>
 }
 
 impl<T> Sturges<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -316,19 +317,19 @@ impl<T> Sturges<T>
 }
 
 impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
     /// Returns `None` if `IQR==0` or if `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
-        S: Data<Elem=Self::Elem>
+        S: Data<Elem = Self::Elem>,
     {
         let n_points = a.len();
         if n_points == 0 {
-            return None
+            return None;
         }
 
         let mut a_copy = a.to_owned();
@@ -341,7 +342,7 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
             (Some(min), Some(max)) => {
                 let builder = EquiSpaced::new(bin_width, min.clone(), max.clone());
                 builder.map(|b| Self { builder: b })
-            },
+            }
             _ => None,
         }
     }
@@ -356,11 +357,10 @@ impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
 }
 
 impl<T> FreedmanDiaconis<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
-    fn compute_bin_width(n_bins: usize, iqr: T) -> T
-    {
+    fn compute_bin_width(n_bins: usize, iqr: T) -> T {
         let denominator = (n_bins as f64).powf(1. / 3.);
         let bin_width = T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap();
         bin_width
@@ -373,15 +373,15 @@ impl<T> FreedmanDiaconis<T>
 }
 
 impl<T> BinsBuildingStrategy for Auto<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
     /// Returns `None` if `IQR==0` and the array is constant or `a.len()==0`.
     fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Option<Self>
     where
-        S: Data<Elem=Self::Elem>
+        S: Data<Elem = Self::Elem>,
     {
         let fd_builder = FreedmanDiaconis::from_array(&a);
         let sturges_builder = Sturges::from_array(&a);
@@ -390,11 +390,11 @@ impl<T> BinsBuildingStrategy for Auto<T>
             (None, Some(sturges_builder)) => {
                 let builder = SturgesOrFD::Sturges(sturges_builder);
                 Some(Self { builder })
-            },
+            }
             (Some(fd_builder), None) => {
                 let builder = SturgesOrFD::FreedmanDiaconis(fd_builder);
                 Some(Self { builder })
-            },
+            }
             (Some(fd_builder), Some(sturges_builder)) => {
                 let builder = if fd_builder.bin_width() > sturges_builder.bin_width() {
                     SturgesOrFD::Sturges(sturges_builder)
@@ -402,7 +402,7 @@ impl<T> BinsBuildingStrategy for Auto<T>
                     SturgesOrFD::FreedmanDiaconis(fd_builder)
                 };
                 Some(Self { builder })
-            },
+            }
         }
     }
 
@@ -424,8 +424,8 @@ impl<T> BinsBuildingStrategy for Auto<T>
 }
 
 impl<T> Auto<T>
-    where
-        T: Ord + Clone + FromPrimitive + NumOps + Zero
+where
+    T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -528,9 +528,8 @@ mod fd_tests {
     #[test]
     fn zero_iqr_causes_panic() {
         assert!(
-            FreedmanDiaconis::from_array(
-                &array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]
-            ).is_none()
+            FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20])
+                .is_none()
         );
     }
 
@@ -552,9 +551,7 @@ mod auto_tests {
 
     #[test]
     fn zero_iqr_is_handled_by_sturged() {
-        assert!(Auto::from_array(
-            &array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]
-        ).is_some());
+        assert!(Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]).is_some());
     }
 
     #[test]

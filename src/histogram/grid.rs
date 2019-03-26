@@ -1,8 +1,8 @@
 use super::bins::Bins;
 use super::strategies::BinsBuildingStrategy;
-use std::ops::Range;
 use itertools::izip;
-use ndarray::{ArrayBase, Data, Ix1, Ix2, Axis};
+use ndarray::{ArrayBase, Axis, Data, Ix1, Ix2};
+use std::ops::Range;
 
 /// A `Grid` is a partition of a rectangular region of an *n*-dimensional
 /// space—e.g. [*a*<sub>0</sub>, *b*<sub>0</sub>) × ⋯ × [*a*<sub>*n*−1</sub>,
@@ -72,7 +72,6 @@ pub struct Grid<A: Ord> {
 }
 
 impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
-
     /// Get a `Grid` instance from a `Vec<Bins<A>>`.
     ///
     /// The `i`-th element in `Vec<Bins<A>>` represents the 1-dimensional
@@ -113,9 +112,14 @@ impl<A: Ord> Grid<A> {
     where
         S: Data<Elem = A>,
     {
-        assert_eq!(point.len(), self.ndim(),
-                   "Dimension mismatch: the point has {:?} dimensions, the grid \
-                   expected {:?} dimensions.", point.len(), self.ndim());
+        assert_eq!(
+            point.len(),
+            self.ndim(),
+            "Dimension mismatch: the point has {:?} dimensions, the grid \
+             expected {:?} dimensions.",
+            point.len(),
+            self.ndim()
+        );
         point
             .iter()
             .zip(self.projections.iter())
@@ -132,9 +136,14 @@ impl<A: Ord + Clone> Grid<A> {
     /// **Panics** if at least one among `(i_0, ..., i_{n-1})` is out of bounds on the respective
     /// coordinate axis - i.e. if there exists `j` such that `i_j >= self.projections[j].len()`.
     pub fn index(&self, index: &[usize]) -> Vec<Range<A>> {
-        assert_eq!(index.len(), self.ndim(),
-                   "Dimension mismatch: the index has {0:?} dimensions, the grid \
-                   expected {1:?} dimensions.", index.len(), self.ndim());
+        assert_eq!(
+            index.len(),
+            self.ndim(),
+            "Dimension mismatch: the index has {0:?} dimensions, the grid \
+             expected {1:?} dimensions.",
+            index.len(),
+            self.ndim()
+        );
         izip!(&self.projections, index)
             .map(|(bins, &i)| bins.index(i))
             .collect()
@@ -167,13 +176,13 @@ where
     /// [`strategy`]: strategies/index.html
     pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Option<Self>
     where
-        S: Data<Elem=A>,
+        S: Data<Elem = A>,
     {
         let bin_builders: Option<Vec<B>> = array
             .axis_iter(Axis(1))
             .map(|data| B::from_array(&data))
             .collect();
-        bin_builders.map(|b| Self { bin_builders: b})
+        bin_builders.map(|b| Self { bin_builders: b })
     }
 
     /// Returns a [`Grid`] instance, built accordingly to the specified [`strategy`]

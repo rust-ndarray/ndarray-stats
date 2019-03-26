@@ -1,7 +1,7 @@
+use super::errors::BinNotFound;
+use super::grid::Grid;
 use ndarray::prelude::*;
 use ndarray::Data;
-use super::grid::Grid;
-use super::errors::BinNotFound;
 
 /// Histogram data structure.
 pub struct Histogram<A: Ord> {
@@ -58,8 +58,8 @@ impl<A: Ord> Histogram<A> {
             Some(bin_index) => {
                 self.counts[&*bin_index] += 1;
                 Ok(())
-            },
-            None => Err(BinNotFound)
+            }
+            None => Err(BinNotFound),
         }
     }
 
@@ -82,8 +82,8 @@ impl<A: Ord> Histogram<A> {
 
 /// Extension trait for `ArrayBase` providing methods to compute histograms.
 pub trait HistogramExt<A, S>
-    where
-        S: Data<Elem = A>,
+where
+    S: Data<Elem = A>,
 {
     /// Returns the [histogram](https://en.wikipedia.org/wiki/Histogram)
     /// for a 2-dimensional array of points `M`.
@@ -145,17 +145,16 @@ pub trait HistogramExt<A, S>
     /// # }
     /// ```
     fn histogram(&self, grid: Grid<A>) -> Histogram<A>
-        where
-            A: Ord;
+    where
+        A: Ord;
 }
 
 impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
-    where
-        S: Data<Elem = A>,
-        A: Ord,
+where
+    S: Data<Elem = A>,
+    A: Ord,
 {
-    fn histogram(&self, grid: Grid<A>) -> Histogram<A>
-    {
+    fn histogram(&self, grid: Grid<A>) -> Histogram<A> {
         let mut histogram = Histogram::new(grid);
         for point in self.axis_iter(Axis(0)) {
             let _ = histogram.add_observation(&point);
