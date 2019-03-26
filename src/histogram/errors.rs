@@ -15,9 +15,19 @@ impl error::Error for BinNotFound {
     fn description(&self) -> &str {
         "No bin has been found."
     }
+}
 
-    fn cause(&self) -> Option<&error::Error> {
-        // Generic error, underlying cause isn't tracked.
-        None
+#[derive(Debug, Clone)]
+pub struct StrategyError;
+
+impl fmt::Display for StrategyError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "The strategy failed to determine a non-zero bin width.")
+    }
+}
+
+impl error::Error for StrategyError{
+    fn description(&self) -> &str {
+        "The strategy failed to determine a non-zero bin width."
     }
 }
