@@ -67,7 +67,7 @@ where
                 let mean = self.mean().unwrap();
                 let shifted_array = self.mapv(|x| x - mean);
                 let shifted_moments = moments(shifted_array, n);
-                let correction_term = -shifted_moments[1].clone();
+                let correction_term = -shifted_moments[1];
 
                 let coefficients = central_moment_coefficients(&shifted_moments);
                 Some(horner_method(coefficients, correction_term))
@@ -91,7 +91,7 @@ where
                 let mean = self.mean().unwrap();
                 let shifted_array = self.mapv(|x| x - mean);
                 let shifted_moments = moments(shifted_array, n);
-                let correction_term = -shifted_moments[1].clone();
+                let correction_term = -shifted_moments[1];
 
                 let mut central_moments = vec![A::one(), A::zero()];
                 for k in 2..=n {
