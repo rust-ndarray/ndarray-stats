@@ -64,7 +64,7 @@ where
             1 => Some(A::zero()),
             n => {
                 let mean = self.mean().unwrap();
-                let shifted_array = self.map(|x| x.clone() - mean);
+                let shifted_array = self.mapv(|x| x - mean);
                 let shifted_moments = moments(shifted_array, n);
                 let correction_term = -shifted_moments[1].clone();
 
@@ -88,7 +88,7 @@ where
                 // We only perform these operations once, and then reuse their
                 // result to compute all the required moments
                 let mean = self.mean().unwrap();
-                let shifted_array = self.map(|x| x.clone() - mean);
+                let shifted_array = self.mapv(|x| x - mean);
                 let shifted_moments = moments(shifted_array, n);
                 let correction_term = -shifted_moments[1].clone();
 
