@@ -1,6 +1,6 @@
 use super::SummaryStatisticsExt;
 use ndarray::{ArrayBase, Data, Dimension};
-use num_traits::{Float, FromPrimitive, Zero};
+use num_traits::{Float, FromPrimitive, ToPrimitive, Zero};
 use std::ops::{Add, Div};
 
 impl<A, S, D> SummaryStatisticsExt<A, S, D> for ArrayBase<S, D>
@@ -124,6 +124,9 @@ where
 {
     let n_elements =
         A::from_usize(a.len()).expect("Converting number of elements to `A` must not fail");
+    let order = order
+        .to_i32()
+        .expect("Moment order must not overflow `i32`.");
 
     // When k=0, we are raising each element to the 0th power
     // No need to waste CPU cycles going through the array
@@ -135,7 +138,7 @@ where
     }
 
     for k in 2..=order {
-        moments.push(a.map(|x| x.powi(k as i32)).sum() / n_elements)
+        moments.push(a.map(|x| x.powi(k)).sum() / n_elements)
     }
     moments
 }
