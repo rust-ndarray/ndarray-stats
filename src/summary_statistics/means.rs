@@ -250,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn test_central_order_moment_with_empty_array_of_floats() {
+    fn test_central_moment_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
         for order in 0..=3 {
             assert!(a.central_moment(order).is_none());
@@ -259,7 +259,7 @@ mod tests {
     }
 
     #[test]
-    fn test_zeroth_central_order_moment_is_one() {
+    fn test_zeroth_central_moment_is_one() {
         let n = 50;
         let bound: f64 = 200.;
         let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()));
@@ -267,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn test_first_central_order_moment_is_zero() {
+    fn test_first_central_moment_is_zero() {
         let n = 50;
         let bound: f64 = 200.;
         let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()));
@@ -275,7 +275,7 @@ mod tests {
     }
 
     #[test]
-    fn test_central_order_moments() {
+    fn test_central_moments() {
         let a: Array1<f64> = array![
             0.07820559, 0.5026185, 0.80935324, 0.39384033, 0.9483038, 0.62516215, 0.90772261,
             0.87329831, 0.60267392, 0.2960298, 0.02810356, 0.31911966, 0.86705506, 0.96884832,
@@ -306,7 +306,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bulk_central_order_moments() {
+    fn test_bulk_central_moments() {
         // Test that the bulk method is coherent with the non-bulk method
         let n = 50;
         let bound: f64 = 200.;
