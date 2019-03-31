@@ -252,8 +252,10 @@ mod tests {
     #[test]
     fn test_central_order_moment_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert!(a.central_moment(1).is_none());
-        assert!(a.central_moments(1).is_none());
+        for order in 0..=3 {
+            assert!(a.central_moment(order).is_none());
+            assert!(a.central_moments(order).is_none());
+        }
     }
 
     #[test]
