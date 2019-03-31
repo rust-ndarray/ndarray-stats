@@ -1,5 +1,6 @@
 use super::SummaryStatisticsExt;
 use ndarray::{ArrayBase, Data, Dimension};
+use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, ToPrimitive, Zero};
 use std::ops::{Add, Div};
 
@@ -153,32 +154,10 @@ where
     A: Float + FromPrimitive,
 {
     let order = moments.len();
-    moments
-        .iter()
-        .rev()
-        .enumerate()
-        .map(|(k, moment)| A::from_usize(binomial_coefficient(order, k)).unwrap() * *moment)
+    IterBinomial::new(order)
+        .zip(moments.iter().rev())
+        .map(|(binom, &moment)| A::from_usize(binom).unwrap() * moment)
         .collect()
-}
-
-/// Returns the binomial coefficient "n over k".
-///
-/// **Panics** if k > n.
-fn binomial_coefficient(n: usize, k: usize) -> usize {
-    if k > n {
-        panic!(
-            "Tried to compute the binomial coefficient of {0} over {1}, \
-             but {1} is strictly greater than {0}!"
-        )
-    }
-    // BC(n, k) = BC(n, n-k)
-    let k = if k > n - k { n - k } else { k };
-    let mut result = 1;
-    for i in 0..k {
-        result = result * (n - i);
-        result = result / (i + 1);
-    }
-    result
 }
 
 /// Uses [Horner's method] to evaluate a polynomial with a single indeterminate.
