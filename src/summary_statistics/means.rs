@@ -56,21 +56,21 @@ where
     where
         A: Float + FromPrimitive,
     {
-        let mean = self.mean();
-        match mean {
-            None => None,
-            Some(mean) => match order {
-                0 => Some(A::one()),
-                1 => Some(A::zero()),
-                n => {
-                    let shifted_array = self.map(|x| x.clone() - mean);
-                    let shifted_moments = moments(shifted_array, n);
-                    let correction_term = -shifted_moments[1].clone();
+        if self.is_empty() {
+            return None;
+        }
+        match order {
+            0 => Some(A::one()),
+            1 => Some(A::zero()),
+            n => {
+                let mean = self.mean().unwrap();
+                let shifted_array = self.map(|x| x.clone() - mean);
+                let shifted_moments = moments(shifted_array, n);
+                let correction_term = -shifted_moments[1].clone();
 
-                    let coefficients = central_moment_coefficients(&shifted_moments);
-                    Some(horner_method(coefficients, correction_term))
-                }
-            },
+                let coefficients = central_moment_coefficients(&shifted_moments);
+                Some(horner_method(coefficients, correction_term))
+            }
         }
     }
 
@@ -78,29 +78,27 @@ where
     where
         A: Float + FromPrimitive,
     {
-        let mean = self.mean();
-        match mean {
-            None => None,
-            Some(mean) => {
-                match order {
-                    0 => Some(vec![A::one()]),
-                    1 => Some(vec![A::one(), A::zero()]),
-                    n => {
-                        // We only perform this operations once, and then reuse their
-                        // result to compute all the required moments
-                        let shifted_array = self.map(|x| x.clone() - mean);
-                        let shifted_moments = moments(shifted_array, n);
-                        let correction_term = -shifted_moments[1].clone();
+        if self.is_empty() {
+            return None;
+        }
+        match order {
+            0 => Some(vec![A::one()]),
+            1 => Some(vec![A::one(), A::zero()]),
+            n => {
+                // We only perform these operations once, and then reuse their
+                // result to compute all the required moments
+                let mean = self.mean().unwrap();
+                let shifted_array = self.map(|x| x.clone() - mean);
+                let shifted_moments = moments(shifted_array, n);
+                let correction_term = -shifted_moments[1].clone();
 
-                        let mut central_moments = vec![A::one(), A::zero()];
-                        for k in 2..=n {
-                            let coefficients = central_moment_coefficients(&shifted_moments[..=k]);
-                            let central_moment = horner_method(coefficients, correction_term);
-                            central_moments.push(central_moment)
-                        }
-                        Some(central_moments)
-                    }
+                let mut central_moments = vec![A::one(), A::zero()];
+                for k in 2..=n {
+                    let coefficients = central_moment_coefficients(&shifted_moments[..=k]);
+                    let central_moment = horner_method(coefficients, correction_term);
+                    central_moments.push(central_moment)
                 }
+                Some(central_moments)
             }
         }
     }
