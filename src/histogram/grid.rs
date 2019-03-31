@@ -181,7 +181,7 @@ where
         let bin_builders: Option<Vec<B>> = array
             .axis_iter(Axis(1))
             .map(|data| match B::from_array(&data) {
-                Ok(Some(builder)) => Some(builder),
+                Ok(builder) => Some(builder),
                 _ => None,
             })
             .collect();
