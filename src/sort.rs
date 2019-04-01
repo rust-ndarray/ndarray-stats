@@ -208,7 +208,7 @@ where
 
     // Since `!indexes.is_empty()` and indexes must be in-bounds, `array` must
     // be non-empty.
-    let mut values: Vec<_> = vec![array[0].clone(); indexes.len()];
+    let mut values = vec![array[0].clone(); indexes.len()];
     _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
 
     // We convert the vector to a more search-friendly `IndexMap`.
