@@ -1,4 +1,5 @@
 use super::bins::Bins;
+use super::errors::BinsBuildError;
 use super::strategies::BinsBuildingStrategy;
 use itertools::izip;
 use ndarray::{ArrayBase, Axis, Data, Ix1, Ix2};
@@ -169,23 +170,20 @@ where
     /// it returns a `GridBuilder` instance that has learned the required parameter
     /// to build a [`Grid`] according to the specified [`strategy`].
     ///
-    /// It returns `None` if it is not possible to build a [`Grid`] given
+    /// It returns `Err` if it is not possible to build a [`Grid`] given
     /// the observed data according to the chosen [`strategy`].
     ///
     /// [`Grid`]: struct.Grid.html
     /// [`strategy`]: strategies/index.html
-    pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Option<Self>
+    pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = A>,
     {
-        let bin_builders: Option<Vec<B>> = array
+        let bin_builders = array
             .axis_iter(Axis(1))
-            .map(|data| match B::from_array(&data) {
-                Ok(Some(builder)) => Some(builder),
-                _ => None,
-            })
-            .collect();
-        bin_builders.map(|b| Self { bin_builders: b })
+            .map(|data| B::from_array(&data))
+            .collect::<Result<Vec<B>, BinsBuildError>>()?;
+        Ok(Self { bin_builders })
     }
 
     /// Returns a [`Grid`] instance, built accordingly to the specified [`strategy`]
