@@ -60,11 +60,13 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
         let mut indexes: Vec<usize> = (0..n).into_iter().collect();
         indexes.append(&mut (0..n).into_iter().collect());
 
-        let sorted_v: Vec<i64> = v
-            .get_many_from_sorted_mut(&indexes)
-            .into_iter()
-            .map(|x| x.1)
-            .collect();
+        let mut sorted_v = Vec::with_capacity(n);
+        for (i, (key, value)) in v.get_many_from_sorted_mut(&indexes).into_iter().enumerate() {
+            if i != key {
+                return false;
+            }
+            sorted_v.push(value);
+        }
         xs.sort();
         println!("Sorted: {:?}. Truth: {:?}", sorted_v, xs);
         xs == sorted_v
