@@ -18,56 +18,56 @@ impl error::Error for BinNotFound {
     }
 }
 
-/// Error computing the set of histogram bins according to a specific strategy.
+/// Error computing the set of histogram bins.
 #[derive(Debug, Clone)]
-pub enum StrategyError {
+pub enum BinsBuildError {
     /// The input array was empty.
     EmptyInput,
-    /// Other error.
-    Other,
+    /// The strategy for computing appropriate bins failed.
+    Strategy,
 }
 
-impl StrategyError {
+impl BinsBuildError {
     /// Returns whether `self` is the `EmptyInput` variant.
     pub fn is_empty_input(&self) -> bool {
         match self {
-            StrategyError::EmptyInput => true,
+            BinsBuildError::EmptyInput => true,
             _ => false,
         }
     }
 
-    /// Returns whether `self` is the `Other` variant.
-    pub fn is_other(&self) -> bool {
+    /// Returns whether `self` is the `Strategy` variant.
+    pub fn is_strategy(&self) -> bool {
         match self {
-            StrategyError::Other => true,
+            BinsBuildError::Strategy => true,
             _ => false,
         }
     }
 }
 
-impl fmt::Display for StrategyError {
+impl fmt::Display for BinsBuildError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "The strategy failed to determine a non-zero bin width.")
     }
 }
 
-impl error::Error for StrategyError {
+impl error::Error for BinsBuildError {
     fn description(&self) -> &str {
         "The strategy failed to determine a non-zero bin width."
     }
 }
 
-impl From<EmptyInput> for StrategyError {
+impl From<EmptyInput> for BinsBuildError {
     fn from(_: EmptyInput) -> Self {
-        StrategyError::EmptyInput
+        BinsBuildError::EmptyInput
     }
 }
 
-impl From<MinMaxError> for StrategyError {
-    fn from(err: MinMaxError) -> StrategyError {
+impl From<MinMaxError> for BinsBuildError {
+    fn from(err: MinMaxError) -> BinsBuildError {
         match err {
-            MinMaxError::EmptyInput => StrategyError::EmptyInput,
-            MinMaxError::UndefinedOrder => StrategyError::Other,
+            MinMaxError::EmptyInput => BinsBuildError::EmptyInput,
+            MinMaxError::UndefinedOrder => BinsBuildError::Strategy,
         }
     }
 }
