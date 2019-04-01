@@ -25,6 +25,8 @@ pub enum BinsBuildError {
     EmptyInput,
     /// The strategy for computing appropriate bins failed.
     Strategy,
+    #[doc(hidden)]
+    __NonExhaustive,
 }
 
 impl BinsBuildError {
