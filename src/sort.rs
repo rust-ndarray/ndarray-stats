@@ -205,11 +205,7 @@ where
     let values = _get_many_from_sorted_mut_unchecked(array, indexes);
 
     // We convert the vector to a more search-friendly IndexMap
-    let mut result = IndexMap::new();
-    for (index, value) in indexes.into_iter().zip(values.into_iter()) {
-        result.insert(*index, value);
-    }
-    result
+    indexes.iter().cloned().zip(values.into_iter()).collect()
 }
 
 fn _get_many_from_sorted_mut_unchecked<A, S>(
