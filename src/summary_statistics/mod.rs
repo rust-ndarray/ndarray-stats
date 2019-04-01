@@ -113,7 +113,8 @@ where
     /// The *p*-th central moment is computed using a corrected two-pass algorithm (see Section 3.5
     /// in [Pébay et al., 2016]). Complexity is *O(np)* when *n >> p*, *p > 1*.
     ///
-    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements
+    /// in the array or if `order` overflows `i32`.
     ///
     /// [central moment]: https://en.wikipedia.org/wiki/Central_moment
     /// [Pébay et al., 2016]: https://www.osti.gov/pages/servlets/purl/1427275
@@ -130,7 +131,8 @@ where
     /// being thus more efficient than repeated calls to [central moment] if the computation
     /// of central moments of multiple orders is required.
     ///
-    /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements
+    /// in the array or if `order` overflows `i32`.
     ///
     /// [central moments]: https://en.wikipedia.org/wiki/Central_moment
     /// [central moment]: #tymethod.central_moment
