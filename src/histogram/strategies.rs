@@ -156,7 +156,7 @@ where
     /// Returns `Err(StrategyError)` if `bin_width<=0` or `min` >= `max`.
     /// Returns `Ok(Self)` otherwise.
     fn new(bin_width: T, min: T, max: T) -> Result<Self, StrategyError> {
-        if (bin_width <= T::zero()) | (min >= max) {
+        if (bin_width <= T::zero()) || (min >= max) {
             Err(StrategyError)
         } else {
             Ok(Self {
