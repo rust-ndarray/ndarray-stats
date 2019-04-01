@@ -222,15 +222,15 @@ where
         S: DataMut,
         I: Interpolate<A>;
 
-    /// A bulk version of [quantile_axis_mut], optimized to retrieve multiple
+    /// A bulk version of [`quantile_axis_mut`], optimized to retrieve multiple
     /// quantiles at once.
-    /// It returns an IndexMap, with (quantile index, quantile over axis) as
+    /// It returns an `IndexMap`, with (quantile index, quantile over axis) as
     /// key-value pairs.
     ///
-    /// The IndexMap is sorted with respect to quantile indexes in increasing order:
+    /// The `IndexMap` is sorted with respect to quantile indexes in increasing order:
     /// this ordering is preserved when you iterate over it (using `iter`/`into_iter`).
     ///
-    /// See [quantile_axis_mut] for additional details on quantiles and the algorithm
+    /// See [`quantile_axis_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
     ///
     /// Returns `None` when the specified axis has length 0.
@@ -238,7 +238,7 @@ where
     /// **Panics** if `axis` is out of bounds or if
     /// any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
-    /// [quantile_axis_mut]: ##tymethod.quantile_axis_mut
+    /// [`quantile_axis_mut`]: #tymethod.quantile_axis_mut
     fn quantiles_axis_mut<I>(
         &mut self,
         axis: Axis,
@@ -252,7 +252,7 @@ where
 
     /// Return the `q`th quantile of the data along the specified axis, skipping NaN values.
     ///
-    /// See [`quantile_axis_mut`](##tymethod.quantile_axis_mut) for details.
+    /// See [`quantile_axis_mut`](#tymethod.quantile_axis_mut) for details.
     fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: N64) -> Option<Array<A, D::Smaller>>
     where
         D: RemoveAxis,
@@ -537,22 +537,22 @@ where
         S: DataMut,
         I: Interpolate<A>;
 
-    /// A bulk version of [quantile_mut], optimized to retrieve multiple
+    /// A bulk version of [`quantile_mut`], optimized to retrieve multiple
     /// quantiles at once.
-    /// It returns an IndexMap, with (quantile index, quantile value) as
+    /// It returns an `IndexMap`, with (quantile index, quantile value) as
     /// key-value pairs.
     ///
-    /// The IndexMap is sorted with respect to quantile indexes in increasing order:
+    /// The `IndexMap` is sorted with respect to quantile indexes in increasing order:
     /// this ordering is preserved when you iterate over it (using `iter`/`into_iter`).
     ///
     /// It returns `None` if the array is empty.
     ///
-    /// See [quantile_mut] for additional details on quantiles and the algorithm
+    /// See [`quantile_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
     ///
     /// **Panics** if any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
-    /// [quantile_mut]: ##tymethod.quantile_mut
+    /// [`quantile_mut`]: #tymethod.quantile_mut
     fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<IndexMap<N64, A>>
     where
         A: Ord + Clone,

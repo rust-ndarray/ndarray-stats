@@ -33,17 +33,17 @@ where
         A: Ord + Clone,
         S: DataMut;
 
-    /// A bulk version of [get_from_sorted_mut], optimized to retrieve multiple
+    /// A bulk version of [`get_from_sorted_mut`], optimized to retrieve multiple
     /// indexes at once.
-    /// It returns an IndexMap, with indexes as keys and retrieved elements as
+    /// It returns an `IndexMap`, with indexes as keys and retrieved elements as
     /// values.
-    /// The IndexMap is sorted with respect to indexes in increasing order:
+    /// The `IndexMap` is sorted with respect to indexes in increasing order:
     /// this ordering is preserved when you iterate over it (using `iter`/`into_iter`).
     ///
     /// **Panics** if any element in `indexes` is greater than or equal to `n`,
     /// where `n` is the length of the array..
     ///
-    /// [get_from_sorted_mut]: ##tymethod.get_from_sorted_mut
+    /// [`get_from_sorted_mut`]: #tymethod.get_from_sorted_mut
     fn get_many_from_sorted_mut(&mut self, indexes: &[usize]) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
