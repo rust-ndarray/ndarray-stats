@@ -3,7 +3,6 @@ use ndarray::prelude::*;
 use ndarray::{Data, DataMut, Slice};
 use rand::prelude::*;
 use rand::thread_rng;
-use std::iter;
 
 /// Methods for sorting and partitioning 1-D arrays.
 pub trait Sort1dExt<A, S>
@@ -209,7 +208,7 @@ where
 
     // Since `!indexes.is_empty` and indexes must be in-bounds, `array` must be
     // non-empty.
-    let mut values: Vec<_> = iter::repeat(array[0].clone()).take(indexes.len()).collect();
+    let mut values: Vec<_> = vec![array[0].clone(); indexes.len()];
     _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
 
     // We convert the vector to a more search-friendly `IndexMap`.
