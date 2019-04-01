@@ -3,6 +3,7 @@ use ndarray::prelude::*;
 use ndarray::{s, Data, DataMut};
 use rand::prelude::*;
 use rand::thread_rng;
+use std::iter;
 
 /// Methods for sorting and partitioning 1-D arrays.
 pub trait Sort1dExt<A, S>
@@ -201,81 +202,96 @@ where
     A: Ord + Clone,
     S: DataMut<Elem = A>,
 {
-    // The actual routine
-    let values = _get_many_from_sorted_mut_unchecked(array, indexes);
+    if indexes.is_empty() {
+        return IndexMap::new();
+    }
 
-    // We convert the vector to a more search-friendly IndexMap
+    // Since `!indexes.is_empty` and indexes must be in-bounds, `array` must be
+    // non-empty.
+    let mut values: Vec<_> = iter::repeat(array[0].clone()).take(indexes.len()).collect();
+    _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
+
+    // We convert the vector to a more search-friendly `IndexMap`.
     indexes.iter().cloned().zip(values.into_iter()).collect()
 }
 
-fn _get_many_from_sorted_mut_unchecked<A, S>(
-    array: &mut ArrayBase<S, Ix1>,
-    indexes: &[usize],
-) -> Vec<A>
-where
+/// This is the recursive portion of `get_many_from_sorted_mut_unchecked`.
+///
+/// `indexes` is the list of indexes to get. `indexes` is mutable so that it
+/// can be used as scratch space for this routine; the value of `indexes` after
+/// calling this routine should be ignored.
+///
+/// `values` is a pre-allocated slice to use for writing the output. Its
+/// initial element values are ignored.
+fn _get_many_from_sorted_mut_unchecked<A>(
+    mut array: ArrayViewMut1<A>,
+    indexes: &mut [usize],
+    values: &mut [A],
+) where
     A: Ord + Clone,
-    S: DataMut<Elem = A>,
 {
     let n = array.len();
+    debug_assert!(n >= indexes.len()); // because indexes must be unique and in-bounds
+    debug_assert_eq!(indexes.len(), values.len());
 
-    // Nothing to do in this case
-    if indexes.len() == 0 || n == 0 {
-        return vec![];
+    if indexes.is_empty() {
+        // Nothing to do in this case.
+        return;
     }
 
-    // We can only reach this point with indexes.len() == 1
-    // So it's safe to return a vector with a single value
+    // At this point, `n >= 1` since `indexes.len() >= 1`.
     if n == 1 {
-        let value = array[0].clone();
-        return vec![value];
+        // We can only reach this point if `indexes.len() == 1`, so we only
+        // need to assign the single value, and then we're done.
+        debug_assert_eq!(indexes.len(), 1);
+        values[0] = array[0].clone();
+        return;
     }
 
     // We pick a random pivot index: the corresponding element is the pivot value
     let mut rng = thread_rng();
     let pivot_index = rng.gen_range(0, n);
 
-    // We partition the array with respect to the pivot value
-    // The pivot value moves to `array_partition_index`
-    // Elements strictly smaller than the pivot value have indexes < `array_partition_index`
-    // Elements greater or equal to the pivot value have indexes > `array_partition_index`
+    // We partition the array with respect to the pivot value.
+    // The pivot value moves to `array_partition_index`.
+    // Elements strictly smaller than the pivot value have indexes < `array_partition_index`.
+    // Elements greater or equal to the pivot value have indexes > `array_partition_index`.
     let array_partition_index = array.partition_mut(pivot_index);
 
-    // We can use a divide et impera strategy, splitting the indexes we are searching
-    // in two chunks with respect to array_partition_index
-    let index_split = indexes.binary_search(&array_partition_index);
-    let (smaller_indexes, bigger_indexes) = match index_split {
-        Ok(index_split) => (&indexes[..index_split], &indexes[(index_split + 1)..]),
-        Err(index_split) => (&indexes[..index_split], &indexes[index_split..]),
+    // We use a divide-and-conquer strategy, splitting the indexes we are
+    // searching for (`indexes`) and the corresponding portions of the output
+    // slice (`values`) into pieces with respect to `array_partition_index`.
+    let (found_exact, index_split) = match indexes.binary_search(&array_partition_index) {
+        Ok(index) => (true, index),
+        Err(index) => (false, index),
     };
-    // We are using a recursive search - to look for bigger_indexes in the right
-    // slice of the array we need to shift the indexes
-    let bigger_indexes: Vec<usize> = bigger_indexes
-        .into_iter()
-        .map(|x| x - array_partition_index - 1)
-        .collect();
+    let (smaller_indexes, other_indexes) = indexes.split_at_mut(index_split);
+    let (smaller_values, other_values) = values.split_at_mut(index_split);
+    let (bigger_indexes, bigger_values) = if found_exact {
+        other_values[0] = array[array_partition_index].clone(); // Write exactly found value.
+        (&mut other_indexes[1..], &mut other_values[1..])
+    } else {
+        (other_indexes, other_values)
+    };
 
-    // We search recursively for the values corresponding to strictly smaller indexes
-    // to the left of partition_index
-    let smaller_values = _get_many_from_sorted_mut_unchecked(
-        &mut array.slice_mut(s![..array_partition_index]),
+    // We search recursively for the values corresponding to strictly smaller
+    // indexes to the left of `partition_index`.
+    _get_many_from_sorted_mut_unchecked(
+        array.slice_mut(s![..array_partition_index]),
         smaller_indexes,
+        smaller_values,
     );
 
-    // We search recursively for the values corresponding to strictly bigger indexes
-    // to the right of partition_index+1
-    let mut bigger_values = _get_many_from_sorted_mut_unchecked(
-        &mut array.slice_mut(s![(array_partition_index + 1)..]),
-        &bigger_indexes,
+    // We search recursively for the values corresponding to strictly bigger
+    // indexes to the right of `partition_index`. Since only the right portion
+    // of the array is passed in, the indexes need to be shifted by length of
+    // the removed portion.
+    bigger_indexes
+        .iter_mut()
+        .for_each(|x| *x -= array_partition_index + 1);
+    _get_many_from_sorted_mut_unchecked(
+        array.slice_mut(s![(array_partition_index + 1)..]),
+        bigger_indexes,
+        bigger_values,
     );
-
-    // We merge the results together, in the correct order
-    let mut results: Vec<A>;
-
-    results = smaller_values;
-    if index_split.is_ok() {
-        // Get the value associated to partition index
-        results.push(array[array_partition_index].clone());
-    }
-    results.append(&mut bigger_values);
-    results
 }
