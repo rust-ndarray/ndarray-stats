@@ -1,3 +1,4 @@
+use crate::errors::{EmptyInput, MinMaxError, MinMaxError::UndefinedOrder};
 use interpolate::Interpolate;
 use ndarray::prelude::*;
 use ndarray::{s, Data, DataMut, RemoveAxis};
@@ -184,11 +185,11 @@ where
 {
     /// Finds the index of the minimum value of the array.
     ///
-    /// Returns `None` if any of the pairwise orderings tested by the function
-    /// are undefined. (For example, this occurs if there are any
-    /// floating-point NaN values in the array.)
+    /// Returns `Err(MinMaxError::UndefinedOrder)` if any of the pairwise
+    /// orderings tested by the function are undefined. (For example, this
+    /// occurs if there are any floating-point NaN values in the array.)
     ///
-    /// Returns `None` if the array is empty.
+    /// Returns `Err(MinMaxError::EmptyInput)` if the array is empty.
     ///
     /// Even if there are multiple (equal) elements that are minima, only one
     /// index is returned. (Which one is returned is unspecified and may depend
@@ -205,9 +206,9 @@ where
     ///
     /// let a = array![[1., 3., 5.],
     ///                [2., 0., 6.]];
-    /// assert_eq!(a.argmin(), Some((1, 1)));
+    /// assert_eq!(a.argmin(), Ok((1, 1)));
     /// ```
-    fn argmin(&self) -> Option<D::Pattern>
+    fn argmin(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: PartialOrd;
 
@@ -240,16 +241,16 @@ where
 
     /// Finds the elementwise minimum of the array.
     ///
-    /// Returns `None` if any of the pairwise orderings tested by the function
-    /// are undefined. (For example, this occurs if there are any
-    /// floating-point NaN values in the array.)
+    /// Returns `Err(MinMaxError::UndefinedOrder)` if any of the pairwise
+    /// orderings tested by the function are undefined. (For example, this
+    /// occurs if there are any floating-point NaN values in the array.)
     ///
-    /// Additionally, returns `None` if the array is empty.
+    /// Returns `Err(MinMaxError::EmptyInput)` if the array is empty.
     ///
     /// Even if there are multiple (equal) elements that are minima, only one
     /// is returned. (Which one is returned is unspecified and may depend on
     /// the memory layout of the array.)
-    fn min(&self) -> Option<&A>
+    fn min(&self) -> Result<&A, MinMaxError>
     where
         A: PartialOrd;
 
@@ -269,11 +270,11 @@ where
 
     /// Finds the index of the maximum value of the array.
     ///
-    /// Returns `None` if any of the pairwise orderings tested by the function
-    /// are undefined. (For example, this occurs if there are any
-    /// floating-point NaN values in the array.)
+    /// Returns `Err(MinMaxError::UndefinedOrder)` if any of the pairwise
+    /// orderings tested by the function are undefined. (For example, this
+    /// occurs if there are any floating-point NaN values in the array.)
     ///
-    /// Returns `None` if the array is empty.
+    /// Returns `Err(MinMaxError::EmptyInput)` if the array is empty.
     ///
     /// Even if there are multiple (equal) elements that are maxima, only one
     /// index is returned. (Which one is returned is unspecified and may depend
@@ -290,9 +291,9 @@ where
     ///
     /// let a = array![[1., 3., 7.],
     ///                [2., 5., 6.]];
-    /// assert_eq!(a.argmax(), Some((0, 2)));
+    /// assert_eq!(a.argmax(), Ok((0, 2)));
     /// ```
-    fn argmax(&self) -> Option<D::Pattern>
+    fn argmax(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: PartialOrd;
 
@@ -325,16 +326,16 @@ where
 
     /// Finds the elementwise maximum of the array.
     ///
-    /// Returns `None` if any of the pairwise orderings tested by the function
-    /// are undefined. (For example, this occurs if there are any
-    /// floating-point NaN values in the array.)
+    /// Returns `Err(MinMaxError::UndefinedOrder)` if any of the pairwise
+    /// orderings tested by the function are undefined. (For example, this
+    /// occurs if there are any floating-point NaN values in the array.)
     ///
-    /// Additionally, returns `None` if the array is empty.
+    /// Returns `Err(EmptyInput)` if the array is empty.
     ///
     /// Even if there are multiple (equal) elements that are maxima, only one
     /// is returned. (Which one is returned is unspecified and may depend on
     /// the memory layout of the array.)
-    fn max(&self) -> Option<&A>
+    fn max(&self) -> Result<&A, MinMaxError>
     where
         A: PartialOrd;
 
@@ -406,21 +407,21 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    fn argmin(&self) -> Option<D::Pattern>
+    fn argmin(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: PartialOrd,
     {
-        let mut current_min = self.first()?;
+        let mut current_min = self.first().ok_or(EmptyInput)?;
         let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
 
         for (pattern, elem) in self.indexed_iter() {
-            if elem.partial_cmp(current_min)? == cmp::Ordering::Less {
+            if elem.partial_cmp(current_min).ok_or(UndefinedOrder)? == cmp::Ordering::Less {
                 current_pattern_min = pattern;
                 current_min = elem
             }
         }
 
-        Some(current_pattern_min)
+        Ok(current_pattern_min)
     }
 
     fn argmin_skipnan(&self) -> Option<D::Pattern>
@@ -445,14 +446,17 @@ where
         }
     }
 
-    fn min(&self) -> Option<&A>
+    fn min(&self) -> Result<&A, MinMaxError>
     where
         A: PartialOrd,
     {
-        let first = self.first()?;
-        self.fold(Some(first), |acc, elem| match elem.partial_cmp(acc?)? {
-            cmp::Ordering::Less => Some(elem),
-            _ => acc,
+        let first = self.first().ok_or(EmptyInput)?;
+        self.fold(Ok(first), |acc, elem| {
+            let acc = acc?;
+            match elem.partial_cmp(acc).ok_or(UndefinedOrder)? {
+                cmp::Ordering::Less => Ok(elem),
+                _ => Ok(acc),
+            }
         })
     }
 
@@ -470,21 +474,21 @@ where
         }))
     }
 
-    fn argmax(&self) -> Option<D::Pattern>
+    fn argmax(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: PartialOrd,
     {
-        let mut current_max = self.first()?;
+        let mut current_max = self.first().ok_or(EmptyInput)?;
         let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
 
         for (pattern, elem) in self.indexed_iter() {
-            if elem.partial_cmp(current_max)? == cmp::Ordering::Greater {
+            if elem.partial_cmp(current_max).ok_or(UndefinedOrder)? == cmp::Ordering::Greater {
                 current_pattern_max = pattern;
                 current_max = elem
             }
         }
 
-        Some(current_pattern_max)
+        Ok(current_pattern_max)
     }
 
     fn argmax_skipnan(&self) -> Option<D::Pattern>
@@ -509,14 +513,17 @@ where
         }
     }
 
-    fn max(&self) -> Option<&A>
+    fn max(&self) -> Result<&A, MinMaxError>
     where
         A: PartialOrd,
     {
-        let first = self.first()?;
-        self.fold(Some(first), |acc, elem| match elem.partial_cmp(acc?)? {
-            cmp::Ordering::Greater => Some(elem),
-            _ => acc,
+        let first = self.first().ok_or(EmptyInput)?;
+        self.fold(Ok(first), |acc, elem| {
+            let acc = acc?;
+            match elem.partial_cmp(acc).ok_or(UndefinedOrder)? {
+                cmp::Ordering::Greater => Ok(elem),
+                _ => Ok(acc),
+            }
         })
     }
 
@@ -619,10 +626,10 @@ where
     /// - worst case: O(`m`^2);
     /// where `m` is the number of elements in the array.
     ///
-    /// Returns `None` if the array is empty.
+    /// Returns `Err(EmptyInput)` if the array is empty.
     ///
     /// **Panics** if `q` is not between `0.` and `1.` (inclusive).
-    fn quantile_mut<I>(&mut self, q: f64) -> Option<A>
+    fn quantile_mut<I>(&mut self, q: f64) -> Result<A, EmptyInput>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -633,16 +640,16 @@ impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
 {
-    fn quantile_mut<I>(&mut self, q: f64) -> Option<A>
+    fn quantile_mut<I>(&mut self, q: f64) -> Result<A, EmptyInput>
     where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
         if self.is_empty() {
-            None
+            Err(EmptyInput)
         } else {
-            Some(self.quantile_axis_mut::<I>(Axis(0), q).into_scalar())
+            Ok(self.quantile_axis_mut::<I>(Axis(0), q).into_scalar())
         }
     }
 }

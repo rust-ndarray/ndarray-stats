@@ -20,7 +20,7 @@
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use super::super::interpolate::Nearest;
 use super::super::{Quantile1dExt, QuantileExt};
-use super::errors::StrategyError;
+use super::errors::BinsBuildError;
 use super::{Bins, Edges};
 use ndarray::prelude::*;
 use ndarray::Data;
@@ -41,11 +41,11 @@ pub trait BinsBuildingStrategy {
     /// Given some observations in a 1-dimensional array it returns a `BinsBuildingStrategy`
     /// that has learned the required parameter to build a collection of [`Bins`].
     ///
-    /// It returns `None` if it is not possible to build a collection of [`Bins`] given
-    /// the observed data according to the chosen strategy.
+    /// It returns `Err` if it is not possible to build a collection of
+    /// [`Bins`] given the observed data according to the chosen strategy.
     ///
     /// [`Bins`]: ../struct.Bins.html
-    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
+    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
         Self: std::marker::Sized;
@@ -153,11 +153,11 @@ impl<T> EquiSpaced<T>
 where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
-    /// Returns `Err(StrategyError)` if `bin_width<=0` or `min` >= `max`.
+    /// Returns `Err(BinsBuildError::Strategy)` if `bin_width<=0` or `min` >= `max`.
     /// Returns `Ok(Self)` otherwise.
-    fn new(bin_width: T, min: T, max: T) -> Result<Self, StrategyError> {
-        if (bin_width <= T::zero()) || (min >= max) {
-            Err(StrategyError)
+    fn new(bin_width: T, min: T, max: T) -> Result<Self, BinsBuildError> {
+        if (bin_width <= T::zero()) | (min >= max) {
+            Err(BinsBuildError::Strategy)
         } else {
             Ok(Self {
                 bin_width,
@@ -198,23 +198,20 @@ where
 {
     type Elem = T;
 
-    /// Returns `Err(StrategyError)` if the array is constant.
-    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
-        match (a.min(), a.max()) {
-            (Some(min), Some(max)) => {
-                let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Ok(Some(Self { builder }))
-            }
-            _ => Ok(None),
-        }
+        let min = a.min()?;
+        let max = a.max()?;
+        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -242,23 +239,20 @@ where
 {
     type Elem = T;
 
-    /// Returns `Err(StrategyError)` if the array is constant.
-    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (2. * (n_elems as f64).powf(1. / 3.)).round() as usize;
-        match (a.min(), a.max()) {
-            (Some(min), Some(max)) => {
-                let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Ok(Some(Self { builder }))
-            }
-            _ => Ok(None),
-        }
+        let min = a.min()?;
+        let max = a.max()?;
+        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -286,23 +280,20 @@ where
 {
     type Elem = T;
 
-    /// Returns `Err(StrategyError)` if the array is constant.
-    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
-        match (a.min(), a.max()) {
-            (Some(min), Some(max)) => {
-                let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Ok(Some(Self { builder }))
-            }
-            _ => Ok(None),
-        }
+        let min = a.min()?;
+        let max = a.max()?;
+        let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -330,16 +321,16 @@ where
 {
     type Elem = T;
 
-    /// Returns `Err(StrategyError)` if `IQR==0`.
-    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Err(BinsBuildError::Strategy)` if `IQR==0`.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_points = a.len();
         if n_points == 0 {
-            return Ok(None);
+            return Err(BinsBuildError::EmptyInput);
         }
 
         let mut a_copy = a.to_owned();
@@ -348,13 +339,10 @@ where
         let iqr = third_quartile - first_quartile;
 
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
-        match (a.min(), a.max()) {
-            (Some(min), Some(max)) => {
-                let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
-                Ok(Some(Self { builder }))
-            }
-            _ => Ok(None),
-        }
+        let min = a.min()?;
+        let max = a.max()?;
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -388,36 +376,33 @@ where
 {
     type Elem = T;
 
-    /// Returns `Err(StrategyError)` if `IQR==0`.
-    /// Returns `Ok(None)` if `a.len()==0`.
+    /// Returns `Err(BinsBuildError::Strategy)` if `IQR==0`.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Option<Self>, StrategyError>
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let fd_builder = FreedmanDiaconis::from_array(&a);
         let sturges_builder = Sturges::from_array(&a);
         match (fd_builder, sturges_builder) {
-            (Ok(None), Ok(Some(sturges_builder))) | (Err(_), Ok(Some(sturges_builder))) => {
+            (Err(_), Ok(sturges_builder)) => {
                 let builder = SturgesOrFD::Sturges(sturges_builder);
-                Ok(Some(Self { builder }))
+                Ok(Self { builder })
             }
-            (Ok(Some(fd_builder)), Ok(None)) | (Ok(Some(fd_builder)), Err(_)) => {
+            (Ok(fd_builder), Err(_)) => {
                 let builder = SturgesOrFD::FreedmanDiaconis(fd_builder);
-                Ok(Some(Self { builder }))
+                Ok(Self { builder })
             }
-            (Ok(Some(fd_builder)), Ok(Some(sturges_builder))) => {
+            (Ok(fd_builder), Ok(sturges_builder)) => {
                 let builder = if fd_builder.bin_width() > sturges_builder.bin_width() {
                     SturgesOrFD::Sturges(sturges_builder)
                 } else {
                     SturgesOrFD::FreedmanDiaconis(fd_builder)
                 };
-                Ok(Some(Self { builder }))
+                Ok(Self { builder })
             }
-            (Err(_), Err(_)) => Err(StrategyError),
-            (Ok(None), Ok(None)) => Ok(None),
-            // Unreachable
-            (Err(_), Ok(None)) | (Ok(None), Err(_)) => Err(StrategyError),
+            (Err(err), Err(_)) => Err(err),
         }
     }
 
@@ -489,13 +474,16 @@ mod sqrt_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
+        assert!(Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
     #[test]
-    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
-        assert!(Sqrt::<usize>::from_array(&array![])?.is_none());
-        Ok(())
+    fn empty_arrays_are_bad() {
+        assert!(Sqrt::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -506,13 +494,16 @@ mod rice_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
+        assert!(Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
     #[test]
-    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
-        assert!(Rice::<usize>::from_array(&array![])?.is_none());
-        Ok(())
+    fn empty_arrays_are_bad() {
+        assert!(Rice::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -523,13 +514,16 @@ mod sturges_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
+        assert!(Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
     #[test]
-    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
-        assert!(Sturges::<usize>::from_array(&array![])?.is_none());
-        Ok(())
+    fn empty_arrays_are_bad() {
+        assert!(Sturges::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -540,21 +534,25 @@ mod fd_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
+        assert!(FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
     #[test]
     fn zero_iqr_is_bad() {
         assert!(
             FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20])
-                .is_err()
+                .unwrap_err()
+                .is_strategy()
         );
     }
 
     #[test]
-    fn empty_arrays_are_bad() -> Result<(), StrategyError> {
-        assert!(FreedmanDiaconis::<usize>::from_array(&array![])?.is_none());
-        Ok(())
+    fn empty_arrays_are_bad() {
+        assert!(FreedmanDiaconis::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -565,7 +563,9 @@ mod auto_tests {
 
     #[test]
     fn constant_array_are_bad() {
-        assert!(Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1]).is_err());
+        assert!(Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
     #[test]
@@ -574,8 +574,9 @@ mod auto_tests {
     }
 
     #[test]
-    fn empty_arrays_cause_panic() -> Result<(), StrategyError> {
-        assert!(Auto::<usize>::from_array(&array![])?.is_none());
-        Ok(())
+    fn empty_arrays_are_bad() {
+        assert!(Auto::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
