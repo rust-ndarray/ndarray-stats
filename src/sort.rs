@@ -1,6 +1,6 @@
 use indexmap::IndexMap;
 use ndarray::prelude::*;
-use ndarray::{s, Data, DataMut};
+use ndarray::{Data, DataMut, Slice};
 use rand::prelude::*;
 use rand::thread_rng;
 use std::iter;
@@ -122,11 +122,12 @@ where
             let pivot_index = rng.gen_range(0, n);
             let partition_index = self.partition_mut(pivot_index);
             if i < partition_index {
-                self.slice_mut(s![..partition_index]).get_from_sorted_mut(i)
+                self.slice_axis_mut(Axis(0), Slice::from(..partition_index))
+                    .get_from_sorted_mut(i)
             } else if i == partition_index {
                 self[i].clone()
             } else {
-                self.slice_mut(s![partition_index + 1..])
+                self.slice_axis_mut(Axis(0), Slice::from(partition_index + 1..))
                     .get_from_sorted_mut(i - (partition_index + 1))
             }
         }
@@ -277,7 +278,7 @@ fn _get_many_from_sorted_mut_unchecked<A>(
     // We search recursively for the values corresponding to strictly smaller
     // indexes to the left of `partition_index`.
     _get_many_from_sorted_mut_unchecked(
-        array.slice_mut(s![..array_partition_index]),
+        array.slice_axis_mut(Axis(0), Slice::from(..array_partition_index)),
         smaller_indexes,
         smaller_values,
     );
@@ -290,7 +291,7 @@ fn _get_many_from_sorted_mut_unchecked<A>(
         .iter_mut()
         .for_each(|x| *x -= array_partition_index + 1);
     _get_many_from_sorted_mut_unchecked(
-        array.slice_mut(s![(array_partition_index + 1)..]),
+        array.slice_axis_mut(Axis(0), Slice::from(array_partition_index + 1..)),
         bigger_indexes,
         bigger_values,
     );
