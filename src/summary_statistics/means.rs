@@ -255,8 +255,8 @@ mod tests {
     fn test_central_moment_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
         for order in 0..=3 {
-            assert!(a.central_moment(order).is_none());
-            assert!(a.central_moments(order).is_none());
+            assert_eq!(a.central_moment(order), Err(EmptyInput));
+            assert_eq!(a.central_moments(order), Err(EmptyInput));
         }
     }
 
@@ -323,8 +323,8 @@ mod tests {
     #[test]
     fn test_kurtosis_and_skewness_is_none_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert!(a.skewness().is_none());
-        assert!(a.kurtosis().is_none());
+        assert_eq!(a.skewness(), Err(EmptyInput));
+        assert_eq!(a.kurtosis(), Err(EmptyInput));
     }
 
     #[test]
