@@ -1,6 +1,5 @@
 use self::interpolate::{higher_index, lower_index, Interpolate};
 use super::sort::get_many_from_sorted_mut_unchecked;
-use indexmap::IndexSet;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis, Zip};
 use noisy_float::types::N64;
@@ -465,23 +464,17 @@ where
                 return Some(Array::from_shape_vec(results_shape, Vec::new()).unwrap());
             }
 
-            let mut deduped_qs: Vec<N64> = qs.to_vec();
-            deduped_qs.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            deduped_qs.dedup();
-
-            // IndexSet preserves insertion order:
-            // - indexes will stay sorted;
-            // - we avoid index duplication.
-            let mut searched_indexes = IndexSet::new();
-            for q in deduped_qs.iter() {
-                if I::needs_lower(*q, axis_len) {
-                    searched_indexes.insert(lower_index(*q, axis_len));
+            let mut searched_indexes = Vec::with_capacity(2 * qs.len());
+            for &q in &qs {
+                if I::needs_lower(q, axis_len) {
+                    searched_indexes.push(lower_index(q, axis_len));
                 }
-                if I::needs_higher(*q, axis_len) {
-                    searched_indexes.insert(higher_index(*q, axis_len));
+                if I::needs_higher(q, axis_len) {
+                    searched_indexes.push(higher_index(q, axis_len));
                 }
             }
-            let searched_indexes: Vec<usize> = searched_indexes.into_iter().collect();
+            searched_indexes.sort();
+            searched_indexes.dedup();
 
             let mut results = Array::from_elem(results_shape, data.first().unwrap().clone());
             Zip::from(results.lanes_mut(axis))
