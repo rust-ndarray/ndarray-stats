@@ -38,32 +38,32 @@ where
         self.map(|x| x.ln()).mean().map(|x| x.exp())
     }
 
-    fn kurtosis(&self) -> Option<A>
+    fn kurtosis(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
         let central_moments = self.central_moments(4)?;
-        Some(central_moments[4] / central_moments[2].powi(2))
+        Ok(central_moments[4] / central_moments[2].powi(2))
     }
 
-    fn skewness(&self) -> Option<A>
+    fn skewness(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
         let central_moments = self.central_moments(3)?;
-        Some(central_moments[3] / central_moments[2].sqrt().powi(3))
+        Ok(central_moments[3] / central_moments[2].sqrt().powi(3))
     }
 
-    fn central_moment(&self, order: usize) -> Option<A>
+    fn central_moment(&self, order: usize) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
         if self.is_empty() {
-            return None;
+            return Err(EmptyInput);
         }
         match order {
-            0 => Some(A::one()),
-            1 => Some(A::zero()),
+            0 => Ok(A::one()),
+            1 => Ok(A::zero()),
             n => {
                 let mean = self.mean().unwrap();
                 let shifted_array = self.mapv(|x| x - mean);
@@ -71,21 +71,21 @@ where
                 let correction_term = -shifted_moments[1];
 
                 let coefficients = central_moment_coefficients(&shifted_moments);
-                Some(horner_method(coefficients, correction_term))
+                Ok(horner_method(coefficients, correction_term))
             }
         }
     }
 
-    fn central_moments(&self, order: usize) -> Option<Vec<A>>
+    fn central_moments(&self, order: usize) -> Result<Vec<A>, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
         if self.is_empty() {
-            return None;
+            return Err(EmptyInput);
         }
         match order {
-            0 => Some(vec![A::one()]),
-            1 => Some(vec![A::one(), A::zero()]),
+            0 => Ok(vec![A::one()]),
+            1 => Ok(vec![A::one(), A::zero()]),
             n => {
                 // We only perform these operations once, and then reuse their
                 // result to compute all the required moments
@@ -100,7 +100,7 @@ where
                     let central_moment = horner_method(coefficients, correction_term);
                     central_moments.push(central_moment)
                 }
-                Some(central_moments)
+                Ok(central_moments)
             }
         }
     }
