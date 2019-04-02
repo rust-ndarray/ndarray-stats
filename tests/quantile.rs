@@ -42,19 +42,19 @@ quickcheck! {
 #[test]
 fn test_argmin_skipnan() {
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+    assert_eq!(a.argmin_skipnan(), Ok((1, 1)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.argmin_skipnan(), Some((0, 0)));
+    assert_eq!(a.argmin_skipnan(), Ok((0, 0)));
 
     let a = array![[::std::f64::NAN, 5., 3.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.argmin_skipnan(), Some((1, 0)));
+    assert_eq!(a.argmin_skipnan(), Ok((1, 0)));
 
     let a: Array2<f64> = array![[], []];
-    assert_eq!(a.argmin_skipnan(), None);
+    assert_eq!(a.argmin_skipnan(), Err(MinMaxError::EmptyInput));
 
     let a = arr2(&[[::std::f64::NAN; 2]; 2]);
-    assert_eq!(a.argmin_skipnan(), None);
+    assert_eq!(a.argmin_skipnan(), Err(MinMaxError::EmptyInput));
 }
 
 quickcheck! {
@@ -63,7 +63,7 @@ quickcheck! {
         let min = a.min_skipnan();
         let argmin = a.argmin_skipnan();
         if min.is_none() {
-            argmin == None
+            argmin == Err(MinMaxError::EmptyInput)
         } else {
             a[argmin.unwrap()] == *min
         }
@@ -122,22 +122,22 @@ quickcheck! {
 #[test]
 fn test_argmax_skipnan() {
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+    assert_eq!(a.argmax_skipnan(), Ok((1, 2)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, ::std::f64::NAN]];
-    assert_eq!(a.argmax_skipnan(), Some((0, 1)));
+    assert_eq!(a.argmax_skipnan(), Ok((0, 1)));
 
     let a = array![
         [::std::f64::NAN, ::std::f64::NAN, 3.],
         [2., ::std::f64::NAN, 6.]
     ];
-    assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+    assert_eq!(a.argmax_skipnan(), Ok((1, 2)));
 
     let a: Array2<f64> = array![[], []];
-    assert_eq!(a.argmax_skipnan(), None);
+    assert_eq!(a.argmax_skipnan(), Err(MinMaxError::EmptyInput));
 
     let a = arr2(&[[::std::f64::NAN; 2]; 2]);
-    assert_eq!(a.argmax_skipnan(), None);
+    assert_eq!(a.argmax_skipnan(), Err(MinMaxError::EmptyInput));
 }
 
 quickcheck! {
@@ -146,7 +146,7 @@ quickcheck! {
         let max = a.max_skipnan();
         let argmax = a.argmax_skipnan();
         if max.is_none() {
-            argmax == None
+            argmax == Err(MinMaxError::EmptyInput)
         } else {
             a[argmax.unwrap()] == *max
         }
