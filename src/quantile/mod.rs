@@ -191,7 +191,7 @@ where
     /// in increasing order.
     /// If `(N-1)q` is not an integer the desired quantile lies between
     /// two data points: we return the lower, nearest, higher or interpolated
-    /// value depending on the type `Interpolate` bound `I`.
+    /// value depending on the `interpolate` strategy.
     ///
     /// Some examples:
     /// - `q=0.` returns the minimum along each 1-dimensional lane;
@@ -215,7 +215,7 @@ where
     ///
     /// **Panics** if `axis` is out of bounds or if
     /// `q` is not between `0.` and `1.` (inclusive).
-    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: N64) -> Option<Array<A, D::Smaller>>
+    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: N64, interpolate: &I) -> Option<Array<A, D::Smaller>>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -253,13 +253,13 @@ where
     /// let mut data = array![[3, 4, 5], [6, 7, 8]];
     /// let axis = Axis(1);
     /// let qs = &[n64(0.3), n64(0.7)];
-    /// let quantiles = data.quantiles_axis_mut::<Nearest>(axis, qs).unwrap();
+    /// let quantiles = data.quantiles_axis_mut(axis, qs, &Nearest).unwrap();
     /// for (&q, quantile) in qs.iter().zip(quantiles.axis_iter(axis)) {
-    ///     assert_eq!(quantile, data.quantile_axis_mut::<Nearest>(axis, q).unwrap());
+    ///     assert_eq!(quantile, data.quantile_axis_mut(axis, q, &Nearest).unwrap());
     /// }
     /// # }
     /// ```
-    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> Option<Array<A, D>>
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64], interpolate: &I) -> Option<Array<A, D>>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -269,7 +269,7 @@ where
     /// Return the `q`th quantile of the data along the specified axis, skipping NaN values.
     ///
     /// See [`quantile_axis_mut`](#tymethod.quantile_axis_mut) for details.
-    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: N64) -> Option<Array<A, D::Smaller>>
+    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: N64, interpolate: &I) -> Option<Array<A, D::Smaller>>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -411,7 +411,7 @@ where
         }))
     }
 
-    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> Option<Array<A, D>>
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64], _interpolate: &I) -> Option<Array<A, D>>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -471,18 +471,18 @@ where
         Some(results)
     }
 
-    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: N64) -> Option<Array<A, D::Smaller>>
+    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: N64, interpolate: &I) -> Option<Array<A, D::Smaller>>
     where
         D: RemoveAxis,
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
-        self.quantiles_axis_mut::<I>(axis, &[q])
+        self.quantiles_axis_mut(axis, &[q], interpolate)
             .map(|a| a.index_axis_move(axis, 0))
     }
 
-    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: N64) -> Option<Array<A, D::Smaller>>
+    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: N64, interpolate: &I) -> Option<Array<A, D::Smaller>>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -500,7 +500,7 @@ where
             } else {
                 Some(
                     not_nan
-                        .quantile_axis_mut::<I>(Axis(0), q)
+                        .quantile_axis_mut::<I>(Axis(0), q, interpolate)
                         .unwrap()
                         .into_scalar(),
                 )
@@ -523,7 +523,7 @@ where
     /// in increasing order.
     /// If `(N-1)q` is not an integer the desired quantile lies between
     /// two data points: we return the lower, nearest, higher or interpolated
-    /// value depending on the type `Interpolate` bound `I`.
+    /// value depending on the `interpolate` strategy.
     ///
     /// Some examples:
     /// - `q=0.` returns the minimum;
@@ -544,7 +544,7 @@ where
     /// Returns `None` if the array is empty.
     ///
     /// **Panics** if `q` is not between `0.` and `1.` (inclusive).
-    fn quantile_mut<I>(&mut self, q: N64) -> Option<A>
+    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Option<A>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -564,7 +564,7 @@ where
     /// **Panics** if any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
     /// [`quantile_mut`]: #tymethod.quantile_mut
-    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<Array1<A>>
+    fn quantiles_mut<I>(&mut self, qs: &[N64], interpolate: &I) -> Option<Array1<A>>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -575,23 +575,23 @@ impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
 {
-    fn quantile_mut<I>(&mut self, q: N64) -> Option<A>
+    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Option<A>
     where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
-        self.quantile_axis_mut::<I>(Axis(0), q)
+        self.quantile_axis_mut::<I>(Axis(0), q, interpolate)
             .map(|v| v.into_scalar())
     }
 
-    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<Array1<A>>
+    fn quantiles_mut<I>(&mut self, qs: &[N64], interpolate: &I) -> Option<Array1<A>>
     where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
-        self.quantiles_axis_mut::<I>(Axis(0), qs)
+        self.quantiles_axis_mut(Axis(0), qs, interpolate)
     }
 }
 
