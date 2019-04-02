@@ -1,6 +1,4 @@
 //! Interpolation strategies.
-use ndarray::azip;
-use ndarray::prelude::*;
 use noisy_float::types::N64;
 use num_traits::{Float, FromPrimitive, NumOps, ToPrimitive};
 
@@ -45,14 +43,7 @@ pub trait Interpolate<T> {
     /// **Panics** if `None` is provided for the lower value when it's needed
     /// or if `None` is provided for the higher value when it's needed.
     #[doc(hidden)]
-    fn interpolate<D>(
-        lower: Option<Array<T, D>>,
-        higher: Option<Array<T, D>>,
-        q: N64,
-        len: usize,
-    ) -> Array<T, D>
-    where
-        D: Dimension;
+    fn interpolate(lower: Option<T>, higher: Option<T>, q: N64, len: usize) -> T;
 }
 
 /// Select the higher value.
@@ -75,12 +66,7 @@ impl<T> Interpolate<T> for Higher {
     fn needs_higher(_q: N64, _len: usize) -> bool {
         true
     }
-    fn interpolate<D>(
-        _lower: Option<Array<T, D>>,
-        higher: Option<Array<T, D>>,
-        _q: N64,
-        _len: usize,
-    ) -> Array<T, D> {
+    fn interpolate(_lower: Option<T>, higher: Option<T>, _q: N64, _len: usize) -> T {
         higher.unwrap()
     }
 }
@@ -92,12 +78,7 @@ impl<T> Interpolate<T> for Lower {
     fn needs_higher(_q: N64, _len: usize) -> bool {
         false
     }
-    fn interpolate<D>(
-        lower: Option<Array<T, D>>,
-        _higher: Option<Array<T, D>>,
-        _q: N64,
-        _len: usize,
-    ) -> Array<T, D> {
+    fn interpolate(lower: Option<T>, _higher: Option<T>, _q: N64, _len: usize) -> T {
         lower.unwrap()
     }
 }
@@ -109,12 +90,7 @@ impl<T> Interpolate<T> for Nearest {
     fn needs_higher(q: N64, len: usize) -> bool {
         !<Self as Interpolate<T>>::needs_lower(q, len)
     }
-    fn interpolate<D>(
-        lower: Option<Array<T, D>>,
-        higher: Option<Array<T, D>>,
-        q: N64,
-        len: usize,
-    ) -> Array<T, D> {
+    fn interpolate(lower: Option<T>, higher: Option<T>, q: N64, len: usize) -> T {
         if <Self as Interpolate<T>>::needs_lower(q, len) {
             lower.unwrap()
         } else {
@@ -133,24 +109,11 @@ where
     fn needs_higher(_q: N64, _len: usize) -> bool {
         true
     }
-    fn interpolate<D>(
-        lower: Option<Array<T, D>>,
-        higher: Option<Array<T, D>>,
-        _q: N64,
-        _len: usize,
-    ) -> Array<T, D>
-    where
-        D: Dimension,
-    {
+    fn interpolate(lower: Option<T>, higher: Option<T>, _q: N64, _len: usize) -> T {
         let denom = T::from_u8(2).unwrap();
-        let mut lower = lower.unwrap();
+        let lower = lower.unwrap();
         let higher = higher.unwrap();
-        azip!(
-            mut lower, ref higher in {
-                *lower = lower.clone() + (higher.clone() - lower.clone()) / denom.clone()
-            }
-        );
-        lower
+        lower.clone() + (higher.clone() - lower.clone()) / denom.clone()
     }
 }
 
@@ -164,23 +127,12 @@ where
     fn needs_higher(_q: N64, _len: usize) -> bool {
         true
     }
-    fn interpolate<D>(
-        lower: Option<Array<T, D>>,
-        higher: Option<Array<T, D>>,
-        q: N64,
-        len: usize,
-    ) -> Array<T, D>
-    where
-        D: Dimension,
-    {
+    fn interpolate(lower: Option<T>, higher: Option<T>, q: N64, len: usize) -> T {
         let fraction = float_quantile_index_fraction(q, len).to_f64().unwrap();
-        let mut a = lower.unwrap();
-        let b = higher.unwrap();
-        azip!(mut a, ref b in {
-            let a_f64 = a.to_f64().unwrap();
-            let b_f64 = b.to_f64().unwrap();
-            *a = a.clone() + T::from_f64(fraction * (b_f64 - a_f64)).unwrap();
-        });
-        a
+        let lower = lower.unwrap();
+        let higher = higher.unwrap();
+        let lower_f64 = lower.to_f64().unwrap();
+        let higher_f64 = higher.to_f64().unwrap();
+        lower.clone() + T::from_f64(fraction * (higher_f64 - lower_f64)).unwrap()
     }
 }
