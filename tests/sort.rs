@@ -58,13 +58,19 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
 
         // Insert each index twice, to get a set of indexes with duplicates, not sorted
         let mut indexes: Vec<usize> = (0..n).into_iter().collect();
-        indexes.append(&mut (0..n).into_iter().collect());
+        indexes.append(&mut (0..n).collect());
 
-        let sorted_v: Vec<i64> = v
-            .get_many_from_sorted_mut(&indexes)
+        let mut sorted_v = Vec::with_capacity(n);
+        for (i, (key, value)) in v
+            .get_many_from_sorted_mut(&Array::from(indexes))
             .into_iter()
-            .map(|x| x.1)
-            .collect();
+            .enumerate()
+        {
+            if i != key {
+                return false;
+            }
+            sorted_v.push(value);
+        }
         xs.sort();
         println!("Sorted: {:?}. Truth: {:?}", sorted_v, xs);
         xs == sorted_v
@@ -78,10 +84,7 @@ fn test_sorted_get_mut_as_sorting_algorithm(mut xs: Vec<i64>) -> bool {
         true
     } else {
         let mut v = Array::from_vec(xs.clone());
-        let mut sorted_v = vec![];
-        for i in 0..n {
-            sorted_v.push(v.get_from_sorted_mut(i))
-        }
+        let sorted_v: Vec<_> = (0..n).map(|i| v.get_from_sorted_mut(i)).collect();
         xs.sort();
         xs == sorted_v
     }
