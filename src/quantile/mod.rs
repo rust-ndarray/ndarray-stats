@@ -211,7 +211,7 @@ where
     /// - worst case: O(`m`^2);
     /// where `m` is the number of elements in the array.
     ///
-    /// Returns `None` when the specified axis has length 0.
+    /// Returns `Err(EmptyInput)` when the specified axis has length 0.
     ///
     /// **Panics** if `axis` is out of bounds or if
     /// `q` is not between `0.` and `1.` (inclusive).
@@ -220,7 +220,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Option<Array<A, D::Smaller>>
+    ) -> Result<Array<A, D::Smaller>, EmptyInput>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -236,7 +236,7 @@ where
     /// See [`quantile_axis_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
     ///
-    /// Returns `None` when the specified axis has length 0.
+    /// Returns `Err(EmptyInput)` when the specified axis has length 0.
     ///
     /// **Panics** if `axis` is out of bounds or if
     /// any `q` in `qs` is not between `0.` and `1.` (inclusive).
@@ -269,7 +269,7 @@ where
         axis: Axis,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Option<Array<A, D>>
+    ) -> Result<Array<A, D>, EmptyInput>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -285,7 +285,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Option<Array<A, D::Smaller>>
+    ) -> Result<Array<A, D::Smaller>, EmptyInput>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -438,7 +438,7 @@ where
         axis: Axis,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Option<Array<A, D>>
+    ) -> Result<Array<A, D>, EmptyInput>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -452,7 +452,7 @@ where
             axis: Axis,
             qs: ArrayView1<N64>,
             _interpolate: &I,
-        ) -> Option<Array<A, D>>
+        ) -> Result<Array<A, D>, EmptyInput>
         where
             D: RemoveAxis,
             A: Ord + Clone,
@@ -462,13 +462,13 @@ where
 
             let axis_len = data.len_of(axis);
             if axis_len == 0 {
-                return None;
+                return Err(EmptyInput);
             }
 
             let mut results_shape = data.raw_dim();
             results_shape[axis.index()] = qs.len();
             if results_shape.size() == 0 {
-                return Some(Array::from_shape_vec(results_shape, Vec::new()).unwrap());
+                return Ok(Array::from_shape_vec(results_shape, Vec::new()).unwrap());
             }
 
             let mut searched_indexes = Vec::with_capacity(2 * qs.len());
@@ -503,7 +503,7 @@ where
                         *result = I::interpolate(lower, higher, q, axis_len);
                     }
                 });
-            Some(results)
+            Ok(results)
         }
 
         quantiles_axis_mut(self.view_mut(), axis, qs.view(), interpolate)
@@ -514,7 +514,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Option<Array<A, D::Smaller>>
+    ) -> Result<Array<A, D::Smaller>, EmptyInput>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -530,7 +530,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Option<Array<A, D::Smaller>>
+    ) -> Result<Array<A, D::Smaller>, EmptyInput>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -539,7 +539,7 @@ where
         I: Interpolate<A::NotNan>,
     {
         if self.len_of(axis) == 0 {
-            return None;
+            return Err(EmptyInput);
         }
         let quantile = self.map_axis_mut(axis, |lane| {
             let mut not_nan = A::remove_nan_mut(lane);
@@ -554,7 +554,7 @@ where
                 )
             })
         });
-        Some(quantile)
+        Ok(quantile)
     }
 }
 
@@ -604,7 +604,7 @@ where
     /// Returns an `Array`, where the elements of the array correspond to the
     /// elements of `qs`.
     ///
-    /// Returns `None` if the array is empty.
+    /// Returns `Err(EmptyInput)` if the array is empty.
     ///
     /// See [`quantile_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
@@ -616,7 +616,7 @@ where
         &mut self,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Option<Array1<A>>
+    ) -> Result<Array1<A>, EmptyInput>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -645,7 +645,7 @@ where
         &mut self,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Option<Array1<A>>
+    ) -> Result<Array1<A>, EmptyInput>
     where
         A: Ord + Clone,
         S: DataMut,
