@@ -44,7 +44,7 @@ where
 
     /// Finds the index of the minimum value of the array skipping NaN values.
     ///
-    /// Returns `None` if the array is empty or none of the values in the array
+    /// Returns `Err(MinMaxError::EmptyInput)` if the array is empty or none of the values in the array
     /// are non-NaN values.
     ///
     /// Even if there are multiple (equal) elements that are minima, only one
@@ -62,9 +62,9 @@ where
     ///
     /// let a = array![[::std::f64::NAN, 3., 5.],
     ///                [2., 0., 6.]];
-    /// assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+    /// assert_eq!(a.argmin_skipnan(), Ok((1, 1)));
     /// ```
-    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    fn argmin_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord;
@@ -129,7 +129,7 @@ where
 
     /// Finds the index of the maximum value of the array skipping NaN values.
     ///
-    /// Returns `None` if the array is empty or none of the values in the array
+    /// Returns `Err(MinMaxError::EmptyInput)` if the array is empty or none of the values in the array
     /// are non-NaN values.
     ///
     /// Even if there are multiple (equal) elements that are maxima, only one
@@ -147,9 +147,9 @@ where
     ///
     /// let a = array![[::std::f64::NAN, 3., 5.],
     ///                [2., 0., 6.]];
-    /// assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+    /// assert_eq!(a.argmax_skipnan(), Ok((1, 2)));
     /// ```
-    fn argmax_skipnan(&self) -> Option<D::Pattern>
+    fn argmax_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord;
@@ -316,7 +316,7 @@ where
         Ok(current_pattern_min)
     }
 
-    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    fn argmin_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord,
@@ -332,9 +332,9 @@ where
             })
         });
         if min.is_some() {
-            Some(pattern_min)
+            Ok(pattern_min)
         } else {
-            None
+            Err(MinMaxError::EmptyInput)
         }
     }
 
@@ -383,7 +383,7 @@ where
         Ok(current_pattern_max)
     }
 
-    fn argmax_skipnan(&self) -> Option<D::Pattern>
+    fn argmax_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord,
@@ -399,9 +399,9 @@ where
             })
         });
         if max.is_some() {
-            Some(pattern_max)
+            Ok(pattern_max)
         } else {
-            None
+            Err(MinMaxError::EmptyInput)
         }
     }
 

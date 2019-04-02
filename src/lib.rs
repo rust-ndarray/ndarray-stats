@@ -38,6 +38,7 @@ extern crate approx;
 extern crate ndarray_rand;
 #[cfg(test)]
 extern crate quickcheck;
+extern crate core;
 
 pub use correlation::CorrelationExt;
 pub use entropy::EntropyExt;
