@@ -1,8 +1,8 @@
 use self::interpolate::{higher_index, lower_index, Interpolate};
 use super::sort::get_many_from_sorted_mut_unchecked;
-use indexmap::{IndexMap, IndexSet};
+use indexmap::IndexSet;
 use ndarray::prelude::*;
-use ndarray::{Data, DataMut, RemoveAxis};
+use ndarray::{Data, DataMut, RemoveAxis, Zip};
 use noisy_float::types::N64;
 use std::cmp;
 use {MaybeNan, MaybeNanExt};
@@ -224,11 +224,9 @@ where
 
     /// A bulk version of [`quantile_axis_mut`], optimized to retrieve multiple
     /// quantiles at once.
-    /// It returns an `IndexMap`, with (quantile index, quantile over axis) as
-    /// key-value pairs.
     ///
-    /// The `IndexMap` is sorted with respect to quantile indexes in increasing order:
-    /// this ordering is preserved when you iterate over it (using `iter`/`into_iter`).
+    /// Returns an `Array`, where subviews along `axis` of the array correspond
+    /// to the elements of `qs`.
     ///
     /// See [`quantile_axis_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
@@ -239,11 +237,29 @@ where
     /// any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
     /// [`quantile_axis_mut`]: #tymethod.quantile_axis_mut
-    fn quantiles_axis_mut<I>(
-        &mut self,
-        axis: Axis,
-        qs: &[N64],
-    ) -> Option<IndexMap<N64, Array<A, D::Smaller>>>
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # extern crate ndarray;
+    /// # extern crate ndarray_stats;
+    /// # extern crate noisy_float;
+    /// #
+    /// use ndarray::{array, Axis};
+    /// use ndarray_stats::{QuantileExt, interpolate::Nearest};
+    /// use noisy_float::types::n64;
+    ///
+    /// # fn main() {
+    /// let mut data = array![[3, 4, 5], [6, 7, 8]];
+    /// let axis = Axis(1);
+    /// let qs = &[n64(0.3), n64(0.7)];
+    /// let quantiles = data.quantiles_axis_mut::<Nearest>(axis, qs).unwrap();
+    /// for (&q, quantile) in qs.iter().zip(quantiles.axis_iter(axis)) {
+    ///     assert_eq!(quantile, data.quantile_axis_mut::<Nearest>(axis, q).unwrap());
+    /// }
+    /// # }
+    /// ```
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> Option<Array<A, D>>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -395,11 +411,7 @@ where
         }))
     }
 
-    fn quantiles_axis_mut<I>(
-        &mut self,
-        axis: Axis,
-        qs: &[N64],
-    ) -> Option<IndexMap<N64, Array<A, D::Smaller>>>
+    fn quantiles_axis_mut<I>(&mut self, axis: Axis, qs: &[N64]) -> Option<Array<A, D>>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -411,6 +423,12 @@ where
         let axis_len = self.len_of(axis);
         if axis_len == 0 {
             return None;
+        }
+
+        let mut results_shape = self.raw_dim();
+        results_shape[axis.index()] = qs.len();
+        if results_shape.size() == 0 {
+            return Some(Array::from_shape_vec(results_shape, Vec::new()).unwrap());
         }
 
         let mut deduped_qs: Vec<N64> = qs.to_vec();
@@ -431,30 +449,25 @@ where
         }
         let searched_indexes: Vec<usize> = searched_indexes.into_iter().collect();
 
-        // Retrieve the values corresponding to each index for each slice along the specified axis
-        // For each 1-dimensional slice along the specified axis we get back an IndexMap
-        // which can be used to retrieve the desired values using searched_indexes
-        let values = self.map_axis_mut(axis, |mut x| {
-            get_many_from_sorted_mut_unchecked(&mut x, &searched_indexes)
-        });
-
-        // Combine the retrieved values according to specified interpolation strategy to
-        // get the desired quantiles
-        let mut results = IndexMap::new();
-        for q in qs {
-            let lower = if I::needs_lower(*q, axis_len) {
-                Some(values.map(|x| x[&lower_index(*q, axis_len)].clone()))
-            } else {
-                None
-            };
-            let higher = if I::needs_higher(*q, axis_len) {
-                Some(values.map(|x| x[&higher_index(*q, axis_len)].clone()))
-            } else {
-                None
-            };
-            let interpolated = I::interpolate(lower, higher, *q, axis_len);
-            results.insert(*q, interpolated);
-        }
+        let mut results = Array::from_elem(results_shape, self.first().unwrap().clone());
+        Zip::from(results.lanes_mut(axis))
+            .and(self.lanes_mut(axis))
+            .apply(|mut results, mut data| {
+                let index_map = get_many_from_sorted_mut_unchecked(&mut data, &searched_indexes);
+                for (result, &q) in results.iter_mut().zip(qs) {
+                    let lower = if I::needs_lower(q, axis_len) {
+                        Some(index_map[&lower_index(q, axis_len)].clone())
+                    } else {
+                        None
+                    };
+                    let higher = if I::needs_higher(q, axis_len) {
+                        Some(index_map[&higher_index(q, axis_len)].clone())
+                    } else {
+                        None
+                    };
+                    *result = I::interpolate(lower, higher, q, axis_len);
+                }
+            });
         Some(results)
     }
 
@@ -466,7 +479,7 @@ where
         I: Interpolate<A>,
     {
         self.quantiles_axis_mut::<I>(axis, &[q])
-            .map(|x| x.into_iter().next().unwrap().1)
+            .map(|a| a.index_axis_move(axis, 0))
     }
 
     fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: N64) -> Option<Array<A, D::Smaller>>
@@ -539,13 +552,11 @@ where
 
     /// A bulk version of [`quantile_mut`], optimized to retrieve multiple
     /// quantiles at once.
-    /// It returns an `IndexMap`, with (quantile index, quantile value) as
-    /// key-value pairs.
     ///
-    /// The `IndexMap` is sorted with respect to quantile indexes in increasing order:
-    /// this ordering is preserved when you iterate over it (using `iter`/`into_iter`).
+    /// Returns an `Array`, where the elements of the array correspond to the
+    /// elements of `qs`.
     ///
-    /// It returns `None` if the array is empty.
+    /// Returns `None` if the array is empty.
     ///
     /// See [`quantile_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
@@ -553,7 +564,7 @@ where
     /// **Panics** if any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
     /// [`quantile_mut`]: #tymethod.quantile_mut
-    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<IndexMap<N64, A>>
+    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<Array1<A>>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -574,14 +585,13 @@ where
             .map(|v| v.into_scalar())
     }
 
-    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<IndexMap<N64, A>>
+    fn quantiles_mut<I>(&mut self, qs: &[N64]) -> Option<Array1<A>>
     where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
         self.quantiles_axis_mut::<I>(Axis(0), qs)
-            .map(|v| v.into_iter().map(|x| (x.0, x.1.into_scalar())).collect())
     }
 }
 

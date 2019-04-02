@@ -1,3 +1,4 @@
+extern crate itertools;
 extern crate ndarray;
 extern crate ndarray_stats;
 extern crate noisy_float;
@@ -5,6 +6,7 @@ extern crate noisy_float;
 extern crate quickcheck;
 extern crate quickcheck_macros;
 
+use itertools::izip;
 use ndarray::array;
 use ndarray::prelude::*;
 use ndarray_stats::{
@@ -317,15 +319,14 @@ fn check_one_interpolation_method_for_quantiles_mut<I: Interpolate<i64>>(
     mut v: Array1<i64>,
     quantile_indexes: &[N64],
 ) -> bool {
-    let bulk_quantiles = v.quantiles_mut::<I>(&quantile_indexes);
+    let bulk_quantiles = v.clone().quantiles_mut::<I>(&quantile_indexes);
 
     if v.len() == 0 {
         bulk_quantiles.is_none()
     } else {
         let bulk_quantiles = bulk_quantiles.unwrap();
-        quantile_indexes.iter().all(|&quantile_index| {
-            let quantile = v.quantile_mut::<I>(quantile_index).unwrap();
-            quantile == bulk_quantiles[&quantile_index]
+        izip!(quantile_indexes, &bulk_quantiles).all(|(&quantile_index, &quantile)| {
+            quantile == v.quantile_mut::<I>(quantile_index).unwrap()
         })
     }
 }
@@ -385,15 +386,16 @@ fn check_one_interpolation_method_for_quantiles_axis_mut<I: Interpolate<u64>>(
     quantile_indexes: &[N64],
     axis: Axis,
 ) -> bool {
-    let bulk_quantiles = v.quantiles_axis_mut::<I>(axis, &quantile_indexes);
+    let bulk_quantiles = v.clone().quantiles_axis_mut::<I>(axis, &quantile_indexes);
 
     if v.len() == 0 {
         bulk_quantiles.is_none()
     } else {
         let bulk_quantiles = bulk_quantiles.unwrap();
-        quantile_indexes.iter().all(|&quantile_index| {
-            let quantile = v.quantile_axis_mut::<I>(axis, quantile_index).unwrap();
-            quantile == bulk_quantiles[&quantile_index]
-        })
+        izip!(quantile_indexes, bulk_quantiles.axis_iter(axis)).all(
+            |(&quantile_index, quantile)| {
+                quantile == v.quantile_axis_mut::<I>(axis, quantile_index).unwrap()
+            },
+        )
     }
 }
