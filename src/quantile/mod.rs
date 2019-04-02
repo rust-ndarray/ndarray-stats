@@ -637,7 +637,10 @@ where
         if self.is_empty() {
             Err(EmptyInput)
         } else {
-            Ok(self.quantile_axis_mut(Axis(0), q, interpolate).unwrap().into_scalar())
+            Ok(self
+                .quantile_axis_mut(Axis(0), q, interpolate)
+                .unwrap()
+                .into_scalar())
         }
     }
 
