@@ -290,7 +290,7 @@ fn test_quantiles_mut(xs: Vec<i64>) -> bool {
     let v = Array::from_vec(xs.clone());
 
     // Unordered list of quantile indexes to look up, with a duplicate
-    let quantile_indexes = vec![
+    let quantile_indexes = Array::from(vec![
         n64(0.75),
         n64(0.90),
         n64(0.95),
@@ -300,24 +300,39 @@ fn test_quantiles_mut(xs: Vec<i64>) -> bool {
         n64(0.25),
         n64(0.5),
         n64(0.5),
-    ];
+    ]);
     let mut correct = true;
-    correct &=
-        check_one_interpolation_method_for_quantiles_mut(v.clone(), &quantile_indexes, &Linear);
-    correct &=
-        check_one_interpolation_method_for_quantiles_mut(v.clone(), &quantile_indexes, &Higher);
-    correct &=
-        check_one_interpolation_method_for_quantiles_mut(v.clone(), &quantile_indexes, &Lower);
-    correct &=
-        check_one_interpolation_method_for_quantiles_mut(v.clone(), &quantile_indexes, &Midpoint);
-    correct &=
-        check_one_interpolation_method_for_quantiles_mut(v.clone(), &quantile_indexes, &Nearest);
+    correct &= check_one_interpolation_method_for_quantiles_mut(
+        v.clone(),
+        quantile_indexes.view(),
+        &Linear,
+    );
+    correct &= check_one_interpolation_method_for_quantiles_mut(
+        v.clone(),
+        quantile_indexes.view(),
+        &Higher,
+    );
+    correct &= check_one_interpolation_method_for_quantiles_mut(
+        v.clone(),
+        quantile_indexes.view(),
+        &Lower,
+    );
+    correct &= check_one_interpolation_method_for_quantiles_mut(
+        v.clone(),
+        quantile_indexes.view(),
+        &Midpoint,
+    );
+    correct &= check_one_interpolation_method_for_quantiles_mut(
+        v.clone(),
+        quantile_indexes.view(),
+        &Nearest,
+    );
     correct
 }
 
 fn check_one_interpolation_method_for_quantiles_mut(
     mut v: Array1<i64>,
-    quantile_indexes: &[N64],
+    quantile_indexes: ArrayView1<N64>,
     interpolate: &impl Interpolate<i64>,
 ) -> bool {
     let bulk_quantiles = v.clone().quantiles_mut(&quantile_indexes, interpolate);
@@ -340,7 +355,7 @@ fn test_quantiles_axis_mut(mut xs: Vec<u64>) -> bool {
     let m = Array::from_shape_vec((axis_length, axis_length), xs).unwrap();
 
     // Unordered list of quantile indexes to look up, with a duplicate
-    let quantile_indexes = vec![
+    let quantile_indexes = Array::from(vec![
         n64(0.75),
         n64(0.90),
         n64(0.95),
@@ -350,37 +365,37 @@ fn test_quantiles_axis_mut(mut xs: Vec<u64>) -> bool {
         n64(0.25),
         n64(0.5),
         n64(0.5),
-    ];
+    ]);
 
     // Test out all interpolation methods
     let mut correct = true;
     correct &= check_one_interpolation_method_for_quantiles_axis_mut(
         m.clone(),
-        &quantile_indexes,
+        quantile_indexes.view(),
         Axis(0),
         &Linear,
     );
     correct &= check_one_interpolation_method_for_quantiles_axis_mut(
         m.clone(),
-        &quantile_indexes,
+        quantile_indexes.view(),
         Axis(0),
         &Higher,
     );
     correct &= check_one_interpolation_method_for_quantiles_axis_mut(
         m.clone(),
-        &quantile_indexes,
+        quantile_indexes.view(),
         Axis(0),
         &Lower,
     );
     correct &= check_one_interpolation_method_for_quantiles_axis_mut(
         m.clone(),
-        &quantile_indexes,
+        quantile_indexes.view(),
         Axis(0),
         &Midpoint,
     );
     correct &= check_one_interpolation_method_for_quantiles_axis_mut(
         m.clone(),
-        &quantile_indexes,
+        quantile_indexes.view(),
         Axis(0),
         &Nearest,
     );
@@ -389,7 +404,7 @@ fn test_quantiles_axis_mut(mut xs: Vec<u64>) -> bool {
 
 fn check_one_interpolation_method_for_quantiles_axis_mut(
     mut v: Array2<u64>,
-    quantile_indexes: &[N64],
+    quantile_indexes: ArrayView1<N64>,
     axis: Axis,
     interpolate: &impl Interpolate<u64>,
 ) -> bool {
