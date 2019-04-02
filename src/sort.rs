@@ -44,10 +44,11 @@ where
     /// where `n` is the length of the array..
     ///
     /// [`get_from_sorted_mut`]: #tymethod.get_from_sorted_mut
-    fn get_many_from_sorted_mut(&mut self, indexes: &[usize]) -> IndexMap<usize, A>
+    fn get_many_from_sorted_mut<S2>(&mut self, indexes: &ArrayBase<S2, Ix1>) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
-        S: DataMut;
+        S: DataMut,
+        S2: Data<Elem = usize>;
 
     /// Partitions the array in increasing order based on the value initially
     /// located at `pivot_index` and returns the new index of the value.
@@ -132,10 +133,11 @@ where
         }
     }
 
-    fn get_many_from_sorted_mut(&mut self, indexes: &[usize]) -> IndexMap<usize, A>
+    fn get_many_from_sorted_mut<S2>(&mut self, indexes: &ArrayBase<S2, Ix1>) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
         S: DataMut,
+        S2: Data<Elem = usize>,
     {
         let mut deduped_indexes: Vec<usize> = indexes.to_vec();
         deduped_indexes.sort_unstable();

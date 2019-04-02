@@ -61,7 +61,11 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
         indexes.append(&mut (0..n).collect());
 
         let mut sorted_v = Vec::with_capacity(n);
-        for (i, (key, value)) in v.get_many_from_sorted_mut(&indexes).into_iter().enumerate() {
+        for (i, (key, value)) in v
+            .get_many_from_sorted_mut(&Array::from(indexes))
+            .into_iter()
+            .enumerate()
+        {
             if i != key {
                 return false;
             }
