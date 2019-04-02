@@ -20,6 +20,7 @@
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram_bin_edges.html#numpy.histogram_bin_edges
 use super::super::interpolate::Nearest;
 use super::super::{Quantile1dExt, QuantileExt};
+use super::errors::BinsBuildError;
 use super::{Bins, Edges};
 use ndarray::prelude::*;
 use ndarray::Data;
@@ -41,10 +42,14 @@ pub trait BinsBuildingStrategy {
     /// Given some observations in a 1-dimensional array it returns a `BinsBuildingStrategy`
     /// that has learned the required parameter to build a collection of [`Bins`].
     ///
+    /// It returns `Err` if it is not possible to build a collection of
+    /// [`Bins`] given the observed data according to the chosen strategy.
+    ///
     /// [`Bins`]: ../struct.Bins.html
-    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Self
+    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
-        S: Data<Elem = Self::Elem>;
+        S: Data<Elem = Self::Elem>,
+        Self: std::marker::Sized;
 
     /// Returns a [`Bins`] instance, built accordingly to the parameters
     /// inferred from observations in [`from_array`].
@@ -60,6 +65,7 @@ pub trait BinsBuildingStrategy {
     fn n_bins(&self) -> usize;
 }
 
+#[derive(Debug)]
 struct EquiSpaced<T> {
     bin_width: T,
     min: T,
@@ -72,6 +78,7 @@ struct EquiSpaced<T> {
 /// Let `n` be the number of observations. Then
 ///
 /// `n_bins` = `sqrt(n)`
+#[derive(Debug)]
 pub struct Sqrt<T> {
     builder: EquiSpaced<T>,
 }
@@ -85,6 +92,7 @@ pub struct Sqrt<T> {
 ///
 /// `n_bins` is only proportional to cube root of `n`. It tends to overestimate
 /// the `n_bins` and it does not take into account data variability.
+#[derive(Debug)]
 pub struct Rice<T> {
     builder: EquiSpaced<T>,
 }
@@ -97,6 +105,7 @@ pub struct Rice<T> {
 /// is too conservative for larger, non-normal datasets.
 ///
 /// This is the default method in R’s hist method.
+#[derive(Debug)]
 pub struct Sturges<T> {
     builder: EquiSpaced<T>,
 }
@@ -115,10 +124,12 @@ pub struct Sturges<T> {
 /// The [`IQR`] is very robust to outliers.
 ///
 /// [`IQR`]: https://en.wikipedia.org/wiki/Interquartile_range
+#[derive(Debug)]
 pub struct FreedmanDiaconis<T> {
     builder: EquiSpaced<T>,
 }
 
+#[derive(Debug)]
 enum SturgesOrFD<T> {
     Sturges(Sturges<T>),
     FreedmanDiaconis(FreedmanDiaconis<T>),
@@ -134,6 +145,7 @@ enum SturgesOrFD<T> {
 ///
 /// [`Sturges`]: struct.Sturges.html
 /// [`FreedmanDiaconis`]: struct.FreedmanDiaconis.html
+#[derive(Debug)]
 pub struct Auto<T> {
     builder: SturgesOrFD<T>,
 }
@@ -142,13 +154,17 @@ impl<T> EquiSpaced<T>
 where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
-    /// **Panics** if `bin_width<=0`.
-    fn new(bin_width: T, min: T, max: T) -> Self {
-        assert!(bin_width > T::zero());
-        Self {
-            bin_width,
-            min,
-            max,
+    /// Returns `Err(BinsBuildError::Strategy)` if `bin_width<=0` or `min` >= `max`.
+    /// Returns `Ok(Self)` otherwise.
+    fn new(bin_width: T, min: T, max: T) -> Result<Self, BinsBuildError> {
+        if (bin_width <= T::zero()) || (min >= max) {
+            Err(BinsBuildError::Strategy)
+        } else {
+            Ok(Self {
+                bin_width,
+                min,
+                max,
+            })
         }
     }
 
@@ -183,18 +199,20 @@ where
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).sqrt().round() as usize;
-        let min = a.min().unwrap().clone();
-        let max = a.max().unwrap().clone();
+        let min = a.min()?;
+        let max = a.max()?;
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-        let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -222,18 +240,20 @@ where
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (2. * (n_elems as f64).powf(1. / 3.)).round() as usize;
-        let min = a.min().unwrap().clone();
-        let max = a.max().unwrap().clone();
+        let min = a.min()?;
+        let max = a.max()?;
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-        let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -261,18 +281,20 @@ where
 {
     type Elem = T;
 
-    /// **Panics** if the array is constant or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
-        let min = a.min().unwrap().clone();
-        let max = a.max().unwrap().clone();
+        let min = a.min()?;
+        let max = a.max()?;
         let bin_width = compute_bin_width(min.clone(), max.clone(), n_bins);
-        let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -300,12 +322,17 @@ where
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0` or if `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `Err(BinsBuildError::Strategy)` if `IQR==0`.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let n_points = a.len();
+        if n_points == 0 {
+            return Err(BinsBuildError::EmptyInput);
+        }
 
         let mut a_copy = a.to_owned();
         let first_quartile = a_copy.quantile_mut(n64(0.25), &Nearest).unwrap();
@@ -313,10 +340,10 @@ where
         let iqr = third_quartile - first_quartile;
 
         let bin_width = FreedmanDiaconis::compute_bin_width(n_points, iqr);
-        let min = a_copy.min().unwrap().clone();
-        let max = a_copy.max().unwrap().clone();
-        let builder = EquiSpaced::new(bin_width, min, max);
-        Self { builder }
+        let min = a.min()?;
+        let max = a.max()?;
+        let builder = EquiSpaced::new(bin_width, min.clone(), max.clone())?;
+        Ok(Self { builder })
     }
 
     fn build(&self) -> Bins<T> {
@@ -350,21 +377,34 @@ where
 {
     type Elem = T;
 
-    /// **Panics** if `IQR==0`, the array is constant, or `a.len()==0`.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Self
+    /// Returns `Err(BinsBuildError::Strategy)` if `IQR==0`.
+    /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
+    /// Returns `Ok(Self)` otherwise.
+    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = Self::Elem>,
     {
         let fd_builder = FreedmanDiaconis::from_array(&a);
         let sturges_builder = Sturges::from_array(&a);
-        let builder = {
-            if fd_builder.bin_width() > sturges_builder.bin_width() {
-                SturgesOrFD::Sturges(sturges_builder)
-            } else {
-                SturgesOrFD::FreedmanDiaconis(fd_builder)
+        match (fd_builder, sturges_builder) {
+            (Err(_), Ok(sturges_builder)) => {
+                let builder = SturgesOrFD::Sturges(sturges_builder);
+                Ok(Self { builder })
             }
-        };
-        Self { builder }
+            (Ok(fd_builder), Err(_)) => {
+                let builder = SturgesOrFD::FreedmanDiaconis(fd_builder);
+                Ok(Self { builder })
+            }
+            (Ok(fd_builder), Ok(sturges_builder)) => {
+                let builder = if fd_builder.bin_width() > sturges_builder.bin_width() {
+                    SturgesOrFD::Sturges(sturges_builder)
+                } else {
+                    SturgesOrFD::FreedmanDiaconis(fd_builder)
+                };
+                Ok(Self { builder })
+            }
+            (Err(err), Err(_)) => Err(err),
+        }
     }
 
     fn build(&self) -> Bins<T> {
@@ -417,10 +457,14 @@ where
 mod equispaced_tests {
     use super::*;
 
-    #[should_panic]
     #[test]
     fn bin_width_has_to_be_positive() {
-        EquiSpaced::new(0, 0, 200);
+        assert!(EquiSpaced::new(0, 0, 200).is_err());
+    }
+
+    #[test]
+    fn min_has_to_be_strictly_smaller_than_max() {
+        assert!(EquiSpaced::new(10, 0, 0).is_err());
     }
 }
 
@@ -429,16 +473,18 @@ mod sqrt_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Sqrt::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
-    #[should_panic]
     #[test]
-    fn empty_arrays_cause_panic() {
-        let _: Sqrt<usize> = Sqrt::from_array(&array![]);
+    fn empty_arrays_are_bad() {
+        assert!(Sqrt::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -447,16 +493,18 @@ mod rice_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Rice::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
-    #[should_panic]
     #[test]
-    fn empty_arrays_cause_panic() {
-        let _: Rice<usize> = Rice::from_array(&array![]);
+    fn empty_arrays_are_bad() {
+        assert!(Rice::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -465,16 +513,18 @@ mod sturges_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Sturges::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
-    #[should_panic]
     #[test]
-    fn empty_arrays_cause_panic() {
-        let _: Sturges<usize> = Sturges::from_array(&array![]);
+    fn empty_arrays_are_bad() {
+        assert!(Sturges::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -483,22 +533,27 @@ mod fd_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(FreedmanDiaconis::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
-    #[should_panic]
     #[test]
-    fn zero_iqr_causes_panic() {
-        FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]);
+    fn zero_iqr_is_bad() {
+        assert!(
+            FreedmanDiaconis::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20])
+                .unwrap_err()
+                .is_strategy()
+        );
     }
 
-    #[should_panic]
     #[test]
-    fn empty_arrays_cause_panic() {
-        let _: FreedmanDiaconis<usize> = FreedmanDiaconis::from_array(&array![]);
+    fn empty_arrays_are_bad() {
+        assert!(FreedmanDiaconis::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
 
@@ -507,21 +562,22 @@ mod auto_tests {
     use super::*;
     use ndarray::array;
 
-    #[should_panic]
     #[test]
     fn constant_array_are_bad() {
-        Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1]);
+        assert!(Auto::from_array(&array![1, 1, 1, 1, 1, 1, 1])
+            .unwrap_err()
+            .is_strategy());
     }
 
-    #[should_panic]
     #[test]
-    fn zero_iqr_causes_panic() {
-        Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]);
+    fn zero_iqr_is_handled_by_sturged() {
+        assert!(Auto::from_array(&array![-20, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 20]).is_ok());
     }
 
-    #[should_panic]
     #[test]
-    fn empty_arrays_cause_panic() {
-        let _: Auto<usize> = Auto::from_array(&array![]);
+    fn empty_arrays_are_bad() {
+        assert!(Auto::<usize>::from_array(&array![])
+            .unwrap_err()
+            .is_empty_input());
     }
 }
