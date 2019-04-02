@@ -1,4 +1,5 @@
 //! Summary statistics (e.g. mean, variance, etc.).
+use crate::errors::EmptyInput;
 use ndarray::{Data, Dimension};
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, Div};
@@ -18,12 +19,12 @@ where
     ///     n  i=1
     /// ```
     ///
-    /// If the array is empty, `None` is returned.
+    /// If the array is empty, `Err(EmptyInput)` is returned.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
     /// [`arithmetic mean`]: https://en.wikipedia.org/wiki/Arithmetic_mean
-    fn mean(&self) -> Option<A>
+    fn mean(&self) -> Result<A, EmptyInput>
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero;
 
@@ -35,12 +36,12 @@ where
     ///           ⎝i=1    ⎠
     /// ```
     ///
-    /// If the array is empty, `None` is returned.
+    /// If the array is empty, `Err(EmptyInput)` is returned.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
     /// [`harmonic mean`]: https://en.wikipedia.org/wiki/Harmonic_mean
-    fn harmonic_mean(&self) -> Option<A>
+    fn harmonic_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive;
 
@@ -52,12 +53,12 @@ where
     ///         ⎝i=1  ⎠
     /// ```
     ///
-    /// If the array is empty, `None` is returned.
+    /// If the array is empty, `Err(EmptyInput)` is returned.
     ///
     /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
     ///
     /// [`geometric mean`]: https://en.wikipedia.org/wiki/Geometric_mean
-    fn geometric_mean(&self) -> Option<A>
+    fn geometric_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive;
 }
