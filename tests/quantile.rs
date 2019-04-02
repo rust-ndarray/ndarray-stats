@@ -11,7 +11,7 @@ use ndarray::array;
 use ndarray::prelude::*;
 use ndarray_stats::{
     interpolate::{Higher, Interpolate, Linear, Lower, Midpoint, Nearest},
-    errors::MinMaxError,
+    errors::{MinMaxError, EmptyInput},
     Quantile1dExt, QuantileExt,
 };
 use noisy_float::types::{n64, N64};
@@ -190,7 +190,7 @@ fn test_quantile_axis_mut_with_odd_axis_length() {
 #[test]
 fn test_quantile_axis_mut_with_zero_axis_length() {
     let mut a = Array2::<i32>::zeros((5, 0));
-    assert!(a.quantile_axis_mut(Axis(1), n64(0.5), &Lower).is_none());
+    assert_eq!(a.quantile_axis_mut(Axis(1), n64(0.5), &Lower), Err(EmptyInput));
 }
 
 #[test]
@@ -339,7 +339,7 @@ fn check_one_interpolation_method_for_quantiles_mut(
     let bulk_quantiles = v.clone().quantiles_mut(&quantile_indexes, interpolate);
 
     if v.len() == 0 {
-        bulk_quantiles.is_none()
+        bulk_quantiles.is_err()
     } else {
         let bulk_quantiles = bulk_quantiles.unwrap();
         izip!(quantile_indexes, &bulk_quantiles).all(|(&quantile_index, &quantile)| {
@@ -414,7 +414,7 @@ fn check_one_interpolation_method_for_quantiles_axis_mut(
         .quantiles_axis_mut(axis, &quantile_indexes, interpolate);
 
     if v.len() == 0 {
-        bulk_quantiles.is_none()
+        bulk_quantiles.is_err()
     } else {
         let bulk_quantiles = bulk_quantiles.unwrap();
         izip!(quantile_indexes, bulk_quantiles.axis_iter(axis)).all(
