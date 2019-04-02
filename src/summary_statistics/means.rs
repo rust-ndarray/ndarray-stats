@@ -1,4 +1,5 @@
 use super::SummaryStatisticsExt;
+use crate::errors::EmptyInput;
 use ndarray::{ArrayBase, Data, Dimension};
 use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, ToPrimitive, Zero};
@@ -9,28 +10,28 @@ where
     S: Data<Elem = A>,
     D: Dimension,
 {
-    fn mean(&self) -> Option<A>
+    fn mean(&self) -> Result<A, EmptyInput>
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero,
     {
         let n_elements = self.len();
         if n_elements == 0 {
-            None
+            Err(EmptyInput)
         } else {
             let n_elements = A::from_usize(n_elements)
                 .expect("Converting number of elements to `A` must not fail.");
-            Some(self.sum() / n_elements)
+            Ok(self.sum() / n_elements)
         }
     }
 
-    fn harmonic_mean(&self) -> Option<A>
+    fn harmonic_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
         self.map(|x| x.recip()).mean().map(|x| x.recip())
     }
 
-    fn geometric_mean(&self) -> Option<A>
+    fn geometric_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
@@ -189,6 +190,7 @@ mod tests {
     use approx::assert_abs_diff_eq;
     use ndarray::{array, Array, Array1};
     use ndarray_rand::RandomExt;
+    use crate::errors::EmptyInput;
     use noisy_float::types::N64;
     use rand::distributions::Uniform;
     use std::f64;
@@ -204,17 +206,17 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert!(a.mean().is_none());
-        assert!(a.harmonic_mean().is_none());
-        assert!(a.geometric_mean().is_none());
+        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.harmonic_mean(), Err(EmptyInput));
+        assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
 
     #[test]
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
-        assert!(a.mean().is_none());
-        assert!(a.harmonic_mean().is_none());
-        assert!(a.geometric_mean().is_none());
+        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.harmonic_mean(), Err(EmptyInput));
+        assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
 
     #[test]

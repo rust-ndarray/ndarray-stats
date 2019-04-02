@@ -5,6 +5,7 @@ extern crate quickcheck;
 
 use ndarray::prelude::*;
 use ndarray_stats::{
+    errors::MinMaxError,
     interpolate::{Higher, Linear, Lower, Midpoint, Nearest},
     Quantile1dExt, QuantileExt,
 };
@@ -13,22 +14,22 @@ use quickcheck::quickcheck;
 #[test]
 fn test_argmin() {
     let a = array![[1, 5, 3], [2, 0, 6]];
-    assert_eq!(a.argmin(), Some((1, 1)));
+    assert_eq!(a.argmin(), Ok((1, 1)));
 
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.argmin(), Some((1, 1)));
+    assert_eq!(a.argmin(), Ok((1, 1)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.argmin(), None);
+    assert_eq!(a.argmin(), Err(MinMaxError::UndefinedOrder));
 
     let a: Array2<i32> = array![[], []];
-    assert_eq!(a.argmin(), None);
+    assert_eq!(a.argmin(), Err(MinMaxError::EmptyInput));
 }
 
 quickcheck! {
     fn argmin_matches_min(data: Vec<f32>) -> bool {
         let a = Array1::from(data);
-        a.argmin().map(|i| a[i]) == a.min().cloned()
+        a.argmin().map(|i| &a[i]) == a.min()
     }
 }
 
@@ -66,13 +67,13 @@ quickcheck! {
 #[test]
 fn test_min() {
     let a = array![[1, 5, 3], [2, 0, 6]];
-    assert_eq!(a.min(), Some(&0));
+    assert_eq!(a.min(), Ok(&0));
 
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.min(), Some(&0.));
+    assert_eq!(a.min(), Ok(&0.));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.min(), None);
+    assert_eq!(a.min(), Err(MinMaxError::UndefinedOrder));
 }
 
 #[test]
@@ -93,22 +94,22 @@ fn test_min_skipnan_all_nan() {
 #[test]
 fn test_argmax() {
     let a = array![[1, 5, 3], [2, 0, 6]];
-    assert_eq!(a.argmax(), Some((1, 2)));
+    assert_eq!(a.argmax(), Ok((1, 2)));
 
     let a = array![[1., 5., 3.], [2., 0., 6.]];
-    assert_eq!(a.argmax(), Some((1, 2)));
+    assert_eq!(a.argmax(), Ok((1, 2)));
 
     let a = array![[1., 5., 3.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.argmax(), None);
+    assert_eq!(a.argmax(), Err(MinMaxError::UndefinedOrder));
 
     let a: Array2<i32> = array![[], []];
-    assert_eq!(a.argmax(), None);
+    assert_eq!(a.argmax(), Err(MinMaxError::EmptyInput));
 }
 
 quickcheck! {
     fn argmax_matches_max(data: Vec<f32>) -> bool {
         let a = Array1::from(data);
-        a.argmax().map(|i| a[i]) == a.max().cloned()
+        a.argmax().map(|i| &a[i]) == a.max()
     }
 }
 
@@ -149,13 +150,13 @@ quickcheck! {
 #[test]
 fn test_max() {
     let a = array![[1, 5, 7], [2, 0, 6]];
-    assert_eq!(a.max(), Some(&7));
+    assert_eq!(a.max(), Ok(&7));
 
     let a = array![[1., 5., 7.], [2., 0., 6.]];
-    assert_eq!(a.max(), Some(&7.));
+    assert_eq!(a.max(), Ok(&7.));
 
     let a = array![[1., 5., 7.], [2., ::std::f64::NAN, 6.]];
-    assert_eq!(a.max(), None);
+    assert_eq!(a.max(), Err(MinMaxError::UndefinedOrder));
 }
 
 #[test]
