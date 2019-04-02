@@ -187,10 +187,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::SummaryStatisticsExt;
+    use crate::errors::EmptyInput;
     use approx::assert_abs_diff_eq;
     use ndarray::{array, Array, Array1};
     use ndarray_rand::RandomExt;
-    use crate::errors::EmptyInput;
     use noisy_float::types::N64;
     use rand::distributions::Uniform;
     use std::f64;
