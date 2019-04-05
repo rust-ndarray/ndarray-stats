@@ -120,14 +120,14 @@ pub enum QuantileError {
     /// The input was empty.
     EmptyInput,
     /// The `q` was not between `0.` and `1.` (inclusive).
-    InvalidFraction(N64),
+    InvalidQuantile(N64),
 }
 
 impl fmt::Display for QuantileError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             QuantileError::EmptyInput => write!(f, "Empty input."),
-            QuantileError::InvalidFraction(q) => {
+            QuantileError::InvalidQuantile(q) => {
                 write!(f, "{:} is not between 0. and 1. (inclusive).", q)
             }
         }
