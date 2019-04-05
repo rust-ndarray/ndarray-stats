@@ -54,7 +54,7 @@ where
         Ok(central_moments[3] / central_moments[2].sqrt().powi(3))
     }
 
-    fn central_moment(&self, order: usize) -> Result<A, EmptyInput>
+    fn central_moment(&self, order: u16) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
@@ -76,7 +76,7 @@ where
         }
     }
 
-    fn central_moments(&self, order: usize) -> Result<Vec<A>, EmptyInput>
+    fn central_moments(&self, order: u16) -> Result<Vec<A>, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
@@ -96,7 +96,7 @@ where
 
                 let mut central_moments = vec![A::one(), A::zero()];
                 for k in 2..=n {
-                    let coefficients = central_moment_coefficients(&shifted_moments[..=k]);
+                    let coefficients = central_moment_coefficients(&shifted_moments[..=(k as usize)]);
                     let central_moment = horner_method(coefficients, correction_term);
                     central_moments.push(central_moment)
                 }
@@ -118,7 +118,7 @@ where
 /// The returned moments are ordered by power magnitude: 0th moment, 1st moment, etc.
 ///
 /// **Panics** if `A::from_usize()` fails to convert the number of elements in the array.
-fn moments<A, S, D>(a: ArrayBase<S, D>, order: usize) -> Vec<A>
+fn moments<A, S, D>(a: ArrayBase<S, D>, order: u16) -> Vec<A>
 where
     A: Float + FromPrimitive,
     S: Data<Elem = A>,
@@ -300,7 +300,7 @@ mod tests {
         ];
         for (order, expected_moment) in expected_moments.iter().enumerate() {
             assert_abs_diff_eq!(
-                a.central_moment(order).unwrap(),
+                a.central_moment(order as u16).unwrap(),
                 expected_moment,
                 epsilon = 1e-8
             );
@@ -316,7 +316,7 @@ mod tests {
         let order = 10;
         let central_moments = a.central_moments(order).unwrap();
         for i in 0..=order {
-            assert_eq!(a.central_moment(i).unwrap(), central_moments[i]);
+            assert_eq!(a.central_moment(i).unwrap(), central_moments[i as usize]);
         }
     }
 

@@ -119,7 +119,7 @@ where
     ///
     /// [central moment]: https://en.wikipedia.org/wiki/Central_moment
     /// [Pébay et al., 2016]: https://www.osti.gov/pages/servlets/purl/1427275
-    fn central_moment(&self, order: usize) -> Result<A, EmptyInput>
+    fn central_moment(&self, order: u16) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive;
 
@@ -137,7 +137,7 @@ where
     ///
     /// [central moments]: https://en.wikipedia.org/wiki/Central_moment
     /// [central moment]: #tymethod.central_moment
-    fn central_moments(&self, order: usize) -> Result<Vec<A>, EmptyInput>
+    fn central_moments(&self, order: u16) -> Result<Vec<A>, EmptyInput>
     where
         A: Float + FromPrimitive;
 }
