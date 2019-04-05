@@ -115,7 +115,7 @@ impl From<ShapeMismatch> for MultiInputError {
 }
 
 /// An error computing a quantile.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum QuantileError {
     /// The input was empty.
     EmptyInput,

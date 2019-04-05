@@ -10,7 +10,7 @@ use itertools::izip;
 use ndarray::array;
 use ndarray::prelude::*;
 use ndarray_stats::{
-    errors::{EmptyInput, MinMaxError},
+    errors::{MinMaxError, QuantileError},
     interpolate::{Higher, Interpolate, Linear, Lower, Midpoint, Nearest},
     Quantile1dExt, QuantileExt,
 };
@@ -192,7 +192,7 @@ fn test_quantile_axis_mut_with_zero_axis_length() {
     let mut a = Array2::<i32>::zeros((5, 0));
     assert_eq!(
         a.quantile_axis_mut(Axis(1), n64(0.5), &Lower),
-        Err(EmptyInput)
+        Err(QuantileError::EmptyInput)
     );
 }
 
