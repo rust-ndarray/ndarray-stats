@@ -214,8 +214,9 @@ where
     ///
     /// Returns `Err(EmptyInput)` when the specified axis has length 0.
     ///
-    /// **Panics** if `axis` is out of bounds or if
-    /// `q` is not between `0.` and `1.` (inclusive).
+    /// Returns `Err(InvalidQuantile(q))` if `q` is not between `0.` and `1.` (inclusive).
+    ///
+    /// **Panics** if `axis` is out of bounds.
     fn quantile_axis_mut<I>(
         &mut self,
         axis: Axis,
@@ -239,8 +240,9 @@ where
     ///
     /// Returns `Err(EmptyInput)` when the specified axis has length 0.
     ///
-    /// **Panics** if `axis` is out of bounds or if
-    /// any `q` in `qs` is not between `0.` and `1.` (inclusive).
+    /// Returns `Err(InvalidQuantile(q))` if any `q` in `qs` is not between `0.` and `1.` (inclusive).
+    ///
+    /// **Panics** if `axis` is out of bounds.
     ///
     /// [`quantile_axis_mut`]: #tymethod.quantile_axis_mut
     ///
@@ -601,7 +603,7 @@ where
     ///
     /// Returns `Err(EmptyInput)` if the array is empty.
     ///
-    /// **Panics** if `q` is not between `0.` and `1.` (inclusive).
+    /// Returns `Err(InvalidQuantile(q))` if `q` is not between `0.` and `1.` (inclusive).
     fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, QuantileError>
     where
         A: Ord + Clone,
@@ -616,10 +618,10 @@ where
     ///
     /// Returns `Err(EmptyInput)` if the array is empty.
     ///
+    /// Returns `Err(InvalidQuantile(q))` if any `q` in `qs` is not between `0.` and `1.` (inclusive).
+    ///
     /// See [`quantile_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
-    ///
-    /// **Panics** if any `q` in `qs` is not between `0.` and `1.` (inclusive).
     ///
     /// [`quantile_mut`]: #tymethod.quantile_mut
     fn quantiles_mut<S2, I>(
