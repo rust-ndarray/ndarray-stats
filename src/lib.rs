@@ -34,7 +34,6 @@ extern crate rand;
 
 #[cfg(test)]
 extern crate approx;
-extern crate core;
 #[cfg(test)]
 extern crate ndarray_rand;
 #[cfg(test)]
