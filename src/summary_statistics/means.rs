@@ -96,7 +96,8 @@ where
 
                 let mut central_moments = vec![A::one(), A::zero()];
                 for k in 2..=n {
-                    let coefficients = central_moment_coefficients(&shifted_moments[..=(k as usize)]);
+                    let coefficients =
+                        central_moment_coefficients(&shifted_moments[..=(k as usize)]);
                     let central_moment = horner_method(coefficients, correction_term);
                     central_moments.push(central_moment)
                 }
@@ -316,7 +317,8 @@ mod tests {
         let order = 10;
         let central_moments = a.central_moments(order).unwrap();
         for i in 0..=order {
-            assert_eq!(a.central_moment(i).unwrap(), central_moments[i as usize]);
+            assert_eq!(a.central_moment(i).unwrap(), central_moments[i as usiz
+            e]);
         }
     }
 
