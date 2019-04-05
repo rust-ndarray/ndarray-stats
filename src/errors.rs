@@ -1,7 +1,7 @@
 //! Custom errors returned from our methods and functions.
+use noisy_float::types::N64;
 use std::error::Error;
 use std::fmt;
-use noisy_float::types::N64;
 
 /// An error that indicates that the input array was empty.
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -1,12 +1,12 @@
 use self::interpolate::{higher_index, lower_index, Interpolate};
 use super::sort::get_many_from_sorted_mut_unchecked;
 use crate::errors::{EmptyInput, MinMaxError, MinMaxError::UndefinedOrder};
+use errors::QuantileError;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis, Zip};
 use noisy_float::types::N64;
 use std::cmp;
 use {MaybeNan, MaybeNanExt};
-use errors::QuantileError;
 
 /// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
@@ -618,7 +618,8 @@ where
     ///
     /// Returns `Err(EmptyInput)` if the array is empty.
     ///
-    /// Returns `Err(InvalidQuantile(q))` if any `q` in `qs` is not between `0.` and `1.` (inclusive).
+    /// Returns `Err(InvalidQuantile(q))` if any `q` in
+    /// `qs` is not between `0.` and `1.` (inclusive).
     ///
     /// See [`quantile_mut`] for additional details on quantiles and the algorithm
     /// used to retrieve them.
@@ -649,7 +650,9 @@ where
         if self.is_empty() {
             Err(QuantileError::EmptyInput)
         } else {
-            Ok(self.quantile_axis_mut(Axis(0), q, interpolate)?.into_scalar())
+            Ok(self
+                .quantile_axis_mut(Axis(0), q, interpolate)?
+                .into_scalar())
         }
     }
 
