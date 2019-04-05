@@ -6,6 +6,7 @@ use ndarray::{Data, DataMut, RemoveAxis, Zip};
 use noisy_float::types::N64;
 use std::cmp;
 use {MaybeNan, MaybeNanExt};
+use errors::QuantileError;
 
 /// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
@@ -220,7 +221,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Result<Array<A, D::Smaller>, EmptyInput>
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -269,7 +270,7 @@ where
         axis: Axis,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Result<Array<A, D>, EmptyInput>
+    ) -> Result<Array<A, D>, QuantileError>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -285,7 +286,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Result<Array<A, D::Smaller>, EmptyInput>
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -438,7 +439,7 @@ where
         axis: Axis,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Result<Array<A, D>, EmptyInput>
+    ) -> Result<Array<A, D>, QuantileError>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -452,17 +453,21 @@ where
             axis: Axis,
             qs: ArrayView1<N64>,
             _interpolate: &I,
-        ) -> Result<Array<A, D>, EmptyInput>
+        ) -> Result<Array<A, D>, QuantileError>
         where
             D: RemoveAxis,
             A: Ord + Clone,
             I: Interpolate<A>,
         {
-            assert!(qs.iter().all(|x| (*x >= 0.) && (*x <= 1.)));
+            for &q in qs {
+                if !((q >= 0.) && (q <= 1.)) {
+                    return Err(QuantileError::InvalidQuantile(q));
+                }
+            }
 
             let axis_len = data.len_of(axis);
             if axis_len == 0 {
-                return Err(EmptyInput);
+                return Err(QuantileError::EmptyInput);
             }
 
             let mut results_shape = data.raw_dim();
@@ -514,7 +519,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Result<Array<A, D::Smaller>, EmptyInput>
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: Ord + Clone,
@@ -530,7 +535,7 @@ where
         axis: Axis,
         q: N64,
         interpolate: &I,
-    ) -> Result<Array<A, D::Smaller>, EmptyInput>
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -538,9 +543,14 @@ where
         S: DataMut,
         I: Interpolate<A::NotNan>,
     {
-        if self.len_of(axis) == 0 {
-            return Err(EmptyInput);
+        if !((q >= 0.) && (q <= 1.)) {
+            return Err(QuantileError::InvalidQuantile(q));
         }
+
+        if self.len_of(axis) == 0 {
+            return Err(QuantileError::EmptyInput);
+        }
+
         let quantile = self.map_axis_mut(axis, |lane| {
             let mut not_nan = A::remove_nan_mut(lane);
             A::from_not_nan_opt(if not_nan.is_empty() {
@@ -592,7 +602,7 @@ where
     /// Returns `Err(EmptyInput)` if the array is empty.
     ///
     /// **Panics** if `q` is not between `0.` and `1.` (inclusive).
-    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, EmptyInput>
+    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, QuantileError>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -616,7 +626,7 @@ where
         &mut self,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Result<Array1<A>, EmptyInput>
+    ) -> Result<Array1<A>, QuantileError>
     where
         A: Ord + Clone,
         S: DataMut,
@@ -628,19 +638,16 @@ impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
 {
-    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, EmptyInput>
+    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, QuantileError>
     where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
         if self.is_empty() {
-            Err(EmptyInput)
+            Err(QuantileError::EmptyInput)
         } else {
-            Ok(self
-                .quantile_axis_mut(Axis(0), q, interpolate)
-                .unwrap()
-                .into_scalar())
+            Ok(self.quantile_axis_mut(Axis(0), q, interpolate)?.into_scalar())
         }
     }
 
@@ -648,7 +655,7 @@ where
         &mut self,
         qs: &ArrayBase<S2, Ix1>,
         interpolate: &I,
-    ) -> Result<Array1<A>, EmptyInput>
+    ) -> Result<Array1<A>, QuantileError>
     where
         A: Ord + Clone,
         S: DataMut,
