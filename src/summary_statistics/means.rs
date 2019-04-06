@@ -321,7 +321,8 @@ mod tests {
 
     #[test]
     fn test_kurtosis_and_skewness_is_none_with_empty_array_of_floats() {
-        let a: Array1<f64> = array![];
+        let a: Array1<f64> = array![]
+            ;
         assert_eq!(a.skewness(), Err(EmptyInput));
         assert_eq!(a.kurtosis(), Err(EmptyInput));
     }
