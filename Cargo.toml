@@ -21,8 +21,15 @@ num-integer = "0.1"
 num-traits = "0.2"
 rand = "0.6"
 itertools = { version = "0.7.0", default-features = false }
+indexmap = "1.0"
 
 [dev-dependencies]
-quickcheck = "0.7"
+criterion = "0.2"
+quickcheck = { version = "0.8.1", default-features = false }
 ndarray-rand = "0.9"
 approx = "0.3"
+quickcheck_macros = "0.8"
+
+[[bench]]
+name = "sort"
+harness = false

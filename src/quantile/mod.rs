@@ -1,181 +1,12 @@
+use self::interpolate::{higher_index, lower_index, Interpolate};
+use super::sort::get_many_from_sorted_mut_unchecked;
 use crate::errors::{EmptyInput, MinMaxError, MinMaxError::UndefinedOrder};
-use interpolate::Interpolate;
+use errors::QuantileError;
 use ndarray::prelude::*;
-use ndarray::{s, Data, DataMut, RemoveAxis};
+use ndarray::{Data, DataMut, RemoveAxis, Zip};
+use noisy_float::types::N64;
 use std::cmp;
-use {MaybeNan, MaybeNanExt, Sort1dExt};
-
-/// Interpolation strategies.
-pub mod interpolate {
-    use ndarray::azip;
-    use ndarray::prelude::*;
-    use num_traits::{FromPrimitive, NumOps, ToPrimitive};
-
-    /// Used to provide an interpolation strategy to [`quantile_axis_mut`].
-    ///
-    /// [`quantile_axis_mut`]: ../trait.QuantileExt.html#tymethod.quantile_axis_mut
-    pub trait Interpolate<T> {
-        #[doc(hidden)]
-        fn float_quantile_index(q: f64, len: usize) -> f64 {
-            ((len - 1) as f64) * q
-        }
-        #[doc(hidden)]
-        fn lower_index(q: f64, len: usize) -> usize {
-            Self::float_quantile_index(q, len).floor() as usize
-        }
-        #[doc(hidden)]
-        fn higher_index(q: f64, len: usize) -> usize {
-            Self::float_quantile_index(q, len).ceil() as usize
-        }
-        #[doc(hidden)]
-        fn float_quantile_index_fraction(q: f64, len: usize) -> f64 {
-            Self::float_quantile_index(q, len).fract()
-        }
-        #[doc(hidden)]
-        fn needs_lower(q: f64, len: usize) -> bool;
-        #[doc(hidden)]
-        fn needs_higher(q: f64, len: usize) -> bool;
-        #[doc(hidden)]
-        fn interpolate<D>(
-            lower: Option<Array<T, D>>,
-            higher: Option<Array<T, D>>,
-            q: f64,
-            len: usize,
-        ) -> Array<T, D>
-        where
-            D: Dimension;
-    }
-
-    /// Select the higher value.
-    pub struct Higher;
-    /// Select the lower value.
-    pub struct Lower;
-    /// Select the nearest value.
-    pub struct Nearest;
-    /// Select the midpoint of the two values (`(lower + higher) / 2`).
-    pub struct Midpoint;
-    /// Linearly interpolate between the two values
-    /// (`lower + (higher - lower) * fraction`, where `fraction` is the
-    /// fractional part of the index surrounded by `lower` and `higher`).
-    pub struct Linear;
-
-    impl<T> Interpolate<T> for Higher {
-        fn needs_lower(_q: f64, _len: usize) -> bool {
-            false
-        }
-        fn needs_higher(_q: f64, _len: usize) -> bool {
-            true
-        }
-        fn interpolate<D>(
-            _lower: Option<Array<T, D>>,
-            higher: Option<Array<T, D>>,
-            _q: f64,
-            _len: usize,
-        ) -> Array<T, D> {
-            higher.unwrap()
-        }
-    }
-
-    impl<T> Interpolate<T> for Lower {
-        fn needs_lower(_q: f64, _len: usize) -> bool {
-            true
-        }
-        fn needs_higher(_q: f64, _len: usize) -> bool {
-            false
-        }
-        fn interpolate<D>(
-            lower: Option<Array<T, D>>,
-            _higher: Option<Array<T, D>>,
-            _q: f64,
-            _len: usize,
-        ) -> Array<T, D> {
-            lower.unwrap()
-        }
-    }
-
-    impl<T> Interpolate<T> for Nearest {
-        fn needs_lower(q: f64, len: usize) -> bool {
-            <Self as Interpolate<T>>::float_quantile_index_fraction(q, len) < 0.5
-        }
-        fn needs_higher(q: f64, len: usize) -> bool {
-            !<Self as Interpolate<T>>::needs_lower(q, len)
-        }
-        fn interpolate<D>(
-            lower: Option<Array<T, D>>,
-            higher: Option<Array<T, D>>,
-            q: f64,
-            len: usize,
-        ) -> Array<T, D> {
-            if <Self as Interpolate<T>>::needs_lower(q, len) {
-                lower.unwrap()
-            } else {
-                higher.unwrap()
-            }
-        }
-    }
-
-    impl<T> Interpolate<T> for Midpoint
-    where
-        T: NumOps + Clone + FromPrimitive,
-    {
-        fn needs_lower(_q: f64, _len: usize) -> bool {
-            true
-        }
-        fn needs_higher(_q: f64, _len: usize) -> bool {
-            true
-        }
-        fn interpolate<D>(
-            lower: Option<Array<T, D>>,
-            higher: Option<Array<T, D>>,
-            _q: f64,
-            _len: usize,
-        ) -> Array<T, D>
-        where
-            D: Dimension,
-        {
-            let denom = T::from_u8(2).unwrap();
-            let mut lower = lower.unwrap();
-            let higher = higher.unwrap();
-            azip!(
-                mut lower, ref higher in {
-                    *lower = lower.clone() + (higher.clone() - lower.clone()) / denom.clone()
-                }
-            );
-            lower
-        }
-    }
-
-    impl<T> Interpolate<T> for Linear
-    where
-        T: NumOps + Clone + FromPrimitive + ToPrimitive,
-    {
-        fn needs_lower(_q: f64, _len: usize) -> bool {
-            true
-        }
-        fn needs_higher(_q: f64, _len: usize) -> bool {
-            true
-        }
-        fn interpolate<D>(
-            lower: Option<Array<T, D>>,
-            higher: Option<Array<T, D>>,
-            q: f64,
-            len: usize,
-        ) -> Array<T, D>
-        where
-            D: Dimension,
-        {
-            let fraction = <Self as Interpolate<T>>::float_quantile_index_fraction(q, len);
-            let mut a = lower.unwrap();
-            let b = higher.unwrap();
-            azip!(mut a, ref b in {
-                let a_f64 = a.to_f64().unwrap();
-                let b_f64 = b.to_f64().unwrap();
-                *a = a.clone() + T::from_f64((b_f64 - a_f64) * fraction).unwrap();
-            });
-            a
-        }
-    }
-}
+use {MaybeNan, MaybeNanExt};
 
 /// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
@@ -214,7 +45,7 @@ where
 
     /// Finds the index of the minimum value of the array skipping NaN values.
     ///
-    /// Returns `None` if the array is empty or none of the values in the array
+    /// Returns `Err(MinMaxError::EmptyInput)` if the array is empty or none of the values in the array
     /// are non-NaN values.
     ///
     /// Even if there are multiple (equal) elements that are minima, only one
@@ -232,9 +63,9 @@ where
     ///
     /// let a = array![[::std::f64::NAN, 3., 5.],
     ///                [2., 0., 6.]];
-    /// assert_eq!(a.argmin_skipnan(), Some((1, 1)));
+    /// assert_eq!(a.argmin_skipnan(), Ok((1, 1)));
     /// ```
-    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    fn argmin_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord;
@@ -299,7 +130,7 @@ where
 
     /// Finds the index of the maximum value of the array skipping NaN values.
     ///
-    /// Returns `None` if the array is empty or none of the values in the array
+    /// Returns `Err(MinMaxError::EmptyInput)` if the array is empty or none of the values in the array
     /// are non-NaN values.
     ///
     /// Even if there are multiple (equal) elements that are maxima, only one
@@ -317,9 +148,9 @@ where
     ///
     /// let a = array![[::std::f64::NAN, 3., 5.],
     ///                [2., 0., 6.]];
-    /// assert_eq!(a.argmax_skipnan(), Some((1, 2)));
+    /// assert_eq!(a.argmax_skipnan(), Ok((1, 2)));
     /// ```
-    fn argmax_skipnan(&self) -> Option<D::Pattern>
+    fn argmax_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord;
@@ -361,7 +192,7 @@ where
     /// in increasing order.
     /// If `(N-1)q` is not an integer the desired quantile lies between
     /// two data points: we return the lower, nearest, higher or interpolated
-    /// value depending on the type `Interpolate` bound `I`.
+    /// value depending on the `interpolate` strategy.
     ///
     /// Some examples:
     /// - `q=0.` returns the minimum along each 1-dimensional lane;
@@ -381,19 +212,83 @@ where
     /// - worst case: O(`m`^2);
     /// where `m` is the number of elements in the array.
     ///
-    /// **Panics** if `axis` is out of bounds, if the axis has length 0, or if
-    /// `q` is not between `0.` and `1.` (inclusive).
-    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    /// Returns `Err(EmptyInput)` when the specified axis has length 0.
+    ///
+    /// Returns `Err(InvalidQuantile(q))` if `q` is not between `0.` and `1.` (inclusive).
+    ///
+    /// **Panics** if `axis` is out of bounds.
+    fn quantile_axis_mut<I>(
+        &mut self,
+        axis: Axis,
+        q: N64,
+        interpolate: &I,
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>;
 
+    /// A bulk version of [`quantile_axis_mut`], optimized to retrieve multiple
+    /// quantiles at once.
+    ///
+    /// Returns an `Array`, where subviews along `axis` of the array correspond
+    /// to the elements of `qs`.
+    ///
+    /// See [`quantile_axis_mut`] for additional details on quantiles and the algorithm
+    /// used to retrieve them.
+    ///
+    /// Returns `Err(EmptyInput)` when the specified axis has length 0.
+    ///
+    /// Returns `Err(InvalidQuantile(q))` if any `q` in `qs` is not between `0.` and `1.` (inclusive).
+    ///
+    /// **Panics** if `axis` is out of bounds.
+    ///
+    /// [`quantile_axis_mut`]: #tymethod.quantile_axis_mut
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # extern crate ndarray;
+    /// # extern crate ndarray_stats;
+    /// # extern crate noisy_float;
+    /// #
+    /// use ndarray::{array, aview1, Axis};
+    /// use ndarray_stats::{QuantileExt, interpolate::Nearest};
+    /// use noisy_float::types::n64;
+    ///
+    /// # fn main() {
+    /// let mut data = array![[3, 4, 5], [6, 7, 8]];
+    /// let axis = Axis(1);
+    /// let qs = &[n64(0.3), n64(0.7)];
+    /// let quantiles = data.quantiles_axis_mut(axis, &aview1(qs), &Nearest).unwrap();
+    /// for (&q, quantile) in qs.iter().zip(quantiles.axis_iter(axis)) {
+    ///     assert_eq!(quantile, data.quantile_axis_mut(axis, q, &Nearest).unwrap());
+    /// }
+    /// # }
+    /// ```
+    fn quantiles_axis_mut<S2, I>(
+        &mut self,
+        axis: Axis,
+        qs: &ArrayBase<S2, Ix1>,
+        interpolate: &I,
+    ) -> Result<Array<A, D>, QuantileError>
+    where
+        D: RemoveAxis,
+        A: Ord + Clone,
+        S: DataMut,
+        S2: Data<Elem = N64>,
+        I: Interpolate<A>;
+
     /// Return the `q`th quantile of the data along the specified axis, skipping NaN values.
     ///
-    /// See [`quantile_axis_mut`](##tymethod.quantile_axis_mut) for details.
-    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    /// See [`quantile_axis_mut`](#tymethod.quantile_axis_mut) for details.
+    fn quantile_axis_skipnan_mut<I>(
+        &mut self,
+        axis: Axis,
+        q: N64,
+        interpolate: &I,
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -424,7 +319,7 @@ where
         Ok(current_pattern_min)
     }
 
-    fn argmin_skipnan(&self) -> Option<D::Pattern>
+    fn argmin_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord,
@@ -440,9 +335,9 @@ where
             })
         });
         if min.is_some() {
-            Some(pattern_min)
+            Ok(pattern_min)
         } else {
-            None
+            Err(MinMaxError::EmptyInput)
         }
     }
 
@@ -491,7 +386,7 @@ where
         Ok(current_pattern_max)
     }
 
-    fn argmax_skipnan(&self) -> Option<D::Pattern>
+    fn argmax_skipnan(&self) -> Result<D::Pattern, MinMaxError>
     where
         A: MaybeNan,
         A::NotNan: Ord,
@@ -507,9 +402,9 @@ where
             })
         });
         if max.is_some() {
-            Some(pattern_max)
+            Ok(pattern_max)
         } else {
-            None
+            Err(MinMaxError::EmptyInput)
         }
     }
 
@@ -541,37 +436,108 @@ where
         }))
     }
 
-    fn quantile_axis_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    fn quantiles_axis_mut<S2, I>(
+        &mut self,
+        axis: Axis,
+        qs: &ArrayBase<S2, Ix1>,
+        interpolate: &I,
+    ) -> Result<Array<A, D>, QuantileError>
+    where
+        D: RemoveAxis,
+        A: Ord + Clone,
+        S: DataMut,
+        S2: Data<Elem = N64>,
+        I: Interpolate<A>,
+    {
+        // Minimize number of type parameters to avoid monomorphization bloat.
+        fn quantiles_axis_mut<A, D, I>(
+            mut data: ArrayViewMut<A, D>,
+            axis: Axis,
+            qs: ArrayView1<N64>,
+            _interpolate: &I,
+        ) -> Result<Array<A, D>, QuantileError>
+        where
+            D: RemoveAxis,
+            A: Ord + Clone,
+            I: Interpolate<A>,
+        {
+            for &q in qs {
+                if !((q >= 0.) && (q <= 1.)) {
+                    return Err(QuantileError::InvalidQuantile(q));
+                }
+            }
+
+            let axis_len = data.len_of(axis);
+            if axis_len == 0 {
+                return Err(QuantileError::EmptyInput);
+            }
+
+            let mut results_shape = data.raw_dim();
+            results_shape[axis.index()] = qs.len();
+            if results_shape.size() == 0 {
+                return Ok(Array::from_shape_vec(results_shape, Vec::new()).unwrap());
+            }
+
+            let mut searched_indexes = Vec::with_capacity(2 * qs.len());
+            for &q in &qs {
+                if I::needs_lower(q, axis_len) {
+                    searched_indexes.push(lower_index(q, axis_len));
+                }
+                if I::needs_higher(q, axis_len) {
+                    searched_indexes.push(higher_index(q, axis_len));
+                }
+            }
+            searched_indexes.sort();
+            searched_indexes.dedup();
+
+            let mut results = Array::from_elem(results_shape, data.first().unwrap().clone());
+            Zip::from(results.lanes_mut(axis))
+                .and(data.lanes_mut(axis))
+                .apply(|mut results, mut data| {
+                    let index_map =
+                        get_many_from_sorted_mut_unchecked(&mut data, &searched_indexes);
+                    for (result, &q) in results.iter_mut().zip(qs) {
+                        let lower = if I::needs_lower(q, axis_len) {
+                            Some(index_map[&lower_index(q, axis_len)].clone())
+                        } else {
+                            None
+                        };
+                        let higher = if I::needs_higher(q, axis_len) {
+                            Some(index_map[&higher_index(q, axis_len)].clone())
+                        } else {
+                            None
+                        };
+                        *result = I::interpolate(lower, higher, q, axis_len);
+                    }
+                });
+            Ok(results)
+        }
+
+        quantiles_axis_mut(self.view_mut(), axis, qs.view(), interpolate)
+    }
+
+    fn quantile_axis_mut<I>(
+        &mut self,
+        axis: Axis,
+        q: N64,
+        interpolate: &I,
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
-        assert!((0. <= q) && (q <= 1.));
-        let mut lower = None;
-        let mut higher = None;
-        let axis_len = self.len_of(axis);
-        if I::needs_lower(q, axis_len) {
-            let lower_index = I::lower_index(q, axis_len);
-            lower = Some(self.map_axis_mut(axis, |mut x| x.sorted_get_mut(lower_index)));
-            if I::needs_higher(q, axis_len) {
-                let higher_index = I::higher_index(q, axis_len);
-                let relative_higher_index = higher_index - lower_index;
-                higher = Some(self.map_axis_mut(axis, |mut x| {
-                    x.slice_mut(s![lower_index..])
-                        .sorted_get_mut(relative_higher_index)
-                }));
-            };
-        } else {
-            higher = Some(
-                self.map_axis_mut(axis, |mut x| x.sorted_get_mut(I::higher_index(q, axis_len))),
-            );
-        };
-        I::interpolate(lower, higher, q, axis_len)
+        self.quantiles_axis_mut(axis, &aview1(&[q]), interpolate)
+            .map(|a| a.index_axis_move(axis, 0))
     }
 
-    fn quantile_axis_skipnan_mut<I>(&mut self, axis: Axis, q: f64) -> Array<A, D::Smaller>
+    fn quantile_axis_skipnan_mut<I>(
+        &mut self,
+        axis: Axis,
+        q: N64,
+        interpolate: &I,
+    ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
         A: MaybeNan,
@@ -579,19 +545,28 @@ where
         S: DataMut,
         I: Interpolate<A::NotNan>,
     {
-        self.map_axis_mut(axis, |lane| {
+        if !((q >= 0.) && (q <= 1.)) {
+            return Err(QuantileError::InvalidQuantile(q));
+        }
+
+        if self.len_of(axis) == 0 {
+            return Err(QuantileError::EmptyInput);
+        }
+
+        let quantile = self.map_axis_mut(axis, |lane| {
             let mut not_nan = A::remove_nan_mut(lane);
             A::from_not_nan_opt(if not_nan.is_empty() {
                 None
             } else {
                 Some(
                     not_nan
-                        .quantile_axis_mut::<I>(Axis(0), q)
-                        .into_raw_vec()
-                        .remove(0),
+                        .quantile_axis_mut::<I>(Axis(0), q, interpolate)
+                        .unwrap()
+                        .into_scalar(),
                 )
             })
-        })
+        });
+        Ok(quantile)
     }
 }
 
@@ -608,7 +583,7 @@ where
     /// in increasing order.
     /// If `(N-1)q` is not an integer the desired quantile lies between
     /// two data points: we return the lower, nearest, higher or interpolated
-    /// value depending on the type `Interpolate` bound `I`.
+    /// value depending on the `interpolate` strategy.
     ///
     /// Some examples:
     /// - `q=0.` returns the minimum;
@@ -628,11 +603,37 @@ where
     ///
     /// Returns `Err(EmptyInput)` if the array is empty.
     ///
-    /// **Panics** if `q` is not between `0.` and `1.` (inclusive).
-    fn quantile_mut<I>(&mut self, q: f64) -> Result<A, EmptyInput>
+    /// Returns `Err(InvalidQuantile(q))` if `q` is not between `0.` and `1.` (inclusive).
+    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, QuantileError>
     where
         A: Ord + Clone,
         S: DataMut,
+        I: Interpolate<A>;
+
+    /// A bulk version of [`quantile_mut`], optimized to retrieve multiple
+    /// quantiles at once.
+    ///
+    /// Returns an `Array`, where the elements of the array correspond to the
+    /// elements of `qs`.
+    ///
+    /// Returns `Err(EmptyInput)` if the array is empty.
+    ///
+    /// Returns `Err(InvalidQuantile(q))` if any `q` in
+    /// `qs` is not between `0.` and `1.` (inclusive).
+    ///
+    /// See [`quantile_mut`] for additional details on quantiles and the algorithm
+    /// used to retrieve them.
+    ///
+    /// [`quantile_mut`]: #tymethod.quantile_mut
+    fn quantiles_mut<S2, I>(
+        &mut self,
+        qs: &ArrayBase<S2, Ix1>,
+        interpolate: &I,
+    ) -> Result<Array1<A>, QuantileError>
+    where
+        A: Ord + Clone,
+        S: DataMut,
+        S2: Data<Elem = N64>,
         I: Interpolate<A>;
 }
 
@@ -640,16 +641,30 @@ impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
 {
-    fn quantile_mut<I>(&mut self, q: f64) -> Result<A, EmptyInput>
+    fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, QuantileError>
     where
         A: Ord + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
-        if self.is_empty() {
-            Err(EmptyInput)
-        } else {
-            Ok(self.quantile_axis_mut::<I>(Axis(0), q).into_scalar())
-        }
+        Ok(self
+            .quantile_axis_mut(Axis(0), q, interpolate)?
+            .into_scalar())
+    }
+
+    fn quantiles_mut<S2, I>(
+        &mut self,
+        qs: &ArrayBase<S2, Ix1>,
+        interpolate: &I,
+    ) -> Result<Array1<A>, QuantileError>
+    where
+        A: Ord + Clone,
+        S: DataMut,
+        S2: Data<Elem = N64>,
+        I: Interpolate<A>,
+    {
+        self.quantiles_axis_mut(Axis(0), qs, interpolate)
     }
 }
+
+pub mod interpolate;

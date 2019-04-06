@@ -25,6 +25,7 @@
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy-1.14.1/reference/routines.statistics.html
 //! [`StatsBase.jl`]: https://juliastats.github.io/StatsBase.jl/latest/
 
+extern crate indexmap;
 extern crate itertools;
 extern crate ndarray;
 extern crate noisy_float;
