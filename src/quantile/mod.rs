@@ -647,13 +647,9 @@ where
         S: DataMut,
         I: Interpolate<A>,
     {
-        if self.is_empty() {
-            Err(QuantileError::EmptyInput)
-        } else {
-            Ok(self
-                .quantile_axis_mut(Axis(0), q, interpolate)?
-                .into_scalar())
-        }
+        Ok(self
+            .quantile_axis_mut(Axis(0), q, interpolate)?
+            .into_scalar())
     }
 
     fn quantiles_mut<S2, I>(
