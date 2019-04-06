@@ -2,7 +2,7 @@ use super::SummaryStatisticsExt;
 use crate::errors::EmptyInput;
 use ndarray::{ArrayBase, Data, Dimension};
 use num_integer::IterBinomial;
-use num_traits::{Float, FromPrimitive, ToPrimitive, Zero};
+use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, Div};
 
 impl<A, S, D> SummaryStatisticsExt<A, S, D> for ArrayBase<S, D>
@@ -127,9 +127,7 @@ where
 {
     let n_elements =
         A::from_usize(a.len()).expect("Converting number of elements to `A` must not fail");
-    let order = order
-        .to_i32()
-        .expect("Moment order must not overflow `i32`.");
+    let order = order as i32;
 
     // When k=0, we are raising each element to the 0th power
     // No need to waste CPU cycles going through the array
@@ -317,8 +315,7 @@ mod tests {
         let order = 10;
         let central_moments = a.central_moments(order).unwrap();
         for i in 0..=order {
-            assert_eq!(a.central_moment(i).unwrap(), central_moments[i as usiz
-            e]);
+            assert_eq!(a.central_moment(i).unwrap(), central_moments[i as usize]);
         }
     }
 
