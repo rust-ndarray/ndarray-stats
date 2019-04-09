@@ -24,6 +24,30 @@ ndarray-stats = "0.1"
 
 ## Releases
 
+* **0.2.0**
+
+  * New functionality:
+    * Summary statistics:
+      * Harmonic mean
+      * Geometric mean
+      * Central moments
+      * Kurtosis
+      * Skewness
+    * Information theory:
+      * Entropy
+      * Cross-entropy
+      * Kullback-Leibler divergence
+    * Quantiles and order statistics:
+      * `argmin` / `argmin_skipnan`
+      * `argmax` / `argmax_skipnan`
+      * Optimized bulk quantile computation (`quantiles_mut`, `quantiles_axis_mut`)
+  * Fixes:
+    * Reduced occurrences of overflow for interpolate::midpoint
+  * Improvements:
+    * Redesigned error handling across the whole crate (standardise on `Result` with `ErrorKind` where needed)
+
+  Contributors: @jturner314, @LukeMathWalker, @phungleson, @munckymagik
+
 * **0.1.0**
 
   * Initial release by @LukeMathWalker and @jturner314.
