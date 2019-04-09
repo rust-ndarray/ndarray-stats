@@ -6,12 +6,19 @@
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
 [![Documentation](https://docs.rs/ndarray-stats/badge.svg)](https://docs.rs/ndarray-stats)
 
-This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type. See
-the [documentation](https://docs.rs/ndarray-stats) for more information.
+This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type.
 
-[`ndarray`]: https://github.com/bluss/ndarray
+Currently available routines include:
+- order statistics (minimum, maximum, median, quantiles, etc.);
+- summary statistics (mean, skewness, kurtosis, central moments, etc.)
+- partitioning;
+- correlation analysis (covariance, pearson correlation);
+- measures from information theory (entropy, KL divergence, etc.);
+- histogram computation.
 
-Please feel free to contribute new functionality!
+See the [documentation](https://docs.rs/ndarray-stats) for more information.
+
+Please feel free to contribute new functionality! A roadmap can be found [here](https://github.com/jturner314/ndarray-stats/issues/1).
 
 ## Using with Cargo
 
