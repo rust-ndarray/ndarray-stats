@@ -2,7 +2,8 @@
 //! the *n*-dimensional array data structure provided by [`ndarray`].
 //!
 //! Currently available routines include:
-//! - [order statistics] (minimum, maximum, quantiles, etc.);
+//! - [order statistics] (minimum, maximum, median, quantiles, etc.);
+//! - [summary statistics] (mean, skewness, kurtosis, central moments, etc.)
 //! - [partitioning];
 //! - [correlation analysis] (covariance, pearson correlation);
 //! - [measures from information theory] (entropy, KL divergence, etc.);
@@ -18,6 +19,7 @@
 //! [`ndarray`]: https://github.com/rust-ndarray/ndarray
 //! [order statistics]: trait.QuantileExt.html
 //! [partitioning]: trait.Sort1dExt.html
+//! [summary statistics]: trait.SummaryStatisticsExt.html
 //! [correlation analysis]: trait.CorrelationExt.html
 //! [measures from information theory]: trait.EntropyExt.html
 //! [histogram computation]: histogram/index.html
