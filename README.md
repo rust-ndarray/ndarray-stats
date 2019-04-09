@@ -20,6 +20,8 @@ See the [documentation](https://docs.rs/ndarray-stats) for more information.
 
 Please feel free to contribute new functionality! A roadmap can be found [here](https://github.com/jturner314/ndarray-stats/issues/1).
 
+[`ndarray`]: https://github.com/rust-ndarray/ndarray
+
 ## Using with Cargo
 
 ```toml
