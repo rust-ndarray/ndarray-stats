@@ -11,8 +11,7 @@ the [documentation](https://docs.rs/ndarray-stats) for more information.
 
 [`ndarray`]: https://github.com/bluss/ndarray
 
-Only some statistical routines are implemented. Please feel free to contribute
-new functionality!
+Please feel free to contribute new functionality!
 
 ## Using with Cargo
 
@@ -42,11 +41,11 @@ ndarray-stats = "0.1"
       * `argmax` / `argmax_skipnan`
       * Optimized bulk quantile computation (`quantiles_mut`, `quantiles_axis_mut`)
   * Fixes:
-    * Reduced occurrences of overflow for interpolate::midpoint
+    * Reduced occurrences of overflow for `interpolate::midpoint`
   * Improvements:
     * Redesigned error handling across the whole crate (standardise on `Result` with `ErrorKind` where needed)
 
-  Contributors: @jturner314, @LukeMathWalker, @phungleson, @munckymagik
+  *Contributors*: @jturner314, @LukeMathWalker, @phungleson, @munckymagik
 
 * **0.1.0**
 
