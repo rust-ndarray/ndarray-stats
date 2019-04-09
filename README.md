@@ -45,7 +45,7 @@ ndarray-stats = "0.1"
   * Improvements:
     * Redesigned error handling across the whole crate (standardise on `Result` with `ErrorKind` where needed)
 
-  *Contributors*: @jturner314, @LukeMathWalker, @phungleson, @munckymagik
+  *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
 
 * **0.1.0**
 
