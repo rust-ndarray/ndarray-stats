@@ -18,7 +18,7 @@ Please feel free to contribute new functionality!
 ```toml
 [dependencies]
 ndarray = "0.12.1"
-ndarray-stats = "0.1"
+ndarray-stats = "0.2"
 ```
 
 ## Releases
