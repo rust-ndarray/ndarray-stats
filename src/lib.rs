@@ -61,16 +61,14 @@ mod private {
         () => {
             /// This method makes this trait impossible to implement outside of
             /// `ndarray-stats`.
-            fn __private__(&self) -> crate::private::PrivateMarker;
+            fn __private__(&self, _: crate::private::PrivateMarker);
         };
     }
 
     /// Implements the associated function defined by `private_decl!`.
     macro_rules! private_impl {
         () => {
-            fn __private__(&self) -> crate::private::PrivateMarker {
-                crate::private::PrivateMarker
-            }
+            fn __private__(&self, _: crate::private::PrivateMarker) {}
         };
     }
 }
