@@ -1,12 +1,12 @@
 use self::interpolate::{higher_index, lower_index, Interpolate};
 use super::sort::get_many_from_sorted_mut_unchecked;
 use crate::errors::{EmptyInput, MinMaxError, MinMaxError::UndefinedOrder};
-use errors::QuantileError;
+use crate::errors::QuantileError;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis, Zip};
 use noisy_float::types::N64;
 use std::cmp;
-use {MaybeNan, MaybeNanExt};
+use crate::{MaybeNan, MaybeNanExt};
 
 /// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>

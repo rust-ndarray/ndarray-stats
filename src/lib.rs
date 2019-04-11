@@ -40,13 +40,13 @@ extern crate ndarray_rand;
 #[cfg(test)]
 extern crate quickcheck;
 
-pub use correlation::CorrelationExt;
-pub use entropy::EntropyExt;
-pub use histogram::HistogramExt;
-pub use maybe_nan::{MaybeNan, MaybeNanExt};
-pub use quantile::{interpolate, Quantile1dExt, QuantileExt};
-pub use sort::Sort1dExt;
-pub use summary_statistics::SummaryStatisticsExt;
+pub use crate::correlation::CorrelationExt;
+pub use crate::entropy::EntropyExt;
+pub use crate::histogram::HistogramExt;
+pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
+pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
+pub use crate::sort::Sort1dExt;
+pub use crate::summary_statistics::SummaryStatisticsExt;
 
 mod correlation;
 mod entropy;

@@ -18,17 +18,17 @@ pub trait MaybeNan: Sized {
     /// Converts the value.
     ///
     /// If the value is `None`, a NaN value is returned.
-    fn from_not_nan(Self::NotNan) -> Self;
+    fn from_not_nan(_: Self::NotNan) -> Self;
 
     /// Converts the value.
     ///
     /// If the value is `None`, a NaN value is returned.
-    fn from_not_nan_opt(Option<Self::NotNan>) -> Self;
+    fn from_not_nan_opt(_: Option<Self::NotNan>) -> Self;
 
     /// Converts the value.
     ///
     /// If the value is `None`, a NaN value is returned.
-    fn from_not_nan_ref_opt(Option<&Self::NotNan>) -> &Self;
+    fn from_not_nan_ref_opt(_: Option<&Self::NotNan>) -> &Self;
 
     /// Returns a view with the NaN values removed.
     ///
@@ -36,7 +36,7 @@ pub trait MaybeNan: Sized {
     /// order of the elements is unspecified. However, this method is
     /// idempotent, and given the same input data, the result is always ordered
     /// the same way.
-    fn remove_nan_mut(ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan>;
+    fn remove_nan_mut(_: ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan>;
 }
 
 /// Returns a view with the NaN values removed.

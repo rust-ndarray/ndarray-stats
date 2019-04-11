@@ -218,7 +218,7 @@ where
 mod tests {
     use super::EntropyExt;
     use approx::assert_abs_diff_eq;
-    use errors::{EmptyInput, MultiInputError};
+    use crate::errors::{EmptyInput, MultiInputError};
     use ndarray::{array, Array1};
     use noisy_float::types::n64;
     use std::f64;
