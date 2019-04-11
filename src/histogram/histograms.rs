@@ -28,7 +28,6 @@ impl<A: Ord> Histogram<A> {
     /// use ndarray_stats::histogram::{Edges, Bins, Histogram, Grid};
     /// use noisy_float::types::n64;
     ///
-    /// # fn main() -> Result<(), Box<std::error::Error>> {
     /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
     /// let bins = Bins::new(edges);
     /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
@@ -44,8 +43,7 @@ impl<A: Ord> Histogram<A> {
     ///     [0, 1],
     /// ];
     /// assert_eq!(histogram_matrix, expected.into_dyn());
-    /// # Ok(())
-    /// # }
+    /// # Ok::<(), Box<std::error::Error>>(())
     /// ```
     pub fn add_observation<S>(&mut self, observation: &ArrayBase<S, Ix1>) -> Result<(), BinNotFound>
     where
