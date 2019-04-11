@@ -60,7 +60,15 @@ mod private {
     macro_rules! private_decl {
         () => {
             /// This method makes this trait impossible to implement outside of
-            /// `ndarray-stats`.
+            /// `ndarray-stats` so that we can freely add new methods, etc., to
+            /// this trait without breaking changes.
+            ///
+            /// We don't anticipate any other crates needing to implement this
+            /// trait, but if you do have such a use-case, please let us know.
+            ///
+            /// **Warning** This method is not considered part of the public
+            /// API, and client code should not rely on it being present. It
+            /// may be removed in a non-breaking release.
             fn __private__(&self, _: crate::private::PrivateMarker);
         };
     }
