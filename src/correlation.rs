@@ -178,7 +178,7 @@ mod cov_tests {
         let a = Array::from_elem((n_random_variables, n_observations), value);
         a.cov(1.).all_close(
             &Array::zeros((n_random_variables, n_random_variables)),
-            1e-8
+            1e-8,
         )
     }
 
@@ -188,7 +188,7 @@ mod cov_tests {
         let n_observations = 4;
         let a = Array::random(
             (n_random_variables, n_observations),
-            Uniform::new(-bound.abs(), bound.abs())
+            Uniform::new(-bound.abs(), bound.abs()),
         );
         let covariance = a.cov(1.);
         covariance.all_close(&covariance.t(), 1e-8)
@@ -278,7 +278,7 @@ mod pearson_correlation_tests {
         let n_observations = 4;
         let a = Array::random(
             (n_random_variables, n_observations),
-            Uniform::new(-bound.abs(), bound.abs())
+            Uniform::new(-bound.abs(), bound.abs()),
         );
         let pearson_correlation = a.pearson_correlation();
         pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
@@ -290,7 +290,10 @@ mod pearson_correlation_tests {
         let n_observations = 4;
         let a = Array::from_elem((n_random_variables, n_observations), value);
         let pearson_correlation = a.pearson_correlation();
-        pearson_correlation.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag)
+        pearson_correlation
+            .iter()
+            .map(|x| x.is_nan())
+            .fold(true, |acc, flag| acc & flag)
     }
 
     #[test]

@@ -340,7 +340,7 @@ mod edges_tests {
         let edges = Edges::from(v);
         let n = edges.len();
         for i in 1..n {
-            if edges[i-1] > edges[i] {
+            if edges[i - 1] > edges[i] {
                 return false;
             }
         }
@@ -353,7 +353,7 @@ mod edges_tests {
         let edges = Edges::from(a);
         let n = edges.len();
         for i in 1..n {
-            if edges[i-1] > edges[i] {
+            if edges[i - 1] > edges[i] {
                 return false;
             }
         }
@@ -367,7 +367,7 @@ mod edges_tests {
         if view.len() == 0 {
             true
         } else {
-            let last = view[view.len()-1];
+            let last = view[view.len() - 1];
             edges.indices_of(&last).is_none()
         }
     }
