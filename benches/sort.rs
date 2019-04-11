@@ -44,7 +44,7 @@ fn get_many_from_sorted_mut(c: &mut Criterion) {
             let mut rng = StdRng::seed_from_u64(42);
             let mut data: Vec<_> = (0..len).collect();
             data.shuffle(&mut rng);
-            let indices: Vec<_> = (0..len).step_by(len / 10).collect();
+            let indices: Array1<_> = (0..len).step_by(len / 10).collect();
             bencher.iter_batched(
                 || Array1::from(data.clone()),
                 |mut arr| {
