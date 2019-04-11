@@ -351,68 +351,71 @@ impl<A: Ord> Bins<A> {
 #[cfg(test)]
 mod edges_tests {
     use super::*;
-    use quickcheck::quickcheck;
+    use quickcheck_macros::quickcheck;
     use std::collections::BTreeSet;
     use std::iter::FromIterator;
 
-    quickcheck! {
-        fn check_sorted_from_vec(v: Vec<i32>) -> bool {
-            let edges = Edges::from(v);
-            let n = edges.len();
-            for i in 1..n {
-                if edges[i-1] > edges[i] {
-                    return false;
-                }
+    #[quickcheck]
+    fn check_sorted_from_vec(v: Vec<i32>) -> bool {
+        let edges = Edges::from(v);
+        let n = edges.len();
+        for i in 1..n {
+            if edges[i-1] > edges[i] {
+                return false;
             }
+        }
+        true
+    }
+
+    #[quickcheck]
+    fn check_sorted_from_array(v: Vec<i32>) -> bool {
+        let a = Array1::from_vec(v);
+        let edges = Edges::from(a);
+        let n = edges.len();
+        for i in 1..n {
+            if edges[i-1] > edges[i] {
+                return false;
+            }
+        }
+        true
+    }
+
+    #[quickcheck]
+    fn edges_are_right_exclusive(v: Vec<i32>) -> bool {
+        let edges = Edges::from(v);
+        let view = edges.as_array_view();
+        if view.len() == 0 {
             true
+        } else {
+            let last = view[view.len()-1];
+            edges.indices_of(&last).is_none()
         }
+    }
 
-        fn check_sorted_from_array(v: Vec<i32>) -> bool {
-            let a = Array1::from_vec(v);
-            let edges = Edges::from(a);
-            let n = edges.len();
-            for i in 1..n {
-                if edges[i-1] > edges[i] {
-                    return false;
-                }
-            }
-            true
-        }
-
-        fn edges_are_right_exclusive(v: Vec<i32>) -> bool {
-            let edges = Edges::from(v);
-            let view = edges.as_array_view();
-            if view.len() == 0 {
-                true
-            } else {
-                let last = view[view.len()-1];
-                edges.indices_of(&last).is_none()
-            }
-        }
-
-        fn edges_are_left_inclusive(v: Vec<i32>) -> bool {
-            let edges = Edges::from(v);
-            match edges.len() {
-                1 => true,
-                _ => {
-                    let view = edges.as_array_view();
-                    if view.len() == 0 {
-                        true
-                    } else {
-                        let first = view[0];
-                        edges.indices_of(&first).is_some()
-                    }
+    #[quickcheck]
+    fn edges_are_left_inclusive(v: Vec<i32>) -> bool {
+        let edges = Edges::from(v);
+        match edges.len() {
+            1 => true,
+            _ => {
+                let view = edges.as_array_view();
+                if view.len() == 0 {
+                    true
+                } else {
+                    let first = view[0];
+                    edges.indices_of(&first).is_some()
                 }
             }
         }
+    }
 
-        fn edges_are_deduped(v: Vec<i32>) -> bool {
-            let unique_elements = BTreeSet::from_iter(v.iter());
-            let edges = Edges::from(v.clone());
-            let view = edges.as_array_view();
-            let unique_edges = BTreeSet::from_iter(view.iter());
-            unique_edges == unique_elements
-        }
+    #[quickcheck]
+    fn edges_are_deduped(v: Vec<i32>) -> bool {
+        let unique_elements = BTreeSet::from_iter(v.iter());
+        let edges = Edges::from(v.clone());
+        let view = edges.as_array_view();
+        let unique_edges = BTreeSet::from_iter(view.iter());
+        unique_edges == unique_elements
     }
 }
 

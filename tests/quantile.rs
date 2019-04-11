@@ -2,8 +2,6 @@ extern crate itertools;
 extern crate ndarray;
 extern crate ndarray_stats;
 extern crate noisy_float;
-#[macro_use]
-extern crate quickcheck;
 extern crate quickcheck_macros;
 
 use itertools::izip;
@@ -32,11 +30,10 @@ fn test_argmin() {
     assert_eq!(a.argmin(), Err(MinMaxError::EmptyInput));
 }
 
-quickcheck! {
-    fn argmin_matches_min(data: Vec<f32>) -> bool {
-        let a = Array1::from(data);
-        a.argmin().map(|i| &a[i]) == a.min()
-    }
+#[quickcheck]
+fn argmin_matches_min(data: Vec<f32>) -> bool {
+    let a = Array1::from(data);
+    a.argmin().map(|i| &a[i]) == a.min()
 }
 
 #[test]
@@ -57,16 +54,15 @@ fn test_argmin_skipnan() {
     assert_eq!(a.argmin_skipnan(), Err(MinMaxError::EmptyInput));
 }
 
-quickcheck! {
-    fn argmin_skipnan_matches_min_skipnan(data: Vec<Option<i32>>) -> bool {
-        let a = Array1::from(data);
-        let min = a.min_skipnan();
-        let argmin = a.argmin_skipnan();
-        if min.is_none() {
-            argmin == Err(MinMaxError::EmptyInput)
-        } else {
-            a[argmin.unwrap()] == *min
-        }
+#[quickcheck]
+fn argmin_skipnan_matches_min_skipnan(data: Vec<Option<i32>>) -> bool {
+    let a = Array1::from(data);
+    let min = a.min_skipnan();
+    let argmin = a.argmin_skipnan();
+    if min.is_none() {
+        argmin == Err(MinMaxError::EmptyInput)
+    } else {
+        a[argmin.unwrap()] == *min
     }
 }
 
@@ -112,11 +108,10 @@ fn test_argmax() {
     assert_eq!(a.argmax(), Err(MinMaxError::EmptyInput));
 }
 
-quickcheck! {
-    fn argmax_matches_max(data: Vec<f32>) -> bool {
-        let a = Array1::from(data);
-        a.argmax().map(|i| &a[i]) == a.max()
-    }
+#[quickcheck]
+fn argmax_matches_max(data: Vec<f32>) -> bool {
+    let a = Array1::from(data);
+    a.argmax().map(|i| &a[i]) == a.max()
 }
 
 #[test]
@@ -140,16 +135,15 @@ fn test_argmax_skipnan() {
     assert_eq!(a.argmax_skipnan(), Err(MinMaxError::EmptyInput));
 }
 
-quickcheck! {
-    fn argmax_skipnan_matches_max_skipnan(data: Vec<Option<i32>>) -> bool {
-        let a = Array1::from(data);
-        let max = a.max_skipnan();
-        let argmax = a.argmax_skipnan();
-        if max.is_none() {
-            argmax == Err(MinMaxError::EmptyInput)
-        } else {
-            a[argmax.unwrap()] == *max
-        }
+#[quickcheck]
+fn argmax_skipnan_matches_max_skipnan(data: Vec<Option<i32>>) -> bool {
+    let a = Array1::from(data);
+    let max = a.max_skipnan();
+    let argmax = a.argmax_skipnan();
+    if max.is_none() {
+        argmax == Err(MinMaxError::EmptyInput)
+    } else {
+        a[argmax.unwrap()] == *max
     }
 }
 
