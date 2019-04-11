@@ -295,6 +295,8 @@ where
         A::NotNan: Clone + Ord,
         S: DataMut,
         I: Interpolate<A::NotNan>;
+
+    private_decl! {}
 }
 
 impl<A, S, D> QuantileExt<A, S, D> for ArrayBase<S, D>
@@ -568,6 +570,8 @@ where
         });
         Ok(quantile)
     }
+
+    private_impl! {}
 }
 
 /// Quantile methods for 1-D arrays.
@@ -635,6 +639,8 @@ where
         S: DataMut,
         S2: Data<Elem = N64>,
         I: Interpolate<A>;
+
+    private_decl! {}
 }
 
 impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
@@ -665,6 +671,8 @@ where
     {
         self.quantiles_axis_mut(Axis(0), qs, interpolate)
     }
+
+    private_impl! {}
 }
 
 pub mod interpolate;

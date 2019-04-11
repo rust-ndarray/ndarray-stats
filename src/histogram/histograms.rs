@@ -147,6 +147,8 @@ where
     fn histogram(&self, grid: Grid<A>) -> Histogram<A>
     where
         A: Ord;
+
+    private_decl! {}
 }
 
 impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
@@ -161,4 +163,6 @@ where
         }
         histogram
     }
+
+    private_impl! {}
 }

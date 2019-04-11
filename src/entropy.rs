@@ -120,6 +120,8 @@ where
     where
         S2: Data<Elem = A>,
         A: Float;
+
+    private_decl! {}
 }
 
 impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
@@ -212,6 +214,8 @@ where
         let cross_entropy = -temp.sum();
         Ok(cross_entropy)
     }
+
+    private_impl! {}
 }
 
 #[cfg(test)]

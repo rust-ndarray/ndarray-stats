@@ -44,6 +44,8 @@ pub trait Interpolate<T> {
     /// or if `None` is provided for the higher value when it's needed.
     #[doc(hidden)]
     fn interpolate(lower: Option<T>, higher: Option<T>, q: N64, len: usize) -> T;
+
+    private_decl! {}
 }
 
 /// Select the higher value.
@@ -69,6 +71,7 @@ impl<T> Interpolate<T> for Higher {
     fn interpolate(_lower: Option<T>, higher: Option<T>, _q: N64, _len: usize) -> T {
         higher.unwrap()
     }
+    private_impl! {}
 }
 
 impl<T> Interpolate<T> for Lower {
@@ -81,6 +84,7 @@ impl<T> Interpolate<T> for Lower {
     fn interpolate(lower: Option<T>, _higher: Option<T>, _q: N64, _len: usize) -> T {
         lower.unwrap()
     }
+    private_impl! {}
 }
 
 impl<T> Interpolate<T> for Nearest {
@@ -97,6 +101,7 @@ impl<T> Interpolate<T> for Nearest {
             higher.unwrap()
         }
     }
+    private_impl! {}
 }
 
 impl<T> Interpolate<T> for Midpoint
@@ -115,6 +120,7 @@ where
         let higher = higher.unwrap();
         lower.clone() + (higher.clone() - lower.clone()) / denom.clone()
     }
+    private_impl! {}
 }
 
 impl<T> Interpolate<T> for Linear
@@ -135,4 +141,5 @@ where
         let higher_f64 = higher.to_f64().unwrap();
         lower.clone() + T::from_f64(fraction * (higher_f64 - lower_f64)).unwrap()
     }
+    private_impl! {}
 }
