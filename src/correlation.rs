@@ -49,8 +49,6 @@ where
     /// # Example
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
     /// use ndarray::{aview2, arr2};
     /// use ndarray_stats::CorrelationExt;
     ///
@@ -98,8 +96,6 @@ where
     ///
     /// variables is zero and division by zero panics for type A.
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
     /// use ndarray::arr2;
     /// use ndarray_stats::CorrelationExt;
     ///

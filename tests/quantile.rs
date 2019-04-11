@@ -1,9 +1,3 @@
-extern crate itertools;
-extern crate ndarray;
-extern crate ndarray_stats;
-extern crate noisy_float;
-extern crate quickcheck_macros;
-
 use itertools::izip;
 use ndarray::array;
 use ndarray::prelude::*;
@@ -330,7 +324,7 @@ fn test_quantiles_mut(xs: Vec<i64>) -> bool {
 
 fn check_one_interpolation_method_for_quantiles_mut(
     mut v: Array1<i64>,
-    quantile_indexes: ArrayView1<N64>,
+    quantile_indexes: ArrayView1<'_, N64>,
     interpolate: &impl Interpolate<i64>,
 ) -> bool {
     let bulk_quantiles = v.clone().quantiles_mut(&quantile_indexes, interpolate);
@@ -402,7 +396,7 @@ fn test_quantiles_axis_mut(mut xs: Vec<u64>) -> bool {
 
 fn check_one_interpolation_method_for_quantiles_axis_mut(
     mut v: Array2<u64>,
-    quantile_indexes: ArrayView1<N64>,
+    quantile_indexes: ArrayView1<'_, N64>,
     axis: Axis,
     interpolate: &impl Interpolate<u64>,
 ) -> bool {

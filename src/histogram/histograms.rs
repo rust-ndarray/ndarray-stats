@@ -24,9 +24,6 @@ impl<A: Ord> Histogram<A> {
     ///
     /// # Example:
     /// ```
-    /// extern crate ndarray_stats;
-    /// extern crate ndarray;
-    /// extern crate noisy_float;
     /// use ndarray::array;
     /// use ndarray_stats::histogram::{Edges, Bins, Histogram, Grid};
     /// use noisy_float::types::n64;
@@ -70,7 +67,7 @@ impl<A: Ord> Histogram<A> {
     }
 
     /// Borrows a view on the histogram counts matrix.
-    pub fn counts(&self) -> ArrayViewD<usize> {
+    pub fn counts(&self) -> ArrayViewD<'_, usize> {
         self.counts.view()
     }
 
@@ -103,10 +100,7 @@ where
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// #[macro_use(array)]
-    /// extern crate ndarray;
-    /// extern crate noisy_float;
+    /// use ndarray::array;
     /// use ndarray_stats::{
     ///     HistogramExt,
     ///     histogram::{
@@ -116,7 +110,6 @@ where
     /// };
     /// use noisy_float::types::{N64, n64};
     ///
-    /// # fn main() {
     /// let observations = array![
     ///     [n64(1.), n64(0.5)],
     ///     [n64(-0.5), n64(1.)],
@@ -142,7 +135,6 @@ where
     ///     [0, 1, 0],
     /// ];
     /// assert_eq!(histogram_matrix, expected.into_dyn());
-    /// # }
     /// ```
     fn histogram(&self, grid: Grid<A>) -> Histogram<A>
     where

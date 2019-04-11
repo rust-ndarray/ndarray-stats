@@ -9,8 +9,6 @@ use std::ops::{Index, Range};
 /// # Example:
 ///
 /// ```
-/// extern crate ndarray_stats;
-/// extern crate noisy_float;
 /// use ndarray_stats::histogram::{Edges, Bins};
 /// use noisy_float::types::n64;
 ///
@@ -41,19 +39,15 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// #[macro_use(array)]
-    /// extern crate ndarray;
+    /// use ndarray::array;
     /// use ndarray_stats::histogram::Edges;
     ///
-    /// # fn main() {
     /// let edges = Edges::from(array![1, 15, 10, 10, 20]);
     /// // The array gets sorted!
     /// assert_eq!(
     ///     edges[2],
     ///     15
     /// );
-    /// # }
     /// ```
     fn from(mut edges: Vec<A>) -> Self {
         // sort the array in-place
@@ -72,7 +66,6 @@ impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::Edges;
     ///
     /// let edges = Edges::from(vec![1, 15, 10, 20]);
@@ -98,7 +91,6 @@ impl<A: Ord> Index<usize> for Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::Edges;
     ///
     /// let edges = Edges::from(vec![1, 5, 10, 20]);
@@ -118,8 +110,6 @@ impl<A: Ord> Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// extern crate noisy_float;
     /// use ndarray_stats::histogram::Edges;
     /// use noisy_float::types::n64;
     ///
@@ -139,8 +129,6 @@ impl<A: Ord> Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
     /// use ndarray::array;
     /// use ndarray_stats::histogram::Edges;
     ///
@@ -150,7 +138,7 @@ impl<A: Ord> Edges<A> {
     ///     array![0, 3, 5].view()
     /// );
     /// ```
-    pub fn as_array_view(&self) -> ArrayView1<A> {
+    pub fn as_array_view(&self) -> ArrayView1<'_, A> {
         ArrayView1::from(&self.edges)
     }
 
@@ -162,7 +150,6 @@ impl<A: Ord> Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::Edges;
     ///
     /// let edges = Edges::from(vec![0, 2, 3]);
@@ -202,8 +189,6 @@ impl<A: Ord> Edges<A> {
 /// # Example:
 ///
 /// ```
-/// extern crate ndarray_stats;
-/// extern crate noisy_float;
 /// use ndarray_stats::histogram::{Edges, Bins};
 /// use noisy_float::types::n64;
 ///
@@ -238,8 +223,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// extern crate noisy_float;
     /// use ndarray_stats::histogram::{Edges, Bins};
     /// use noisy_float::types::n64;
     ///
@@ -264,7 +247,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::{Edges, Bins};
     ///
     /// let edges = Edges::from(vec![0, 2, 4, 6]);
@@ -291,7 +273,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::{Edges, Bins};
     ///
     /// let edges = Edges::from(vec![0, 2, 4, 6]);
@@ -323,7 +304,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::{Edges, Bins};
     ///
     /// let edges = Edges::from(vec![1, 5, 10, 20]);

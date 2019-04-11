@@ -29,9 +29,6 @@ where
     /// # Example
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
-    ///
     /// use ndarray::array;
     /// use ndarray_stats::QuantileExt;
     ///
@@ -55,9 +52,6 @@ where
     /// # Example
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
-    ///
     /// use ndarray::array;
     /// use ndarray_stats::QuantileExt;
     ///
@@ -114,9 +108,6 @@ where
     /// # Example
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
-    ///
     /// use ndarray::array;
     /// use ndarray_stats::QuantileExt;
     ///
@@ -140,9 +131,6 @@ where
     /// # Example
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
-    ///
     /// use ndarray::array;
     /// use ndarray_stats::QuantileExt;
     ///
@@ -249,15 +237,10 @@ where
     /// # Example
     ///
     /// ```rust
-    /// # extern crate ndarray;
-    /// # extern crate ndarray_stats;
-    /// # extern crate noisy_float;
-    /// #
     /// use ndarray::{array, aview1, Axis};
     /// use ndarray_stats::{QuantileExt, interpolate::Nearest};
     /// use noisy_float::types::n64;
     ///
-    /// # fn main() {
     /// let mut data = array![[3, 4, 5], [6, 7, 8]];
     /// let axis = Axis(1);
     /// let qs = &[n64(0.3), n64(0.7)];
@@ -265,7 +248,6 @@ where
     /// for (&q, quantile) in qs.iter().zip(quantiles.axis_iter(axis)) {
     ///     assert_eq!(quantile, data.quantile_axis_mut(axis, q, &Nearest).unwrap());
     /// }
-    /// # }
     /// ```
     fn quantiles_axis_mut<S2, I>(
         &mut self,
@@ -451,9 +433,9 @@ where
     {
         // Minimize number of type parameters to avoid monomorphization bloat.
         fn quantiles_axis_mut<A, D, I>(
-            mut data: ArrayViewMut<A, D>,
+            mut data: ArrayViewMut<'_, A, D>,
             axis: Axis,
-            qs: ArrayView1<N64>,
+            qs: ArrayView1<'_, N64>,
             _interpolate: &I,
         ) -> Result<Array<A, D>, QuantileError>
         where

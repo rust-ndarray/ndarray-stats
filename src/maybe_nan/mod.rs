@@ -36,13 +36,13 @@ pub trait MaybeNan: Sized {
     /// order of the elements is unspecified. However, this method is
     /// idempotent, and given the same input data, the result is always ordered
     /// the same way.
-    fn remove_nan_mut(_: ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan>;
+    fn remove_nan_mut(_: ArrayViewMut1<'_, Self>) -> ArrayViewMut1<'_, Self::NotNan>;
 }
 
 /// Returns a view with the NaN values removed.
 ///
 /// This modifies the input view by moving elements as necessary.
-fn remove_nan_mut<A: MaybeNan>(mut view: ArrayViewMut1<A>) -> ArrayViewMut1<A> {
+fn remove_nan_mut<A: MaybeNan>(mut view: ArrayViewMut1<'_, A>) -> ArrayViewMut1<'_, A> {
     if view.len() == 0 {
         return view.slice_move(s![..0]);
     }
@@ -100,7 +100,7 @@ macro_rules! impl_maybenan_for_fxx {
                 }
             }
 
-            fn remove_nan_mut(view: ArrayViewMut1<$fxx>) -> ArrayViewMut1<$Nxx> {
+            fn remove_nan_mut(view: ArrayViewMut1<'_, $fxx>) -> ArrayViewMut1<'_, $Nxx> {
                 let not_nan = remove_nan_mut(view);
                 // This is safe because `remove_nan_mut` has removed the NaN
                 // values, and `$Nxx` is a thin wrapper around `$fxx`.
@@ -150,7 +150,7 @@ macro_rules! impl_maybenan_for_opt_never_nan {
                 }
             }
 
-            fn remove_nan_mut(view: ArrayViewMut1<Self>) -> ArrayViewMut1<Self::NotNan> {
+            fn remove_nan_mut(view: ArrayViewMut1<'_, Self>) -> ArrayViewMut1<'_, Self::NotNan> {
                 let not_nan = remove_nan_mut(view);
                 // This is safe because `remove_nan_mut` has removed the `None`
                 // values, and `NotNone<$ty>` is a thin wrapper around `Option<$ty>`.

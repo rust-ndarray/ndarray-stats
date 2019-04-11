@@ -25,21 +25,6 @@
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy-1.14.1/reference/routines.statistics.html
 //! [`StatsBase.jl`]: https://juliastats.github.io/StatsBase.jl/latest/
 
-extern crate indexmap;
-extern crate itertools;
-extern crate ndarray;
-extern crate noisy_float;
-extern crate num_integer;
-extern crate num_traits;
-extern crate rand;
-
-#[cfg(test)]
-extern crate approx;
-#[cfg(test)]
-extern crate ndarray_rand;
-#[cfg(test)]
-extern crate quickcheck;
-
 pub use crate::correlation::CorrelationExt;
 pub use crate::entropy::EntropyExt;
 pub use crate::histogram::HistogramExt;

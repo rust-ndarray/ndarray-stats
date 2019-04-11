@@ -1,8 +1,3 @@
-extern crate ndarray;
-extern crate ndarray_stats;
-extern crate quickcheck;
-extern crate quickcheck_macros;
-
 use ndarray::prelude::*;
 use ndarray_stats::Sort1dExt;
 use quickcheck_macros::quickcheck;
