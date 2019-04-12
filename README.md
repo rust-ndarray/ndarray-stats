@@ -52,7 +52,7 @@ ndarray-stats = "0.2"
   * Fixes:
     * Reduced occurrences of overflow for `interpolate::midpoint`
   * Improvements:
-    * Redesigned error handling across the whole crate (standardise on `Result` with `ErrorKind` where needed)
+    * Redesigned error handling across the whole crate, standardising on `Result`
 
   *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
 
