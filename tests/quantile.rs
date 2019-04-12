@@ -54,7 +54,7 @@ fn argmin_skipnan_matches_min_skipnan(data: Vec<Option<i32>>) -> bool {
     let min = a.min_skipnan();
     let argmin = a.argmin_skipnan();
     if min.is_none() {
-        argmin == Err(MinMaxError::EmptyInput)
+        argmin == Err(EmptyInput)
     } else {
         a[argmin.unwrap()] == *min
     }
@@ -135,7 +135,7 @@ fn argmax_skipnan_matches_max_skipnan(data: Vec<Option<i32>>) -> bool {
     let max = a.max_skipnan();
     let argmax = a.argmax_skipnan();
     if max.is_none() {
-        argmax == Err(MinMaxError::EmptyInput)
+        argmax == Err(EmptyInput)
     } else {
         a[argmax.unwrap()] == *max
     }
