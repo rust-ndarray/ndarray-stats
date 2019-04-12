@@ -48,6 +48,39 @@ pub use quantile::{interpolate, Quantile1dExt, QuantileExt};
 pub use sort::Sort1dExt;
 pub use summary_statistics::SummaryStatisticsExt;
 
+#[macro_use]
+mod private {
+    /// This is a public type in a private module, so it can be included in
+    /// public APIs, but other crates can't access it.
+    pub struct PrivateMarker;
+
+    /// Defines an associated function for a trait that is impossible for other
+    /// crates to implement. This makes it possible to add new associated
+    /// types/functions/consts/etc. to the trait without breaking changes.
+    macro_rules! private_decl {
+        () => {
+            /// This method makes this trait impossible to implement outside of
+            /// `ndarray-stats` so that we can freely add new methods, etc., to
+            /// this trait without breaking changes.
+            ///
+            /// We don't anticipate any other crates needing to implement this
+            /// trait, but if you do have such a use-case, please let us know.
+            ///
+            /// **Warning** This method is not considered part of the public
+            /// API, and client code should not rely on it being present. It
+            /// may be removed in a non-breaking release.
+            fn __private__(&self, _: crate::private::PrivateMarker);
+        };
+    }
+
+    /// Implements the associated function defined by `private_decl!`.
+    macro_rules! private_impl {
+        () => {
+            fn __private__(&self, _: crate::private::PrivateMarker) {}
+        };
+    }
+}
+
 mod correlation;
 mod entropy;
 pub mod errors;

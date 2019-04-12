@@ -103,6 +103,8 @@ where
     where
         A: Ord + Clone,
         S: DataMut;
+
+    private_decl! {}
 }
 
 impl<A, S> Sort1dExt<A, S> for ArrayBase<S, Ix1>
@@ -183,6 +185,8 @@ where
         self.swap(0, i - 1);
         i - 1
     }
+
+    private_impl! {}
 }
 
 /// To retrieve multiple indexes from the sorted array in an optimized fashion,

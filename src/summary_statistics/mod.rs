@@ -140,6 +140,8 @@ where
     fn central_moments(&self, order: u16) -> Result<Vec<A>, EmptyInput>
     where
         A: Float + FromPrimitive;
+
+    private_decl! {}
 }
 
 mod means;
