@@ -115,6 +115,8 @@ where
     fn pearson_correlation(&self) -> Array2<A>
     where
         A: Float + FromPrimitive;
+
+    private_decl! {}
 }
 
 impl<A: 'static, S> CorrelationExt<A, S> for ArrayBase<S, Ix2>
@@ -160,6 +162,8 @@ where
         // element-wise division
         cov / std_matrix
     }
+
+    private_impl! {}
 }
 
 #[cfg(test)]

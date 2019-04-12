@@ -2,7 +2,7 @@ use itertools::izip;
 use ndarray::array;
 use ndarray::prelude::*;
 use ndarray_stats::{
-    errors::{MinMaxError, QuantileError},
+    errors::{EmptyInput, MinMaxError, QuantileError},
     interpolate::{Higher, Interpolate, Linear, Lower, Midpoint, Nearest},
     Quantile1dExt, QuantileExt,
 };
@@ -42,10 +42,10 @@ fn test_argmin_skipnan() {
     assert_eq!(a.argmin_skipnan(), Ok((1, 0)));
 
     let a: Array2<f64> = array![[], []];
-    assert_eq!(a.argmin_skipnan(), Err(MinMaxError::EmptyInput));
+    assert_eq!(a.argmin_skipnan(), Err(EmptyInput));
 
     let a = arr2(&[[::std::f64::NAN; 2]; 2]);
-    assert_eq!(a.argmin_skipnan(), Err(MinMaxError::EmptyInput));
+    assert_eq!(a.argmin_skipnan(), Err(EmptyInput));
 }
 
 #[quickcheck]
@@ -123,10 +123,10 @@ fn test_argmax_skipnan() {
     assert_eq!(a.argmax_skipnan(), Ok((1, 2)));
 
     let a: Array2<f64> = array![[], []];
-    assert_eq!(a.argmax_skipnan(), Err(MinMaxError::EmptyInput));
+    assert_eq!(a.argmax_skipnan(), Err(EmptyInput));
 
     let a = arr2(&[[::std::f64::NAN; 2]; 2]);
-    assert_eq!(a.argmax_skipnan(), Err(MinMaxError::EmptyInput));
+    assert_eq!(a.argmax_skipnan(), Err(EmptyInput));
 }
 
 #[quickcheck]

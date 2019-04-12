@@ -289,6 +289,8 @@ where
         S: DataMut,
         D: RemoveAxis,
         F: FnMut(ArrayViewMut1<'a, A::NotNan>) -> B;
+
+    private_decl! {}
 }
 
 impl<A, S, D> MaybeNanExt<A, S, D> for ArrayBase<S, D>
@@ -365,6 +367,8 @@ where
     {
         self.map_axis_mut(axis, |lane| mapping(A::remove_nan_mut(lane)))
     }
+
+    private_impl! {}
 }
 
 #[cfg(test)]

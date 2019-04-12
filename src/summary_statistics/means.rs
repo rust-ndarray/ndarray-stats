@@ -105,6 +105,8 @@ where
             }
         }
     }
+
+    private_impl! {}
 }
 
 /// Returns a vector containing all moments of the array elements up to
