@@ -54,6 +54,7 @@ ndarray-stats = "0.2"
   * Improvements:
     * Redesigned error handling across the whole crate, standardising on `Result`
 
+  All `ndarray-stats`' extension traits are now impossible to implement by users of the library (see [issue](https://github.com/jturner314/ndarray-stats/issues/34))
   *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
 
 * **0.1.0**
