@@ -51,11 +51,14 @@ ndarray-stats = "0.2"
       * Optimized bulk quantile computation (`quantiles_mut`, `quantiles_axis_mut`)
   * Fixes:
     * Reduced occurrences of overflow for `interpolate::midpoint`
-  * Improvements:
+  * Improvements / breaking changes:
     * Redesigned error handling across the whole crate, standardising on `Result`
+    * All `ndarray-stats`' extension traits are now impossible to implement by
+      users of the library (see [#34])
 
-  All `ndarray-stats`' extension traits are now impossible to implement by users of the library (see [issue](https://github.com/jturner314/ndarray-stats/issues/34))
   *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
+
+  [#34]: https://github.com/jturner314/ndarray-stats/issues/34
 
 * **0.1.0**
 
