@@ -49,8 +49,6 @@ where
     /// # Example
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
     /// use ndarray::{aview2, arr2};
     /// use ndarray_stats::CorrelationExt;
     ///
@@ -98,8 +96,6 @@ where
     ///
     /// variables is zero and division by zero panics for type A.
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
     /// use ndarray::arr2;
     /// use ndarray_stats::CorrelationExt;
     ///
@@ -175,31 +171,31 @@ mod cov_tests {
     use super::*;
     use ndarray::array;
     use ndarray_rand::RandomExt;
-    use quickcheck::quickcheck;
+    use quickcheck_macros::quickcheck;
     use rand;
     use rand::distributions::Uniform;
 
-    quickcheck! {
-        fn constant_random_variables_have_zero_covariance_matrix(value: f64) -> bool {
-            let n_random_variables = 3;
-            let n_observations = 4;
-            let a = Array::from_elem((n_random_variables, n_observations), value);
-            a.cov(1.).all_close(
-                &Array::zeros((n_random_variables, n_random_variables)),
-                1e-8
-            )
-        }
+    #[quickcheck]
+    fn constant_random_variables_have_zero_covariance_matrix(value: f64) -> bool {
+        let n_random_variables = 3;
+        let n_observations = 4;
+        let a = Array::from_elem((n_random_variables, n_observations), value);
+        a.cov(1.).all_close(
+            &Array::zeros((n_random_variables, n_random_variables)),
+            1e-8,
+        )
+    }
 
-        fn covariance_matrix_is_symmetric(bound: f64) -> bool {
-            let n_random_variables = 3;
-            let n_observations = 4;
-            let a = Array::random(
-                (n_random_variables, n_observations),
-                Uniform::new(-bound.abs(), bound.abs())
-            );
-            let covariance = a.cov(1.);
-            covariance.all_close(&covariance.t(), 1e-8)
-        }
+    #[quickcheck]
+    fn covariance_matrix_is_symmetric(bound: f64) -> bool {
+        let n_random_variables = 3;
+        let n_observations = 4;
+        let a = Array::random(
+            (n_random_variables, n_observations),
+            Uniform::new(-bound.abs(), bound.abs()),
+        );
+        let covariance = a.cov(1.);
+        covariance.all_close(&covariance.t(), 1e-8)
     }
 
     #[test]
@@ -277,28 +273,31 @@ mod pearson_correlation_tests {
     use super::*;
     use ndarray::array;
     use ndarray_rand::RandomExt;
-    use quickcheck::quickcheck;
+    use quickcheck_macros::quickcheck;
     use rand::distributions::Uniform;
 
-    quickcheck! {
-        fn output_matrix_is_symmetric(bound: f64) -> bool {
-            let n_random_variables = 3;
-            let n_observations = 4;
-            let a = Array::random(
-                (n_random_variables, n_observations),
-                Uniform::new(-bound.abs(), bound.abs())
-            );
-            let pearson_correlation = a.pearson_correlation();
-            pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
-        }
+    #[quickcheck]
+    fn output_matrix_is_symmetric(bound: f64) -> bool {
+        let n_random_variables = 3;
+        let n_observations = 4;
+        let a = Array::random(
+            (n_random_variables, n_observations),
+            Uniform::new(-bound.abs(), bound.abs()),
+        );
+        let pearson_correlation = a.pearson_correlation();
+        pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
+    }
 
-        fn constant_random_variables_have_nan_correlation(value: f64) -> bool {
-            let n_random_variables = 3;
-            let n_observations = 4;
-            let a = Array::from_elem((n_random_variables, n_observations), value);
-            let pearson_correlation = a.pearson_correlation();
-            pearson_correlation.iter().map(|x| x.is_nan()).fold(true, |acc, flag| acc & flag)
-        }
+    #[quickcheck]
+    fn constant_random_variables_have_nan_correlation(value: f64) -> bool {
+        let n_random_variables = 3;
+        let n_observations = 4;
+        let a = Array::from_elem((n_random_variables, n_observations), value);
+        let pearson_correlation = a.pearson_correlation();
+        pearson_correlation
+            .iter()
+            .map(|x| x.is_nan())
+            .fold(true, |acc, flag| acc & flag)
     }
 
     #[test]

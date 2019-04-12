@@ -7,7 +7,7 @@ use std::fmt;
 pub struct BinNotFound;
 
 impl fmt::Display for BinNotFound {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "No bin has been found.")
     }
 }
@@ -48,7 +48,7 @@ impl BinsBuildError {
 }
 
 impl fmt::Display for BinsBuildError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "The strategy failed to determine a non-zero bin width.")
     }
 }

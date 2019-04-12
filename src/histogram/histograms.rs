@@ -24,14 +24,10 @@ impl<A: Ord> Histogram<A> {
     ///
     /// # Example:
     /// ```
-    /// extern crate ndarray_stats;
-    /// extern crate ndarray;
-    /// extern crate noisy_float;
     /// use ndarray::array;
     /// use ndarray_stats::histogram::{Edges, Bins, Histogram, Grid};
     /// use noisy_float::types::n64;
     ///
-    /// # fn main() -> Result<(), Box<std::error::Error>> {
     /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
     /// let bins = Bins::new(edges);
     /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
@@ -47,8 +43,7 @@ impl<A: Ord> Histogram<A> {
     ///     [0, 1],
     /// ];
     /// assert_eq!(histogram_matrix, expected.into_dyn());
-    /// # Ok(())
-    /// # }
+    /// # Ok::<(), Box<std::error::Error>>(())
     /// ```
     pub fn add_observation<S>(&mut self, observation: &ArrayBase<S, Ix1>) -> Result<(), BinNotFound>
     where
@@ -70,7 +65,7 @@ impl<A: Ord> Histogram<A> {
     }
 
     /// Borrows a view on the histogram counts matrix.
-    pub fn counts(&self) -> ArrayViewD<usize> {
+    pub fn counts(&self) -> ArrayViewD<'_, usize> {
         self.counts.view()
     }
 
@@ -103,10 +98,7 @@ where
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// #[macro_use(array)]
-    /// extern crate ndarray;
-    /// extern crate noisy_float;
+    /// use ndarray::array;
     /// use ndarray_stats::{
     ///     HistogramExt,
     ///     histogram::{
@@ -116,7 +108,6 @@ where
     /// };
     /// use noisy_float::types::{N64, n64};
     ///
-    /// # fn main() {
     /// let observations = array![
     ///     [n64(1.), n64(0.5)],
     ///     [n64(-0.5), n64(1.)],
@@ -142,7 +133,6 @@ where
     ///     [0, 1, 0],
     /// ];
     /// assert_eq!(histogram_matrix, expected.into_dyn());
-    /// # }
     /// ```
     fn histogram(&self, grid: Grid<A>) -> Histogram<A>
     where

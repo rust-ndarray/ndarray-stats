@@ -9,8 +9,6 @@ use std::ops::{Index, Range};
 /// # Example:
 ///
 /// ```
-/// extern crate ndarray_stats;
-/// extern crate noisy_float;
 /// use ndarray_stats::histogram::{Edges, Bins};
 /// use noisy_float::types::n64;
 ///
@@ -41,19 +39,15 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// #[macro_use(array)]
-    /// extern crate ndarray;
+    /// use ndarray::array;
     /// use ndarray_stats::histogram::Edges;
     ///
-    /// # fn main() {
     /// let edges = Edges::from(array![1, 15, 10, 10, 20]);
     /// // The array gets sorted!
     /// assert_eq!(
     ///     edges[2],
     ///     15
     /// );
-    /// # }
     /// ```
     fn from(mut edges: Vec<A>) -> Self {
         // sort the array in-place
@@ -72,7 +66,6 @@ impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::Edges;
     ///
     /// let edges = Edges::from(vec![1, 15, 10, 20]);
@@ -98,7 +91,6 @@ impl<A: Ord> Index<usize> for Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::Edges;
     ///
     /// let edges = Edges::from(vec![1, 5, 10, 20]);
@@ -118,8 +110,6 @@ impl<A: Ord> Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// extern crate noisy_float;
     /// use ndarray_stats::histogram::Edges;
     /// use noisy_float::types::n64;
     ///
@@ -139,8 +129,6 @@ impl<A: Ord> Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
     /// use ndarray::array;
     /// use ndarray_stats::histogram::Edges;
     ///
@@ -150,7 +138,7 @@ impl<A: Ord> Edges<A> {
     ///     array![0, 3, 5].view()
     /// );
     /// ```
-    pub fn as_array_view(&self) -> ArrayView1<A> {
+    pub fn as_array_view(&self) -> ArrayView1<'_, A> {
         ArrayView1::from(&self.edges)
     }
 
@@ -162,7 +150,6 @@ impl<A: Ord> Edges<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::Edges;
     ///
     /// let edges = Edges::from(vec![0, 2, 3]);
@@ -202,8 +189,6 @@ impl<A: Ord> Edges<A> {
 /// # Example:
 ///
 /// ```
-/// extern crate ndarray_stats;
-/// extern crate noisy_float;
 /// use ndarray_stats::histogram::{Edges, Bins};
 /// use noisy_float::types::n64;
 ///
@@ -238,8 +223,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
-    /// extern crate noisy_float;
     /// use ndarray_stats::histogram::{Edges, Bins};
     /// use noisy_float::types::n64;
     ///
@@ -264,7 +247,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::{Edges, Bins};
     ///
     /// let edges = Edges::from(vec![0, 2, 4, 6]);
@@ -291,7 +273,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::{Edges, Bins};
     ///
     /// let edges = Edges::from(vec![0, 2, 4, 6]);
@@ -323,7 +304,6 @@ impl<A: Ord> Bins<A> {
     /// # Example:
     ///
     /// ```
-    /// extern crate ndarray_stats;
     /// use ndarray_stats::histogram::{Edges, Bins};
     ///
     /// let edges = Edges::from(vec![1, 5, 10, 20]);
@@ -351,68 +331,71 @@ impl<A: Ord> Bins<A> {
 #[cfg(test)]
 mod edges_tests {
     use super::*;
-    use quickcheck::quickcheck;
+    use quickcheck_macros::quickcheck;
     use std::collections::BTreeSet;
     use std::iter::FromIterator;
 
-    quickcheck! {
-        fn check_sorted_from_vec(v: Vec<i32>) -> bool {
-            let edges = Edges::from(v);
-            let n = edges.len();
-            for i in 1..n {
-                if edges[i-1] > edges[i] {
-                    return false;
-                }
+    #[quickcheck]
+    fn check_sorted_from_vec(v: Vec<i32>) -> bool {
+        let edges = Edges::from(v);
+        let n = edges.len();
+        for i in 1..n {
+            if edges[i - 1] > edges[i] {
+                return false;
             }
+        }
+        true
+    }
+
+    #[quickcheck]
+    fn check_sorted_from_array(v: Vec<i32>) -> bool {
+        let a = Array1::from_vec(v);
+        let edges = Edges::from(a);
+        let n = edges.len();
+        for i in 1..n {
+            if edges[i - 1] > edges[i] {
+                return false;
+            }
+        }
+        true
+    }
+
+    #[quickcheck]
+    fn edges_are_right_exclusive(v: Vec<i32>) -> bool {
+        let edges = Edges::from(v);
+        let view = edges.as_array_view();
+        if view.len() == 0 {
             true
+        } else {
+            let last = view[view.len() - 1];
+            edges.indices_of(&last).is_none()
         }
+    }
 
-        fn check_sorted_from_array(v: Vec<i32>) -> bool {
-            let a = Array1::from_vec(v);
-            let edges = Edges::from(a);
-            let n = edges.len();
-            for i in 1..n {
-                if edges[i-1] > edges[i] {
-                    return false;
-                }
-            }
-            true
-        }
-
-        fn edges_are_right_exclusive(v: Vec<i32>) -> bool {
-            let edges = Edges::from(v);
-            let view = edges.as_array_view();
-            if view.len() == 0 {
-                true
-            } else {
-                let last = view[view.len()-1];
-                edges.indices_of(&last).is_none()
-            }
-        }
-
-        fn edges_are_left_inclusive(v: Vec<i32>) -> bool {
-            let edges = Edges::from(v);
-            match edges.len() {
-                1 => true,
-                _ => {
-                    let view = edges.as_array_view();
-                    if view.len() == 0 {
-                        true
-                    } else {
-                        let first = view[0];
-                        edges.indices_of(&first).is_some()
-                    }
+    #[quickcheck]
+    fn edges_are_left_inclusive(v: Vec<i32>) -> bool {
+        let edges = Edges::from(v);
+        match edges.len() {
+            1 => true,
+            _ => {
+                let view = edges.as_array_view();
+                if view.len() == 0 {
+                    true
+                } else {
+                    let first = view[0];
+                    edges.indices_of(&first).is_some()
                 }
             }
         }
+    }
 
-        fn edges_are_deduped(v: Vec<i32>) -> bool {
-            let unique_elements = BTreeSet::from_iter(v.iter());
-            let edges = Edges::from(v.clone());
-            let view = edges.as_array_view();
-            let unique_edges = BTreeSet::from_iter(view.iter());
-            unique_edges == unique_elements
-        }
+    #[quickcheck]
+    fn edges_are_deduped(v: Vec<i32>) -> bool {
+        let unique_elements = BTreeSet::from_iter(v.iter());
+        let edges = Edges::from(v.clone());
+        let view = edges.as_array_view();
+        let unique_edges = BTreeSet::from_iter(view.iter());
+        unique_edges == unique_elements
     }
 }
 

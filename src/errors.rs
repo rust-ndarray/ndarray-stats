@@ -8,7 +8,7 @@ use std::fmt;
 pub struct EmptyInput;
 
 impl fmt::Display for EmptyInput {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Empty input.")
     }
 }
@@ -25,7 +25,7 @@ pub enum MinMaxError {
 }
 
 impl fmt::Display for MinMaxError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MinMaxError::EmptyInput => write!(f, "Empty input."),
             MinMaxError::UndefinedOrder => {
@@ -53,7 +53,7 @@ pub struct ShapeMismatch {
 }
 
 impl fmt::Display for ShapeMismatch {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
             "Array shapes do not match: {:?} and {:?}.",
@@ -92,7 +92,7 @@ impl MultiInputError {
 }
 
 impl fmt::Display for MultiInputError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MultiInputError::EmptyInput => write!(f, "Empty input."),
             MultiInputError::ShapeMismatch(e) => write!(f, "Shape mismatch: {}", e),
@@ -124,7 +124,7 @@ pub enum QuantileError {
 }
 
 impl fmt::Display for QuantileError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             QuantileError::EmptyInput => write!(f, "Empty input."),
             QuantileError::InvalidQuantile(q) => {

@@ -24,7 +24,7 @@ impl<T> DerefMut for NotNone<T> {
 }
 
 impl<T: fmt::Display> fmt::Display for NotNone<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         self.deref().fmt(f)
     }
 }

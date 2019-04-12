@@ -37,16 +37,12 @@ use std::ops::Range;
 /// # Example:
 ///
 /// ```
-/// extern crate ndarray_stats;
-/// extern crate ndarray;
-/// extern crate noisy_float;
 /// use ndarray::{Array, array};
 /// use ndarray_stats::{HistogramExt,
 ///                     histogram::{Histogram, Grid, GridBuilder,
 ///                                 Edges, Bins, strategies::Auto}};
 /// use noisy_float::types::{N64, n64};
 ///
-/// # fn main() {
 /// // 1-dimensional observations, as a (n_observations, 1) 2-d matrix
 /// let observations = Array::from_shape_vec(
 ///     (12, 1),
@@ -65,7 +61,6 @@ use std::ops::Range;
 /// // Bins are left inclusive, right exclusive!
 /// let expected = array![4, 3, 3, 1, 0, 1];
 /// assert_eq!(histogram_matrix, expected.into_dyn());
-/// # }
 /// ```
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Grid<A: Ord> {

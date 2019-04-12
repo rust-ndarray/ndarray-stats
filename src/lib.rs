@@ -25,28 +25,13 @@
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy-1.14.1/reference/routines.statistics.html
 //! [`StatsBase.jl`]: https://juliastats.github.io/StatsBase.jl/latest/
 
-extern crate indexmap;
-extern crate itertools;
-extern crate ndarray;
-extern crate noisy_float;
-extern crate num_integer;
-extern crate num_traits;
-extern crate rand;
-
-#[cfg(test)]
-extern crate approx;
-#[cfg(test)]
-extern crate ndarray_rand;
-#[cfg(test)]
-extern crate quickcheck;
-
-pub use correlation::CorrelationExt;
-pub use entropy::EntropyExt;
-pub use histogram::HistogramExt;
-pub use maybe_nan::{MaybeNan, MaybeNanExt};
-pub use quantile::{interpolate, Quantile1dExt, QuantileExt};
-pub use sort::Sort1dExt;
-pub use summary_statistics::SummaryStatisticsExt;
+pub use crate::correlation::CorrelationExt;
+pub use crate::entropy::EntropyExt;
+pub use crate::histogram::HistogramExt;
+pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
+pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
+pub use crate::sort::Sort1dExt;
+pub use crate::summary_statistics::SummaryStatisticsExt;
 
 #[macro_use]
 mod private {

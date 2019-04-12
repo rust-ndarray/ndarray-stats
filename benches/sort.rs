@@ -1,8 +1,3 @@
-extern crate criterion;
-extern crate ndarray;
-extern crate ndarray_stats;
-extern crate rand;
-
 use criterion::{
     black_box, criterion_group, criterion_main, AxisScale, BatchSize, Criterion,
     ParameterizedBenchmark, PlotConfiguration,

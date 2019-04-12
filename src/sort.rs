@@ -74,13 +74,9 @@ where
     /// # Example
     ///
     /// ```
-    /// extern crate ndarray;
-    /// extern crate ndarray_stats;
-    ///
     /// use ndarray::array;
     /// use ndarray_stats::Sort1dExt;
     ///
-    /// # fn main() {
     /// let mut data = array![3, 1, 4, 5, 2];
     /// let pivot_index = 2;
     /// let pivot_value = data[pivot_index];
@@ -97,7 +93,6 @@ where
     /// for i in (new_index + 1)..data.len() {
     ///      assert!(data[i] >= pivot_value);
     /// }
-    /// # }
     /// ```
     fn partition_mut(&mut self, pivot_index: usize) -> usize
     where
@@ -230,7 +225,7 @@ where
 /// `values` is a pre-allocated slice to use for writing the output. Its
 /// initial element values are ignored.
 fn _get_many_from_sorted_mut_unchecked<A>(
-    mut array: ArrayViewMut1<A>,
+    mut array: ArrayViewMut1<'_, A>,
     indexes: &mut [usize],
     values: &mut [A],
 ) where
