@@ -6,23 +6,59 @@
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
 [![Documentation](https://docs.rs/ndarray-stats/badge.svg)](https://docs.rs/ndarray-stats)
 
-This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type. See
-the [documentation](https://docs.rs/ndarray-stats) for more information.
+This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type.
 
-[`ndarray`]: https://github.com/bluss/ndarray
+Currently available routines include:
+- order statistics (minimum, maximum, median, quantiles, etc.);
+- summary statistics (mean, skewness, kurtosis, central moments, etc.)
+- partitioning;
+- correlation analysis (covariance, pearson correlation);
+- measures from information theory (entropy, KL divergence, etc.);
+- histogram computation.
 
-Only some statistical routines are implemented. Please feel free to contribute
-new functionality!
+See the [documentation](https://docs.rs/ndarray-stats) for more information.
+
+Please feel free to contribute new functionality! A roadmap can be found [here](https://github.com/jturner314/ndarray-stats/issues/1).
+
+[`ndarray`]: https://github.com/rust-ndarray/ndarray
 
 ## Using with Cargo
 
 ```toml
 [dependencies]
 ndarray = "0.12.1"
-ndarray-stats = "0.1"
+ndarray-stats = "0.2"
 ```
 
 ## Releases
+
+* **0.2.0**
+
+  * New functionality:
+    * Summary statistics:
+      * Harmonic mean
+      * Geometric mean
+      * Central moments
+      * Kurtosis
+      * Skewness
+    * Information theory:
+      * Entropy
+      * Cross-entropy
+      * Kullback-Leibler divergence
+    * Quantiles and order statistics:
+      * `argmin` / `argmin_skipnan`
+      * `argmax` / `argmax_skipnan`
+      * Optimized bulk quantile computation (`quantiles_mut`, `quantiles_axis_mut`)
+  * Fixes:
+    * Reduced occurrences of overflow for `interpolate::midpoint`
+  * Improvements / breaking changes:
+    * Redesigned error handling across the whole crate, standardising on `Result`
+    * All `ndarray-stats`' extension traits are now impossible to implement by
+      users of the library (see [#34])
+
+  *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
+
+  [#34]: https://github.com/jturner314/ndarray-stats/issues/34
 
 * **0.1.0**
 
