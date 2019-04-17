@@ -30,6 +30,7 @@ quickcheck = { version = "0.8.1", default-features = false }
 ndarray-rand = "0.9"
 approx = "0.3"
 quickcheck_macros = "0.8"
+num-bigint = "0.2.2"
 
 [[bench]]
 name = "sort"

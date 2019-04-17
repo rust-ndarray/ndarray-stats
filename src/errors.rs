@@ -46,7 +46,7 @@ impl From<EmptyInput> for MinMaxError {
 /// An error used by methods and functions that take two arrays as argument and
 /// expect them to have exactly the same shape
 /// (e.g. `ShapeMismatch` is raised when `a.shape() == b.shape()` evaluates to `False`).
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ShapeMismatch {
     pub first_shape: Vec<usize>,
     pub second_shape: Vec<usize>,
@@ -65,7 +65,7 @@ impl fmt::Display for ShapeMismatch {
 impl Error for ShapeMismatch {}
 
 /// An error for methods that take multiple non-empty array inputs.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum MultiInputError {
     /// One or more of the arrays were empty.
     EmptyInput,

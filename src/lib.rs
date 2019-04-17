@@ -28,6 +28,7 @@
 //! [`StatsBase.jl`]: https://juliastats.github.io/StatsBase.jl/latest/
 
 pub use crate::correlation::CorrelationExt;
+pub use crate::deviation::DeviationExt;
 pub use crate::entropy::EntropyExt;
 pub use crate::histogram::HistogramExt;
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
@@ -69,6 +70,7 @@ mod private {
 }
 
 mod correlation;
+mod deviation;
 mod entropy;
 pub mod errors;
 pub mod histogram;
