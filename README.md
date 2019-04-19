@@ -5,6 +5,7 @@
 [![Dependencies status](https://deps.rs/repo/github/jturner314/ndarray-stats/status.svg)](https://deps.rs/repo/github/jturner314/ndarray-stats)
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
 [![Documentation](https://docs.rs/ndarray-stats/badge.svg)](https://docs.rs/ndarray-stats)
+[![Chat](https://img.shields.io/badge/chat-%23rust--sci-lightgrey.svg)](https://chat.mibbit.com/?server=irc.mozilla.org&channel=%23rust-sci)
 
 This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type.
 
