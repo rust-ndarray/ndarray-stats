@@ -101,6 +101,24 @@ where
     where
         A: Float + FromPrimitive;
 
+    /// Returns the [standard deviation] σ of all elements in the array:
+    /// ```text
+    ///       _____________
+    ///      / 1  n
+    /// σ = /  ―  ∑ (xᵢ-x̅)²
+    ///    √   n i=1
+    /// ```
+    ///
+    /// If the array is empty, `Err(EmptyInput)` is returned.
+    ///
+    /// **Panics** if `A::from_usize()` fails to convert the number of elements
+    /// in the array or if `order` overflows `i32`.
+    ///
+    /// [standard deviation]: https://en.wikipedia.org/wiki/Standard_deviation
+    fn standard_deviation(&self) -> Result<A, EmptyInput>
+    where
+        A: Float + FromPrimitive;
+
     /// Returns the *p*-th [central moment] of all elements in the array, μₚ:
     ///
     /// ```text

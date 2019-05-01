@@ -54,6 +54,13 @@ where
         Ok(central_moments[3] / central_moments[2].sqrt().powi(3))
     }
 
+    fn standard_deviation(&self) -> Result<A, EmptyInput>
+    where
+        A: Float + FromPrimitive,
+    {
+        Ok(self.central_moment(2)?.sqrt())
+    }
+
     fn central_moment(&self, order: u16) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
@@ -275,6 +282,18 @@ mod tests {
         let bound: f64 = 200.;
         let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()));
         assert_eq!(a.central_moment(1).unwrap(), 0.);
+    }
+
+    #[test]
+    fn test_standard_deviation() {
+        let a: Array1<f64> = array![4.0, 9.0, 11.0, 12.0, 17.0, 5.0, 8.0, 12.0, 14.0];
+        // Computed using numpy.std
+        let expected_std = 3.9377878103709665;
+        assert_abs_diff_eq!(
+            a.standard_deviation().unwrap(),
+            expected_std,
+            epsilon = 1e-12
+        );
     }
 
     #[test]
