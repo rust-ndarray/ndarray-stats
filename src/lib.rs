@@ -15,7 +15,7 @@
 //! [`NumPy`] (Python) and [`StatsBase.jl`] (Julia) - any contribution bringing us closer to
 //! feature parity is more than welcome!
 //!
-//! [`ndarray-stats`]: https://github.com/jturner314/ndarray-stats/
+//! [`ndarray-stats`]: https://github.com/rust-ndarray/ndarray-stats/
 //! [`ndarray`]: https://github.com/rust-ndarray/ndarray
 //! [order statistics]: trait.QuantileExt.html
 //! [partitioning]: trait.Sort1dExt.html
@@ -23,7 +23,7 @@
 //! [correlation analysis]: trait.CorrelationExt.html
 //! [measures from information theory]: trait.EntropyExt.html
 //! [histogram computation]: histogram/index.html
-//! [here]: https://github.com/jturner314/ndarray-stats/issues/1
+//! [here]: https://github.com/rust-ndarray/ndarray-stats/issues/1
 //! [`NumPy`]: https://docs.scipy.org/doc/numpy-1.14.1/reference/routines.statistics.html
 //! [`StatsBase.jl`]: https://juliastats.github.io/StatsBase.jl/latest/
 

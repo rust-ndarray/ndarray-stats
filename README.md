@@ -1,8 +1,8 @@
 # ndarray-stats
 
-[![Build status](https://travis-ci.org/jturner314/ndarray-stats.svg?branch=master)](https://travis-ci.org/jturner314/ndarray-stats)
-[![Coverage](https://codecov.io/gh/jturner314/ndarray-stats/branch/master/graph/badge.svg)](https://codecov.io/gh/jturner314/ndarray-stats)
-[![Dependencies status](https://deps.rs/repo/github/jturner314/ndarray-stats/status.svg)](https://deps.rs/repo/github/jturner314/ndarray-stats)
+[![Build status](https://travis-ci.org/rust-ndarray/ndarray-stats.svg?branch=master)](https://travis-ci.org/rust-ndarray/ndarray-stats)
+[![Coverage](https://codecov.io/gh/rust-ndarray/ndarray-stats/branch/master/graph/badge.svg)](https://codecov.io/gh/rust-ndarray/ndarray-stats)
+[![Dependencies status](https://deps.rs/repo/github/rust-ndarray/ndarray-stats/status.svg)](https://deps.rs/repo/github/rust-ndarray/ndarray-stats)
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
 [![Documentation](https://docs.rs/ndarray-stats/badge.svg)](https://docs.rs/ndarray-stats)
 
@@ -18,7 +18,7 @@ Currently available routines include:
 
 See the [documentation](https://docs.rs/ndarray-stats) for more information.
 
-Please feel free to contribute new functionality! A roadmap can be found [here](https://github.com/jturner314/ndarray-stats/issues/1).
+Please feel free to contribute new functionality! A roadmap can be found [here](https://github.com/rust-ndarray/ndarray-stats/issues/1).
 
 [`ndarray`]: https://github.com/rust-ndarray/ndarray
 
@@ -58,7 +58,7 @@ ndarray-stats = "0.2"
 
   *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
 
-  [#34]: https://github.com/jturner314/ndarray-stats/issues/34
+  [#34]: https://github.com/rust-ndarray/ndarray-stats/issues/34
 
 * **0.1.0**
 
