@@ -30,6 +30,6 @@ script: |
   cargo test
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
-    cargo tarpaulin --out Xml
+    cargo tarpaulin --run-types Tests Doctests --out Xml
     bash <(curl -s https://codecov.io/bash)
   fi
