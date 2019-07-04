@@ -7,6 +7,7 @@
 //! - [partitioning];
 //! - [correlation analysis] (covariance, pearson correlation);
 //! - [measures from information theory] (entropy, KL divergence, etc.);
+//! - [measures of deviation] (count equal, L1, L2 distances, mean squared err etc.)
 //! - [histogram computation].
 //!
 //! Please feel free to contribute new functionality! A roadmap can be found [here].
@@ -21,6 +22,7 @@
 //! [partitioning]: trait.Sort1dExt.html
 //! [summary statistics]: trait.SummaryStatisticsExt.html
 //! [correlation analysis]: trait.CorrelationExt.html
+//! [measures of deviation]: trait.DeviationExt.html
 //! [measures from information theory]: trait.EntropyExt.html
 //! [histogram computation]: histogram/index.html
 //! [here]: https://github.com/rust-ndarray/ndarray-stats/issues/1
