@@ -57,9 +57,9 @@ where
     /// Computes the [L2 distance] between `self` and `other`.
     ///
     /// ```text
-    ///    n
-    /// √  ∑  |aᵢ - bᵢ|²
-    ///   i=1
+    ///      n
+    /// √ (  ∑  |aᵢ - bᵢ|² )
+    ///     i=1
     /// ```
     ///
     /// where `self` is `a` and `other` is `b`.
