@@ -165,9 +165,7 @@ where
     /// √ mse(a, b)
     /// ```
     ///
-    /// where `self` is `a` and `other` is `b`.
-    ///
-    /// where `mse` is the mean-squared-error.
+    /// where `self` is `a`, `other` is `b` and `mse` is the mean-squared-error.
     ///
     /// The following **errors** may be returned:
     ///
