@@ -18,7 +18,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     fn count_eq(&self, other: &ArrayBase<S, D>) -> Result<usize, MultiInputError>
     where
         A: PartialEq;
@@ -29,7 +29,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     fn count_neq(&self, other: &ArrayBase<S, D>) -> Result<usize, MultiInputError>
     where
         A: PartialEq;
@@ -47,7 +47,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// [squared L2 distance]: https://en.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance
     fn sq_l2_dist(&self, other: &ArrayBase<S, D>) -> Result<A, MultiInputError>
@@ -67,7 +67,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
@@ -89,7 +89,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// [L1 distance]: https://en.wikipedia.org/wiki/Taxicab_geometry
     fn l1_dist(&self, other: &ArrayBase<S, D>) -> Result<A, MultiInputError>
@@ -108,7 +108,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// [L∞ distance]: https://en.wikipedia.org/wiki/Chebyshev_distance
     fn linf_dist(&self, other: &ArrayBase<S, D>) -> Result<A, MultiInputError>
@@ -128,7 +128,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
@@ -150,7 +150,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
@@ -172,7 +172,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
@@ -193,7 +193,7 @@ where
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
-    /// * `ShapeMismatch` if `self` and `other` don't have the same shape
+    /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
