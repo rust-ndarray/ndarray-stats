@@ -207,7 +207,7 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.mean(), None);
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
@@ -215,7 +215,7 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
-        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.mean(), None);
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }

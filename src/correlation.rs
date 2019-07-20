@@ -191,9 +191,10 @@ mod cov_tests {
         let n_random_variables = 3;
         let n_observations = 4;
         let a = Array::from_elem((n_random_variables, n_observations), value);
-        a.cov(1.).all_close(
+        abs_diff_eq!(
+            a.cov(1.).unwrap(),
             &Array::zeros((n_random_variables, n_random_variables)),
-            1e-8,
+            epsilon = 1e-8,
         )
     }
 
@@ -205,8 +206,8 @@ mod cov_tests {
             (n_random_variables, n_observations),
             Uniform::new(-bound.abs(), bound.abs()),
         );
-        let covariance = a.cov(1.);
-        covariance.all_close(&covariance.t(), 1e-8)
+        let covariance = a.cov(1.).unwrap();
+        abs_diff_eq!(covariance, &covariance.t(), epsilon = 1e-8)
     }
 
     #[test]
@@ -266,7 +267,7 @@ mod cov_tests {
             ]
         ];
         assert_eq!(a.ndim(), 2);
-        assert!(a.cov(1.).all_close(&numpy_covariance, 1e-8));
+        assert_abs_diff_eq!(a.cov(1.).unwrap(), &numpy_covariance, epsilon = 1e-8);
     }
 
     #[test]
@@ -275,7 +276,7 @@ mod cov_tests {
     fn test_covariance_for_badly_conditioned_array() {
         let a: Array2<f64> = array![[1e12 + 1., 1e12 - 1.], [1e-6 + 1e-12, 1e-6 - 1e-12],];
         let expected_covariance = array![[2., 2e-12], [2e-12, 2e-24]];
-        assert!(a.cov(1.).all_close(&expected_covariance, 1e-24));
+        assert_abs_diff_eq!(a.cov(1.).unwrap(), &expected_covariance, epsilon = 1e-24);
     }
 }
 
@@ -295,8 +296,8 @@ mod pearson_correlation_tests {
             (n_random_variables, n_observations),
             Uniform::new(-bound.abs(), bound.abs()),
         );
-        let pearson_correlation = a.pearson_correlation();
-        pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
+        let pearson_correlation = a.pearson_correlation().unwrap();
+        abs_diff_eq!(pearson_correlation.view(), pearson_correlation.t(), epsilon = 1e-8)
     }
 
     #[quickcheck]
@@ -349,7 +350,7 @@ mod pearson_correlation_tests {
             [0.1365648, 0.38954398, -0.17324776, -0.8743213, 1.]
         ];
         assert_eq!(a.ndim(), 2);
-        assert!(a.pearson_correlation().all_close(&numpy_corrcoeff, 1e-7));
+        assert_abs_diff_eq!(a.pearson_correlation().unwrap(), numpy_corrcoeff, epsilon = 1e-7);
     }
 
 }

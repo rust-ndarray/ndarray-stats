@@ -38,6 +38,10 @@ pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
 pub use crate::sort::Sort1dExt;
 pub use crate::summary_statistics::SummaryStatisticsExt;
 
+#[cfg(test)]
+#[macro_use]
+extern crate approx;
+
 #[macro_use]
 mod private {
     /// This is a public type in a private module, so it can be included in
