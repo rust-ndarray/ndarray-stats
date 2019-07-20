@@ -1,6 +1,7 @@
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{Float, FromPrimitive};
+use crate::errors::EmptyInput;
 
 /// Extension trait for `ArrayBase` providing functions
 /// to compute different correlation measures.
@@ -60,7 +61,7 @@ where
     ///    aview2(&[[4., 4.], [4., 4.]])
     /// );
     /// ```
-    fn cov(&self, ddof: A) -> Array2<A>
+    fn cov(&self, ddof: A) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive;
 
@@ -112,7 +113,7 @@ where
     ///     )
     /// );
     /// ```
-    fn pearson_correlation(&self) -> Array2<A>
+    fn pearson_correlation(&self) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive;
 
@@ -123,7 +124,7 @@ impl<A: 'static, S> CorrelationExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
 {
-    fn cov(&self, ddof: A) -> Array2<A>
+    fn cov(&self, ddof: A) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
@@ -139,12 +140,17 @@ where
             n_observations - ddof
         };
         let mean = self.mean_axis(observation_axis);
-        let denoised = self - &mean.insert_axis(observation_axis);
-        let covariance = denoised.dot(&denoised.t());
-        covariance.mapv_into(|x| x / dof)
+        match mean {
+            Some(mean) => {
+                let denoised = self - &mean.insert_axis(observation_axis);
+                let covariance = denoised.dot(&denoised.t());
+                Ok(covariance.mapv_into(|x| x / dof))
+            },
+            None => Err(EmptyInput)
+        }
     }
 
-    fn pearson_correlation(&self) -> Array2<A>
+    fn pearson_correlation(&self) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
@@ -155,12 +161,17 @@ where
         // observation per random variable (or no observations at all)
         let ddof = -A::one();
         let cov = self.cov(ddof);
-        let std = self
-            .std_axis(observation_axis, ddof)
-            .insert_axis(observation_axis);
-        let std_matrix = std.dot(&std.t());
-        // element-wise division
-        cov / std_matrix
+        match cov {
+            Ok(cov) => {
+                let std = self
+                    .std_axis(observation_axis, ddof)
+                    .insert_axis(observation_axis);
+                let std_matrix = std.dot(&std.t());
+                // element-wise division
+                Ok(cov / std_matrix)
+            },
+            Err(EmptyInput) => Err(EmptyInput)
+        }
     }
 
     private_impl! {}

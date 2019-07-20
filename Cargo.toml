@@ -35,3 +35,6 @@ num-bigint = "0.2.2"
 [[bench]]
 name = "sort"
 harness = false
+
+[patch.crates-io]
+ndarray = {git = "https://github.com/rust-ndarray/ndarray", branch = "master"}
