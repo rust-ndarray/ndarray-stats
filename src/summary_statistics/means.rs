@@ -28,14 +28,14 @@ where
     where
         A: Float + FromPrimitive,
     {
-        self.map(|x| x.recip()).mean().map(|x| x.recip())
+        self.map(|x| x.recip()).mean().map(|x| x.recip()).ok_or(EmptyInput)
     }
 
     fn geometric_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
-        self.map(|x| x.ln()).mean().map(|x| x.exp())
+        self.map(|x| x.ln()).mean().map(|x| x.exp()).ok_or(EmptyInput)
     }
 
     fn kurtosis(&self) -> Result<A, EmptyInput>
