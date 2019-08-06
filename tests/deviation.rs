@@ -12,12 +12,12 @@ use std::f64;
 fn test_count_eq() -> Result<(), MultiInputError> {
     let a = array![0., 0.];
     let b = array![1., 0.];
-    let c = array![0., 1.];
+    let mut c = array![0., 1.];
     let d = array![1., 1.];
 
     assert_eq!(a.count_eq(&a)?, 2);
-    assert_eq!(a.count_eq(&b)?, 1);
-    assert_eq!(a.count_eq(&c)?, 1);
+    assert_eq!(a.count_eq(&b.view())?, 1);
+    assert_eq!(a.count_eq(&c.view_mut())?, 1);
     assert_eq!(a.count_eq(&d)?, 0);
 
     Ok(())
@@ -27,12 +27,12 @@ fn test_count_eq() -> Result<(), MultiInputError> {
 fn test_count_neq() -> Result<(), MultiInputError> {
     let a = array![0., 0.];
     let b = array![1., 0.];
-    let c = array![0., 1.];
+    let mut c = array![0., 1.];
     let d = array![1., 1.];
 
     assert_eq!(a.count_neq(&a)?, 0);
-    assert_eq!(a.count_neq(&b)?, 1);
-    assert_eq!(a.count_neq(&c)?, 1);
+    assert_eq!(a.count_neq(&b.view())?, 1);
+    assert_eq!(a.count_neq(&c.view_mut())?, 1);
     assert_eq!(a.count_neq(&d)?, 2);
 
     Ok(())
@@ -41,9 +41,11 @@ fn test_count_neq() -> Result<(), MultiInputError> {
 #[test]
 fn test_sq_l2_dist() -> Result<(), MultiInputError> {
     let a = array![0., 1., 4., 2.];
-    let b = array![1., 1., 2., 4.];
+    let mut b = array![1., 1., 2., 4.];
 
     assert_eq!(a.sq_l2_dist(&b)?, 9.);
+    assert_eq!(a.sq_l2_dist(&b.view())?, 9.);
+    assert_eq!(a.sq_l2_dist(&b.view_mut())?, 9.);
 
     Ok(())
 }
@@ -51,9 +53,11 @@ fn test_sq_l2_dist() -> Result<(), MultiInputError> {
 #[test]
 fn test_l2_dist() -> Result<(), MultiInputError> {
     let a = array![0., 1., 4., 2.];
-    let b = array![1., 1., 2., 4.];
+    let mut b = array![1., 1., 2., 4.];
 
     assert_eq!(a.l2_dist(&b)?, 3.);
+    assert_eq!(a.l2_dist(&b.view())?, 3.);
+    assert_eq!(a.l2_dist(&b.view_mut())?, 3.);
 
     Ok(())
 }
@@ -61,9 +65,11 @@ fn test_l2_dist() -> Result<(), MultiInputError> {
 #[test]
 fn test_l1_dist() -> Result<(), MultiInputError> {
     let a = array![0., 1., 4., 2.];
-    let b = array![1., 1., 2., 4.];
+    let mut b = array![1., 1., 2., 4.];
 
     assert_eq!(a.l1_dist(&b)?, 5.);
+    assert_eq!(a.l1_dist(&b.view())?, 5.);
+    assert_eq!(a.l1_dist(&b.view_mut())?, 5.);
 
     Ok(())
 }
@@ -71,15 +77,15 @@ fn test_l1_dist() -> Result<(), MultiInputError> {
 #[test]
 fn test_linf_dist() -> Result<(), MultiInputError> {
     let a = array![0., 0.];
-    let b = array![1., 0.];
+    let mut b = array![1., 0.];
     let c = array![1., 2.];
 
     assert_eq!(a.linf_dist(&a)?, 0.);
 
-    assert_eq!(a.linf_dist(&b)?, 1.);
+    assert_eq!(a.linf_dist(&b.view_mut())?, 1.);
     assert_eq!(b.linf_dist(&a)?, 1.);
 
-    assert_eq!(a.linf_dist(&c)?, 2.);
+    assert_eq!(a.linf_dist(&c.view())?, 2.);
     assert_eq!(c.linf_dist(&a)?, 2.);
 
     Ok(())
@@ -88,10 +94,10 @@ fn test_linf_dist() -> Result<(), MultiInputError> {
 #[test]
 fn test_mean_abs_err() -> Result<(), MultiInputError> {
     let a = array![1., 1.];
-    let b = array![3., 5.];
+    let mut b = array![3., 5.];
 
-    assert_eq!(a.mean_abs_err(&a)?, 0.);
-    assert_eq!(a.mean_abs_err(&b)?, 3.);
+    assert_eq!(a.mean_abs_err(&a.view())?, 0.);
+    assert_eq!(a.mean_abs_err(&b.view_mut())?, 3.);
     assert_eq!(b.mean_abs_err(&a)?, 3.);
 
     Ok(())
@@ -100,11 +106,11 @@ fn test_mean_abs_err() -> Result<(), MultiInputError> {
 #[test]
 fn test_mean_sq_err() -> Result<(), MultiInputError> {
     let a = array![1., 1.];
-    let b = array![3., 5.];
+    let mut b = array![3., 5.];
 
     assert_eq!(a.mean_sq_err(&a)?, 0.);
-    assert_eq!(a.mean_sq_err(&b)?, 10.);
-    assert_eq!(b.mean_sq_err(&a)?, 10.);
+    assert_eq!(a.mean_sq_err(&b.view_mut())?, 10.);
+    assert_eq!(b.mean_sq_err(&a.view())?, 10.);
 
     Ok(())
 }
@@ -112,10 +118,10 @@ fn test_mean_sq_err() -> Result<(), MultiInputError> {
 #[test]
 fn test_root_mean_sq_err() -> Result<(), MultiInputError> {
     let a = array![1., 1.];
-    let b = array![3., 5.];
+    let mut b = array![3., 5.];
 
-    assert_eq!(a.root_mean_sq_err(&a)?, 0.);
-    assert_abs_diff_eq!(a.root_mean_sq_err(&b)?, 10.0.sqrt());
+    assert_eq!(a.root_mean_sq_err(&a.view())?, 0.);
+    assert_abs_diff_eq!(a.root_mean_sq_err(&b.view_mut())?, 10.0.sqrt());
     assert_abs_diff_eq!(b.root_mean_sq_err(&a)?, 10.0.sqrt());
 
     Ok(())
@@ -130,7 +136,7 @@ fn test_peak_signal_to_noise_ratio() -> Result<(), MultiInputError> {
     let b = array![1., 3., 3., 4., 6., 7., 8.];
     let maxv = 8.;
     let expected = 20. * Float::log10(maxv) - 10. * Float::log10(a.mean_sq_err(&b)?);
-    let actual = a.peak_signal_to_noise_ratio(&b, maxv)?;
+    let actual = a.peak_signal_to_noise_ratio(&b.view(), maxv)?;
 
     assert_abs_diff_eq!(actual, expected);
 
