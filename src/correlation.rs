@@ -340,5 +340,4 @@ mod pearson_correlation_tests {
         assert_eq!(a.ndim(), 2);
         assert!(a.pearson_correlation().all_close(&numpy_corrcoeff, 1e-7));
     }
-
 }
