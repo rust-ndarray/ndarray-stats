@@ -1,9 +1,9 @@
 use super::SummaryStatisticsExt;
-use crate::errors::EmptyInput;
+use crate::errors::{EmptyInput, MultiInputError};
 use ndarray::{ArrayBase, Data, Dimension};
 use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, Zero};
-use std::ops::{Add, Div};
+use std::ops::{Add, Div, Mul};
 
 impl<A, S, D> SummaryStatisticsExt<A, S, D> for ArrayBase<S, D>
 where
@@ -22,6 +22,18 @@ where
                 .expect("Converting number of elements to `A` must not fail.");
             Ok(self.sum() / n_elements)
         }
+    }
+
+    fn weighted_mean(&self, weights: &ArrayBase<S, D>) -> Result<A, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero,
+    {
+        return_err_if_empty!(self);
+        return_err_unless_same_shape!(self, weights);
+        Ok(self
+            .iter()
+            .zip(weights)
+            .fold(A::zero(), |acc, (&d, &w)| acc + d * w))
     }
 
     fn harmonic_mean(&self) -> Result<A, EmptyInput>

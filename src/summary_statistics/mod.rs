@@ -1,8 +1,8 @@
 //! Summary statistics (e.g. mean, variance, etc.).
-use crate::errors::EmptyInput;
+use crate::errors::{EmptyInput, MultiInputError};
 use ndarray::{Data, Dimension};
 use num_traits::{Float, FromPrimitive, Zero};
-use std::ops::{Add, Div};
+use std::ops::{Add, Div, Mul};
 
 /// Extension trait for `ArrayBase` providing methods
 /// to compute several summary statistics (e.g. mean, variance, etc.).
@@ -27,6 +27,25 @@ where
     fn mean(&self) -> Result<A, EmptyInput>
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero;
+
+    /// Returns the [`arithmetic weighted mean`] x̅ of all elements in the array: Assumes that the
+    /// weights are already normalized.
+    ///
+    /// ```text
+    ///      n
+    /// x̅ =  ∑ xᵢwᵢ
+    ///     i=1
+    /// ```
+    ///
+    /// The following **errors** may be returned:
+    ///
+    /// * `MultiInputError::EmptyInput` if `self` is empty
+    /// * `MultiInputError::ShapeMismatch` if `self` and `weights` don't have the same shape
+    ///
+    /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+    fn weighted_mean(&self, weights: &Self) -> Result<A, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero;
 
     /// Returns the [`harmonic mean`] `HM(X)` of all elements in the array:
     ///
