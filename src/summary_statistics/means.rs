@@ -228,7 +228,7 @@ mod tests {
     use super::SummaryStatisticsExt;
     use crate::errors::{EmptyInput, MultiInputError};
     use approx::assert_abs_diff_eq;
-    use ndarray::{array, Array, Array1};
+    use ndarray::{array, Array, Array1, Axis};
     use ndarray_rand::RandomExt;
     use noisy_float::types::N64;
     use rand::distributions::Uniform;
@@ -239,6 +239,11 @@ mod tests {
         let a = array![f64::NAN, 1.];
         assert!(a.mean().unwrap().is_nan());
         assert!(a.weighted_mean(&array![1.0, f64::NAN]).unwrap().is_nan());
+        assert!(a
+            .weighted_mean_axis(Axis(0), &array![1.0, f64::NAN])
+            .unwrap()
+            .into_scalar()
+            .is_nan());
         assert!(a.harmonic_mean().unwrap().is_nan());
         assert!(a.geometric_mean().unwrap().is_nan());
     }
@@ -251,6 +256,10 @@ mod tests {
             a.weighted_mean(&array![1.0]),
             Err(MultiInputError::EmptyInput)
         );
+        assert_eq!(
+            a.weighted_mean_axis(Axis(0), &array![1.0]),
+            Err(MultiInputError::EmptyInput)
+        );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
@@ -260,6 +269,10 @@ mod tests {
         let a: Array1<N64> = array![];
         assert_eq!(a.mean(), Err(EmptyInput));
         assert_eq!(a.weighted_mean(&array![]), Err(MultiInputError::EmptyInput));
+        assert_eq!(
+            a.weighted_mean_axis(Axis(0), &array![]),
+            Err(MultiInputError::EmptyInput)
+        );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
@@ -309,6 +322,33 @@ mod tests {
             expected_weighted_mean,
             epsilon = 1e-12
         );
+
+        let data = a.into_shape((2, 5, 5)).unwrap();
+        assert!(data
+            .weighted_mean_axis(Axis(0), &array![0.5, 0.5])
+            .unwrap()
+            .all_close(&data.mean_axis(Axis(0)), 1e-12));
+        let weights = array![0.1, 0.3, 0.25, 0.15, 0.2];
+        assert!(data
+            .weighted_mean_axis(Axis(1), &weights)
+            .unwrap()
+            .all_close(
+                &array![
+                    [0.44101183, 0.55664246, 0.30327354, 0.59595320, 0.39738206],
+                    [0.56957640, 0.56098049, 0.57067907, 0.64527520, 0.70696926]
+                ],
+                1e-8
+            ));
+        assert!(data
+            .weighted_mean_axis(Axis(2), &weights)
+            .unwrap()
+            .all_close(
+                &array![
+                    [0.39819792, 0.37685724, 0.55147013, 0.45484881, 0.48404941],
+                    [0.69563747, 0.61676800, 0.42408611, 0.72082281, 0.68683798]
+                ],
+                1e-8
+            ));
     }
 
     #[test]
