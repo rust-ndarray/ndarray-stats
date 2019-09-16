@@ -1,6 +1,6 @@
 use super::SummaryStatisticsExt;
-use crate::errors::{EmptyInput, MultiInputError};
-use ndarray::{ArrayBase, Data, Dimension};
+use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
+use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, Div, Mul};
@@ -34,6 +34,32 @@ where
             .iter()
             .zip(weights)
             .fold(A::zero(), |acc, (&d, &w)| acc + d * w))
+    }
+
+    fn weighted_mean_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero,
+        D: RemoveAxis,
+    {
+        return_err_if_empty!(self);
+        if self.shape()[axis.index()] != weights.len() {
+            return Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                first_shape: self.shape().to_vec(),
+                second_shape: weights.shape().to_vec(),
+            }));
+        }
+
+        // We could use `lane.weighted_mean` here, but we're avoiding 2
+        // conditions and an unwrap per lane.
+        Ok(self.map_axis(axis, |lane| {
+            lane.iter()
+                .zip(weights)
+                .fold(A::zero(), |acc, (&d, &w)| acc + d * w)
+        }))
     }
 
     fn harmonic_mean(&self) -> Result<A, EmptyInput>

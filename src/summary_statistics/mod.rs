@@ -1,6 +1,6 @@
 //! Summary statistics (e.g. mean, variance, etc.).
 use crate::errors::{EmptyInput, MultiInputError};
-use ndarray::{Data, Dimension};
+use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, Div, Mul};
 
@@ -28,7 +28,7 @@ where
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero;
 
-    /// Returns the [`arithmetic weighted mean`] x̅ of all elements in the array: Assumes that the
+    /// Returns the [`arithmetic weighted mean`] x̅ of all elements in the array. Assumes that the
     /// weights are already normalized.
     ///
     /// ```text
@@ -46,6 +46,30 @@ where
     fn weighted_mean(&self, weights: &Self) -> Result<A, MultiInputError>
     where
         A: Copy + Mul<Output = A> + Zero;
+
+    /// Returns the [`arithmetic weighted mean`] x̅ along `axis`. Assumes that the weights are
+    /// already normalized.
+    ///
+    /// ```text
+    ///      n
+    /// x̅ =  ∑ xᵢwᵢ
+    ///     i=1
+    /// ```
+    ///
+    /// The following **errors** may be returned:
+    ///
+    /// * `MultiInputError::EmptyInput` if `self` is empty
+    /// * `MultiInputError::ShapeMismatch` if `self` length along axis is not equal to `weights` length
+    ///
+    /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+    fn weighted_mean_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero,
+        D: RemoveAxis;
 
     /// Returns the [`harmonic mean`] `HM(X)` of all elements in the array:
     ///
