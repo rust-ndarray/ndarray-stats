@@ -3,7 +3,7 @@ use num_traits::{Signed, ToPrimitive};
 use std::convert::Into;
 use std::ops::AddAssign;
 
-use crate::errors::{MultiInputError, ShapeMismatch};
+use crate::errors::MultiInputError;
 
 /// An extension trait for `ArrayBase` providing functions
 /// to compute different deviation measures.
@@ -215,25 +215,6 @@ where
         T: Data<Elem = A>;
 
     private_decl! {}
-}
-
-macro_rules! return_err_if_empty {
-    ($arr:expr) => {
-        if $arr.len() == 0 {
-            return Err(MultiInputError::EmptyInput);
-        }
-    };
-}
-macro_rules! return_err_unless_same_shape {
-    ($arr_a:expr, $arr_b:expr) => {
-        if $arr_a.shape() != $arr_b.shape() {
-            return Err(ShapeMismatch {
-                first_shape: $arr_a.shape().to_vec(),
-                second_shape: $arr_b.shape().to_vec(),
-            }
-            .into());
-        }
-    };
 }
 
 impl<A, S, D> DeviationExt<A, S, D> for ArrayBase<S, D>
