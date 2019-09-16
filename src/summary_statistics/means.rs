@@ -200,7 +200,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::SummaryStatisticsExt;
-    use crate::errors::EmptyInput;
+    use crate::errors::{EmptyInput, MultiInputError};
     use approx::assert_abs_diff_eq;
     use ndarray::{array, Array, Array1};
     use ndarray_rand::RandomExt;
@@ -212,6 +212,7 @@ mod tests {
     fn test_means_with_nan_values() {
         let a = array![f64::NAN, 1.];
         assert!(a.mean().unwrap().is_nan());
+        assert!(a.weighted_mean(&array![1.0, f64::NAN]).unwrap().is_nan());
         assert!(a.harmonic_mean().unwrap().is_nan());
         assert!(a.geometric_mean().unwrap().is_nan());
     }
@@ -220,6 +221,10 @@ mod tests {
     fn test_means_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
         assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(
+            a.weighted_mean(&array![1.0]),
+            Err(MultiInputError::EmptyInput)
+        );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
@@ -228,6 +233,7 @@ mod tests {
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
         assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.weighted_mean(&array![]), Err(MultiInputError::EmptyInput));
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
@@ -246,9 +252,9 @@ mod tests {
         ];
         // Computed using NumPy
         let expected_mean = 0.5475494059146699;
+        let expected_weighted_mean = 0.6782420496397121;
         // Computed using SciPy
         let expected_harmonic_mean = 0.21790094950226022;
-        // Computed using SciPy
         let expected_geometric_mean = 0.4345897639796527;
 
         assert_abs_diff_eq!(a.mean().unwrap(), expected_mean, epsilon = 1e-9);
@@ -260,6 +266,21 @@ mod tests {
         assert_abs_diff_eq!(
             a.geometric_mean().unwrap(),
             expected_geometric_mean,
+            epsilon = 1e-12
+        );
+
+        // Same as mean
+        let weights = Array1::from_elem(a.len(), 1.0 / a.len() as f64);
+        assert_abs_diff_eq!(
+            a.weighted_mean(&weights).unwrap(),
+            expected_mean,
+            epsilon = 1e-9
+        );
+        // weighted_mean with itself, normalized
+        let weights = &a / a.sum();
+        assert_abs_diff_eq!(
+            a.weighted_mean(&weights).unwrap(),
+            expected_weighted_mean,
             epsilon = 1e-12
         );
     }
