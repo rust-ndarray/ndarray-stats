@@ -227,10 +227,11 @@ where
 mod tests {
     use super::SummaryStatisticsExt;
     use crate::errors::{EmptyInput, MultiInputError};
-    use approx::assert_abs_diff_eq;
+    use approx::{abs_diff_eq, assert_abs_diff_eq};
     use ndarray::{array, Array, Array1, Axis};
     use ndarray_rand::RandomExt;
     use noisy_float::types::N64;
+    use quickcheck::{quickcheck, TestResult};
     use rand::distributions::Uniform;
     use std::f64;
 
@@ -308,13 +309,6 @@ mod tests {
             epsilon = 1e-12
         );
 
-        // Same as mean
-        let weights = Array1::from_elem(a.len(), 1.0 / a.len() as f64);
-        assert_abs_diff_eq!(
-            a.weighted_mean(&weights).unwrap(),
-            expected_mean,
-            epsilon = 1e-9
-        );
         // weighted_mean with itself, normalized
         let weights = &a / a.sum();
         assert_abs_diff_eq!(
@@ -324,10 +318,6 @@ mod tests {
         );
 
         let data = a.into_shape((2, 5, 5)).unwrap();
-        assert!(data
-            .weighted_mean_axis(Axis(0), &array![0.5, 0.5])
-            .unwrap()
-            .all_close(&data.mean_axis(Axis(0)), 1e-12));
         let weights = array![0.1, 0.3, 0.25, 0.15, 0.2];
         assert!(data
             .weighted_mean_axis(Axis(1), &weights)
@@ -349,6 +339,40 @@ mod tests {
                 ],
                 1e-8
             ));
+    }
+
+    #[test]
+    fn mean_eq_weighted_mean_if_uniform_weights() {
+        fn prop(a: Vec<f64>) -> TestResult {
+            if a.len() < 1 {
+                return TestResult::discard();
+            }
+            let a = Array1::from_vec(a);
+            let weights = Array1::from_elem(a.len(), 1.0 / a.len() as f64);
+            TestResult::from_bool(abs_diff_eq!(
+                a.weighted_mean(&weights).unwrap(),
+                a.mean().unwrap(),
+                epsilon = 1e-9
+            ))
+        }
+        quickcheck(prop as fn(Vec<f64>) -> TestResult);
+    }
+
+    #[test]
+    fn mean_axis_eq_weighted_mean_axis_if_uniform_weights() {
+        fn prop(mut a: Vec<f64>) -> TestResult {
+            if a.len() < 24 {
+                return TestResult::discard();
+            }
+            a.truncate(24);
+            let a = Array1::from_vec(a).into_shape((2, 3, 4)).unwrap();
+            TestResult::from_bool(
+                a.weighted_mean_axis(Axis(0), &array![0.5, 0.5])
+                    .unwrap()
+                    .all_close(&a.mean_axis(Axis(0)), 1e-12),
+            )
+        }
+        quickcheck(prop as fn(Vec<f64>) -> TestResult);
     }
 
     #[test]
