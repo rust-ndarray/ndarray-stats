@@ -24,7 +24,15 @@ where
         }
     }
 
-    fn weighted_mean(&self, weights: &ArrayBase<S, D>) -> Result<A, MultiInputError>
+    fn weighted_mean(&self, weights: &Self) -> Result<A, MultiInputError>
+    where
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero
+    {
+        let weighted_sum = self.weighted_sum(weights)?;
+        Ok(weighted_sum / weights.sum())
+    }
+
+    fn weighted_sum(&self, weights: &ArrayBase<S, D>) -> Result<A, MultiInputError>
     where
         A: Copy + Mul<Output = A> + Zero,
     {
@@ -42,6 +50,20 @@ where
         weights: &ArrayBase<S, Ix1>,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
+        D: RemoveAxis
+    {
+        let mut weighted_sum = self.weighted_sum_axis(axis, weights)?;
+        weighted_sum.mapv_inplace(|v| v / weights.sum());
+        Ok(weighted_sum)
+    }
+
+    fn weighted_sum_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
         A: Copy + Mul<Output = A> + Zero,
         D: RemoveAxis,
     {
@@ -53,7 +75,7 @@ where
             }));
         }
 
-        // We could use `lane.weighted_mean` here, but we're avoiding 2
+        // We could use `lane.weighted_sum` here, but we're avoiding 2
         // conditions and an unwrap per lane.
         Ok(self.map_axis(axis, |lane| {
             lane.iter()
@@ -239,9 +261,9 @@ mod tests {
     fn test_means_with_nan_values() {
         let a = array![f64::NAN, 1.];
         assert!(a.mean().unwrap().is_nan());
-        assert!(a.weighted_mean(&array![1.0, f64::NAN]).unwrap().is_nan());
+        assert!(a.weighted_sum(&array![1.0, f64::NAN]).unwrap().is_nan());
         assert!(a
-            .weighted_mean_axis(Axis(0), &array![1.0, f64::NAN])
+            .weighted_sum_axis(Axis(0), &array![1.0, f64::NAN])
             .unwrap()
             .into_scalar()
             .is_nan());
@@ -254,11 +276,11 @@ mod tests {
         let a: Array1<f64> = array![];
         assert_eq!(a.mean(), Err(EmptyInput));
         assert_eq!(
-            a.weighted_mean(&array![1.0]),
+            a.weighted_sum(&array![1.0]),
             Err(MultiInputError::EmptyInput)
         );
         assert_eq!(
-            a.weighted_mean_axis(Axis(0), &array![1.0]),
+            a.weighted_sum_axis(Axis(0), &array![1.0]),
             Err(MultiInputError::EmptyInput)
         );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
@@ -269,9 +291,9 @@ mod tests {
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
         assert_eq!(a.mean(), Err(EmptyInput));
-        assert_eq!(a.weighted_mean(&array![]), Err(MultiInputError::EmptyInput));
+        assert_eq!(a.weighted_sum(&array![]), Err(MultiInputError::EmptyInput));
         assert_eq!(
-            a.weighted_mean_axis(Axis(0), &array![]),
+            a.weighted_sum_axis(Axis(0), &array![]),
             Err(MultiInputError::EmptyInput)
         );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
@@ -312,7 +334,7 @@ mod tests {
         // weighted_mean with itself, normalized
         let weights = &a / a.sum();
         assert_abs_diff_eq!(
-            a.weighted_mean(&weights).unwrap(),
+            a.weighted_sum(&weights).unwrap(),
             expected_weighted_mean,
             epsilon = 1e-12
         );
@@ -320,7 +342,7 @@ mod tests {
         let data = a.into_shape((2, 5, 5)).unwrap();
         let weights = array![0.1, 0.3, 0.25, 0.15, 0.2];
         assert!(data
-            .weighted_mean_axis(Axis(1), &weights)
+            .weighted_sum_axis(Axis(1), &weights)
             .unwrap()
             .all_close(
                 &array![
@@ -330,7 +352,7 @@ mod tests {
                 1e-8
             ));
         assert!(data
-            .weighted_mean_axis(Axis(2), &weights)
+            .weighted_sum_axis(Axis(2), &weights)
             .unwrap()
             .all_close(
                 &array![
@@ -350,7 +372,7 @@ mod tests {
             let a = Array1::from_vec(a);
             let weights = Array1::from_elem(a.len(), 1.0 / a.len() as f64);
             TestResult::from_bool(abs_diff_eq!(
-                a.weighted_mean(&weights).unwrap(),
+                a.weighted_sum(&weights).unwrap(),
                 a.mean().unwrap(),
                 epsilon = 1e-9
             ))
@@ -367,7 +389,7 @@ mod tests {
             a.truncate(24);
             let a = Array1::from_vec(a).into_shape((2, 3, 4)).unwrap();
             TestResult::from_bool(
-                a.weighted_mean_axis(Axis(0), &array![0.5, 0.5])
+                a.weighted_sum_axis(Axis(0), &array![0.5, 0.5])
                     .unwrap()
                     .all_close(&a.mean_axis(Axis(0)), 1e-12),
             )

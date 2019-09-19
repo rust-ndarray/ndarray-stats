@@ -28,13 +28,17 @@ where
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero;
 
-    /// Returns the [`arithmetic weighted mean`] x̅ of all elements in the array. Assumes that the
-    /// weights are already normalized.
+    /// Returns the [`arithmetic weighted mean`] x̅ of all elements in the array. Use `weighted_sum`
+    /// if the `weights` are normalized (they sum up to 1.0).
     ///
     /// ```text
-    ///      n
-    /// x̅ =  ∑ xᵢwᵢ
-    ///     i=1
+    ///       n
+    ///       ∑ wᵢxᵢ
+    ///      i=1
+    /// x̅ = ―――――――――
+    ///        n
+    ///        ∑ wᵢ
+    ///       i=1
     /// ```
     ///
     /// The following **errors** may be returned:
@@ -45,15 +49,31 @@ where
     /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
     fn weighted_mean(&self, weights: &Self) -> Result<A, MultiInputError>
     where
-        A: Copy + Mul<Output = A> + Zero;
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero;
 
-    /// Returns the [`arithmetic weighted mean`] x̅ along `axis`. Assumes that the weights are
-    /// already normalized.
+    /// Like `weighted_mean`, but assumes that the `weights` are normalized. In that case, this
+    /// function is identical to `weighted_mean`. See its documentation for more information.
     ///
     /// ```text
     ///      n
-    /// x̅ =  ∑ xᵢwᵢ
+    /// x̅ =  ∑ wᵢxᵢ
     ///     i=1
+    /// ```
+    fn weighted_sum(&self, weights: &Self) -> Result<A, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero;
+
+    /// Returns the [`arithmetic weighted mean`] x̅ along `axis`. Use `weighted_mean_axis ` if the
+    /// `weights` are normalized.
+    ///
+    /// ```text
+    ///       n
+    ///       ∑ wᵢxᵢ
+    ///      i=1
+    /// x̅ = ―――――――――
+    ///        n
+    ///        ∑ wᵢ
+    ///       i=1
     /// ```
     ///
     /// The following **errors** may be returned:
@@ -63,6 +83,23 @@ where
     ///
     /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
     fn weighted_mean_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
+        D: RemoveAxis;
+
+    /// Like `weighted_mean_axis`, but assumes that the `weights` are normalized. In that case, this
+    /// function is identical to `weighted_mean_axis`. See its documentation for more information.
+    ///
+    /// ```text
+    ///      n
+    /// x̅ =  ∑ wᵢxᵢ
+    ///     i=1
+    /// ```
+    fn weighted_sum_axis(
         &self,
         axis: Axis,
         weights: &ArrayBase<S, Ix1>,
