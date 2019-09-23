@@ -54,7 +54,8 @@ where
         D: RemoveAxis,
     {
         let mut weighted_sum = self.weighted_sum_axis(axis, weights)?;
-        weighted_sum.mapv_inplace(|v| v / weights.sum());
+        let weights_sum = weights.sum();
+        weighted_sum.mapv_inplace(|v| v / weights_sum);
         Ok(weighted_sum)
     }
 
