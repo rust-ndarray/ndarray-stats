@@ -279,7 +279,7 @@ fn test_midpoint_overflow() {
 
 #[quickcheck]
 fn test_quantiles_mut(xs: Vec<i64>) -> bool {
-    let v = Array::from_vec(xs.clone());
+    let v = Array::from(xs.clone());
 
     // Unordered list of quantile indexes to look up, with a duplicate
     let quantile_indexes = Array::from(vec![
