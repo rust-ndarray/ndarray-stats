@@ -1,7 +1,7 @@
+use crate::errors::EmptyInput;
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{Float, FromPrimitive};
-use crate::errors::EmptyInput;
 
 /// Extension trait for `ArrayBase` providing functions
 /// to compute different correlation measures.
@@ -150,8 +150,8 @@ where
                 let denoised = self - &mean.insert_axis(observation_axis);
                 let covariance = denoised.dot(&denoised.t());
                 Ok(covariance.mapv_into(|x| x / dof))
-            },
-            None => Err(EmptyInput)
+            }
+            None => Err(EmptyInput),
         }
     }
 
@@ -173,8 +173,8 @@ where
                 let std_matrix = std.dot(&std.t());
                 // element-wise division
                 Ok(cov / std_matrix)
-            },
-            _ => Err(EmptyInput)
+            }
+            _ => Err(EmptyInput),
         }
     }
 
@@ -301,7 +301,11 @@ mod pearson_correlation_tests {
             Uniform::new(-bound.abs(), bound.abs()),
         );
         let pearson_correlation = a.pearson_correlation().unwrap();
-        abs_diff_eq!(pearson_correlation.view(), pearson_correlation.t(), epsilon = 1e-8)
+        abs_diff_eq!(
+            pearson_correlation.view(),
+            pearson_correlation.t(),
+            epsilon = 1e-8
+        )
     }
 
     #[quickcheck]
@@ -355,6 +359,10 @@ mod pearson_correlation_tests {
             [0.1365648, 0.38954398, -0.17324776, -0.8743213, 1.]
         ];
         assert_eq!(a.ndim(), 2);
-        assert_abs_diff_eq!(a.pearson_correlation().unwrap(), numpy_corrcoeff, epsilon = 1e-7);
+        assert_abs_diff_eq!(
+            a.pearson_correlation().unwrap(),
+            numpy_corrcoeff,
+            epsilon = 1e-7
+        );
     }
 }
