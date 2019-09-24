@@ -9,6 +9,24 @@ use num_traits::Float;
 use std::f64;
 
 #[test]
+fn test_deviation_computation_for_mixed_ownership() {
+    // It's enough to check that the code compiles!
+    let a = array![0., 0.];
+    let b = array![1., 0.];
+
+    let _ = a.count_eq(&b.view());
+    let _ = a.count_neq(&b.view());
+    let _ = a.l2_dist(&b.view());
+    let _ = a.sq_l2_dist(&b.view());
+    let _ = a.l1_dist(&b.view());
+    let _ = a.linf_dist(&b.view());
+    let _ = a.mean_abs_err(&b.view());
+    let _ = a.mean_sq_err(&b.view());
+    let _ = a.root_mean_sq_err(&b.view());
+    let _ = a.peak_signal_to_noise_ratio(&b.view(), 10.);
+}
+
+#[test]
 fn test_count_eq() -> Result<(), MultiInputError> {
     let a = array![0., 0.];
     let b = array![1., 0.];

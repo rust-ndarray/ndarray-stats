@@ -357,5 +357,4 @@ mod pearson_correlation_tests {
         assert_eq!(a.ndim(), 2);
         assert_abs_diff_eq!(a.pearson_correlation().unwrap(), numpy_corrcoeff, epsilon = 1e-7);
     }
-
 }
