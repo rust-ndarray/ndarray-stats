@@ -41,6 +41,8 @@ where
     ///       i=1
     /// ```
     ///
+    /// **Panics** if division by zero panics for type A.
+    ///
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
@@ -51,14 +53,18 @@ where
     where
         A: Copy + Div<Output = A> + Mul<Output = A> + Zero;
 
-    /// Like `weighted_mean`, but assumes that the `weights` are normalized. In that case, this
-    /// function is identical to `weighted_mean`. See its documentation for more information.
+    /// Returns the weighted sum of all elements in the array, that is, the dot product of the
+    /// arrays `self` and `weights`. Equivalent to `weighted_mean` if the `weights` are normalized.
     ///
     /// ```text
     ///      n
     /// x̅ =  ∑ wᵢxᵢ
     ///     i=1
     /// ```
+    ///
+    /// The following **errors** may be returned:
+    ///
+    /// * `MultiInputError::ShapeMismatch` if `self` and `weights` don't have the same shape
     fn weighted_sum(&self, weights: &Self) -> Result<A, MultiInputError>
     where
         A: Copy + Mul<Output = A> + Zero;
@@ -76,6 +82,8 @@ where
     ///       i=1
     /// ```
     ///
+    /// **Panics** if `axis` is out of bounds.
+    ///
     /// The following **errors** may be returned:
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
@@ -91,14 +99,20 @@ where
         A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
         D: RemoveAxis;
 
-    /// Like `weighted_mean_axis`, but assumes that the `weights` are normalized. In that case, this
-    /// function is identical to `weighted_mean_axis`. See its documentation for more information.
+    /// Returns the weighted sum along `axis`, that is, the dot product of `weights` and each lane
+    /// of `self` along `axis`. Equivalent to `weighted_mean_axis` if the `weights` are normalized.
     ///
     /// ```text
     ///      n
     /// x̅ =  ∑ wᵢxᵢ
     ///     i=1
     /// ```
+    ///
+    /// **Panics** if `axis` is out of bounds.
+    ///
+    /// The following **errors** may be returned
+    ///
+    /// * `MultiInputError::ShapeMismatch` if `self` and `weights` don't have the same shape
     fn weighted_sum_axis(
         &self,
         axis: Axis,

@@ -28,6 +28,7 @@ where
     where
         A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
     {
+        return_err_if_empty!(self);
         let weighted_sum = self.weighted_sum(weights)?;
         Ok(weighted_sum / weights.sum())
     }
@@ -36,7 +37,6 @@ where
     where
         A: Copy + Mul<Output = A> + Zero,
     {
-        return_err_if_empty!(self);
         return_err_unless_same_shape!(self, weights);
         Ok(self
             .iter()
@@ -53,6 +53,7 @@ where
         A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
         D: RemoveAxis,
     {
+        return_err_if_empty!(self);
         let mut weighted_sum = self.weighted_sum_axis(axis, weights)?;
         let weights_sum = weights.sum();
         weighted_sum.mapv_inplace(|v| v / weights_sum);
@@ -68,7 +69,6 @@ where
         A: Copy + Mul<Output = A> + Zero,
         D: RemoveAxis,
     {
-        return_err_if_empty!(self);
         if self.shape()[axis.index()] != weights.len() {
             return Err(MultiInputError::ShapeMismatch(ShapeMismatch {
                 first_shape: self.shape().to_vec(),
