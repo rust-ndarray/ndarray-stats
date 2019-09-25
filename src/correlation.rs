@@ -1,3 +1,4 @@
+use crate::errors::EmptyInput;
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{Float, FromPrimitive};
@@ -41,10 +42,10 @@ where
     /// ```
     /// and similarly for ̅y.
     ///
-    /// **Panics** if `ddof` is greater than or equal to the number of
-    /// observations, if the number of observations is zero and division by
-    /// zero panics for type `A`, or if the type cast of `n_observations` from
-    /// `usize` to `A` fails.
+    /// If `M` is empty (either zero observations or zero random variables), it returns `Err(EmptyInput)`.
+    ///
+    /// **Panics** if `ddof` is negative or greater than or equal to the number of
+    /// observations, or if the type cast of `n_observations` from `usize` to `A` fails.
     ///
     /// # Example
     ///
@@ -54,13 +55,13 @@ where
     ///
     /// let a = arr2(&[[1., 3., 5.],
     ///                [2., 4., 6.]]);
-    /// let covariance = a.cov(1.);
+    /// let covariance = a.cov(1.).unwrap();
     /// assert_eq!(
     ///    covariance,
     ///    aview2(&[[4., 4.], [4., 4.]])
     /// );
     /// ```
-    fn cov(&self, ddof: A) -> Array2<A>
+    fn cov(&self, ddof: A) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive;
 
@@ -89,30 +90,35 @@ where
     /// R_ij = rho(X_i, X_j)
     /// ```
     ///
-    /// **Panics** if `M` is empty, if the type cast of `n_observations`
-    /// from `usize` to `A` fails or if the standard deviation of one of the random
+    /// If `M` is empty (either zero observations or zero random variables), it returns `Err(EmptyInput)`.
+    ///
+    /// **Panics** if the type cast of `n_observations` from `usize` to `A` fails or
+    /// if the standard deviation of one of the random variables is zero and
+    /// division by zero panics for type A.
     ///
     /// # Example
     ///
-    /// variables is zero and division by zero panics for type A.
     /// ```
+    /// use approx;
     /// use ndarray::arr2;
     /// use ndarray_stats::CorrelationExt;
+    /// use approx::AbsDiffEq;
     ///
     /// let a = arr2(&[[1., 3., 5.],
     ///                [2., 4., 6.]]);
-    /// let corr = a.pearson_correlation();
+    /// let corr = a.pearson_correlation().unwrap();
+    /// let epsilon = 1e-7;
     /// assert!(
-    ///     corr.all_close(
+    ///     corr.abs_diff_eq(
     ///         &arr2(&[
     ///             [1., 1.],
     ///             [1., 1.],
     ///         ]),
-    ///         1e-7
+    ///         epsilon
     ///     )
     /// );
     /// ```
-    fn pearson_correlation(&self) -> Array2<A>
+    fn pearson_correlation(&self) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive;
 
@@ -123,7 +129,7 @@ impl<A: 'static, S> CorrelationExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
 {
-    fn cov(&self, ddof: A) -> Array2<A>
+    fn cov(&self, ddof: A) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
@@ -139,28 +145,37 @@ where
             n_observations - ddof
         };
         let mean = self.mean_axis(observation_axis);
-        let denoised = self - &mean.insert_axis(observation_axis);
-        let covariance = denoised.dot(&denoised.t());
-        covariance.mapv_into(|x| x / dof)
+        match mean {
+            Some(mean) => {
+                let denoised = self - &mean.insert_axis(observation_axis);
+                let covariance = denoised.dot(&denoised.t());
+                Ok(covariance.mapv_into(|x| x / dof))
+            }
+            None => Err(EmptyInput),
+        }
     }
 
-    fn pearson_correlation(&self) -> Array2<A>
+    fn pearson_correlation(&self) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
-        let observation_axis = Axis(1);
-        // The ddof value doesn't matter, as long as we use the same one
-        // for computing covariance and standard deviation
-        // We choose -1 to avoid panicking when we only have one
-        // observation per random variable (or no observations at all)
-        let ddof = -A::one();
-        let cov = self.cov(ddof);
-        let std = self
-            .std_axis(observation_axis, ddof)
-            .insert_axis(observation_axis);
-        let std_matrix = std.dot(&std.t());
-        // element-wise division
-        cov / std_matrix
+        match self.dim() {
+            (n, m) if n > 0 && m > 0 => {
+                let observation_axis = Axis(1);
+                // The ddof value doesn't matter, as long as we use the same one
+                // for computing covariance and standard deviation
+                // We choose 0 as it is the smallest number admitted by std_axis
+                let ddof = A::zero();
+                let cov = self.cov(ddof).unwrap();
+                let std = self
+                    .std_axis(observation_axis, ddof)
+                    .insert_axis(observation_axis);
+                let std_matrix = std.dot(&std.t());
+                // element-wise division
+                Ok(cov / std_matrix)
+            }
+            _ => Err(EmptyInput),
+        }
     }
 
     private_impl! {}
@@ -180,9 +195,10 @@ mod cov_tests {
         let n_random_variables = 3;
         let n_observations = 4;
         let a = Array::from_elem((n_random_variables, n_observations), value);
-        a.cov(1.).all_close(
+        abs_diff_eq!(
+            a.cov(1.).unwrap(),
             &Array::zeros((n_random_variables, n_random_variables)),
-            1e-8,
+            epsilon = 1e-8,
         )
     }
 
@@ -194,8 +210,8 @@ mod cov_tests {
             (n_random_variables, n_observations),
             Uniform::new(-bound.abs(), bound.abs()),
         );
-        let covariance = a.cov(1.);
-        covariance.all_close(&covariance.t(), 1e-8)
+        let covariance = a.cov(1.).unwrap();
+        abs_diff_eq!(covariance, &covariance.t(), epsilon = 1e-8)
     }
 
     #[test]
@@ -205,14 +221,15 @@ mod cov_tests {
         let n_observations = 4;
         let a = Array::random((n_random_variables, n_observations), Uniform::new(0., 10.));
         let invalid_ddof = (n_observations as f64) + rand::random::<f64>().abs();
-        a.cov(invalid_ddof);
+        let _ = a.cov(invalid_ddof);
     }
 
     #[test]
     fn test_covariance_zero_variables() {
         let a = Array2::<f32>::zeros((0, 2));
         let cov = a.cov(1.);
-        assert_eq!(cov.shape(), &[0, 0]);
+        assert!(cov.is_ok());
+        assert_eq!(cov.unwrap().shape(), &[0, 0]);
     }
 
     #[test]
@@ -220,8 +237,7 @@ mod cov_tests {
         let a = Array2::<f32>::zeros((2, 0));
         // Negative ddof (-1 < 0) to avoid invalid-ddof panic
         let cov = a.cov(-1.);
-        assert_eq!(cov.shape(), &[2, 2]);
-        cov.mapv(|x| assert_eq!(x, 0.));
+        assert_eq!(cov, Err(EmptyInput));
     }
 
     #[test]
@@ -229,7 +245,7 @@ mod cov_tests {
         let a = Array2::<f32>::zeros((0, 0));
         // Negative ddof (-1 < 0) to avoid invalid-ddof panic
         let cov = a.cov(-1.);
-        assert_eq!(cov.shape(), &[0, 0]);
+        assert_eq!(cov, Err(EmptyInput));
     }
 
     #[test]
@@ -255,7 +271,7 @@ mod cov_tests {
             ]
         ];
         assert_eq!(a.ndim(), 2);
-        assert!(a.cov(1.).all_close(&numpy_covariance, 1e-8));
+        assert_abs_diff_eq!(a.cov(1.).unwrap(), &numpy_covariance, epsilon = 1e-8);
     }
 
     #[test]
@@ -264,7 +280,7 @@ mod cov_tests {
     fn test_covariance_for_badly_conditioned_array() {
         let a: Array2<f64> = array![[1e12 + 1., 1e12 - 1.], [1e-6 + 1e-12, 1e-6 - 1e-12],];
         let expected_covariance = array![[2., 2e-12], [2e-12, 2e-24]];
-        assert!(a.cov(1.).all_close(&expected_covariance, 1e-24));
+        assert_abs_diff_eq!(a.cov(1.).unwrap(), &expected_covariance, epsilon = 1e-24);
     }
 }
 
@@ -284,8 +300,12 @@ mod pearson_correlation_tests {
             (n_random_variables, n_observations),
             Uniform::new(-bound.abs(), bound.abs()),
         );
-        let pearson_correlation = a.pearson_correlation();
-        pearson_correlation.all_close(&pearson_correlation.t(), 1e-8)
+        let pearson_correlation = a.pearson_correlation().unwrap();
+        abs_diff_eq!(
+            pearson_correlation.view(),
+            pearson_correlation.t(),
+            epsilon = 1e-8
+        )
     }
 
     #[quickcheck]
@@ -295,6 +315,7 @@ mod pearson_correlation_tests {
         let a = Array::from_elem((n_random_variables, n_observations), value);
         let pearson_correlation = a.pearson_correlation();
         pearson_correlation
+            .unwrap()
             .iter()
             .map(|x| x.is_nan())
             .fold(true, |acc, flag| acc & flag)
@@ -304,21 +325,21 @@ mod pearson_correlation_tests {
     fn test_zero_variables() {
         let a = Array2::<f32>::zeros((0, 2));
         let pearson_correlation = a.pearson_correlation();
-        assert_eq!(pearson_correlation.shape(), &[0, 0]);
+        assert_eq!(pearson_correlation, Err(EmptyInput))
     }
 
     #[test]
     fn test_zero_observations() {
         let a = Array2::<f32>::zeros((2, 0));
         let pearson = a.pearson_correlation();
-        pearson.mapv(|x| x.is_nan());
+        assert_eq!(pearson, Err(EmptyInput));
     }
 
     #[test]
     fn test_zero_variables_zero_observations() {
         let a = Array2::<f32>::zeros((0, 0));
         let pearson = a.pearson_correlation();
-        assert_eq!(pearson.shape(), &[0, 0]);
+        assert_eq!(pearson, Err(EmptyInput));
     }
 
     #[test]
@@ -338,6 +359,10 @@ mod pearson_correlation_tests {
             [0.1365648, 0.38954398, -0.17324776, -0.8743213, 1.]
         ];
         assert_eq!(a.ndim(), 2);
-        assert!(a.pearson_correlation().all_close(&numpy_corrcoeff, 1e-7));
+        assert_abs_diff_eq!(
+            a.pearson_correlation().unwrap(),
+            numpy_corrcoeff,
+            epsilon = 1e-7
+        );
     }
 }

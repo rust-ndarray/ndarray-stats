@@ -89,14 +89,20 @@ where
     where
         A: Float + FromPrimitive,
     {
-        self.map(|x| x.recip()).mean().map(|x| x.recip())
+        self.map(|x| x.recip())
+            .mean()
+            .map(|x| x.recip())
+            .ok_or(EmptyInput)
     }
 
     fn geometric_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
-        self.map(|x| x.ln()).mean().map(|x| x.exp())
+        self.map(|x| x.ln())
+            .mean()
+            .map(|x| x.exp())
+            .ok_or(EmptyInput)
     }
 
     fn kurtosis(&self) -> Result<A, EmptyInput>
@@ -281,7 +287,7 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.mean(), None);
         assert_eq!(
             a.weighted_mean(&array![1.0]),
             Err(MultiInputError::EmptyInput)
@@ -305,7 +311,7 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
-        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.mean(), None);
         assert_eq!(a.weighted_mean(&array![]), Err(MultiInputError::EmptyInput));
         assert_eq!(a.weighted_sum(&array![]), Err(MultiInputError::EmptyInput));
         assert_eq!(
@@ -361,46 +367,38 @@ mod tests {
 
         let data = a.into_shape((2, 5, 5)).unwrap();
         let weights = array![0.1, 0.5, 0.25, 0.15, 0.2];
-        assert!(data
-            .weighted_mean_axis(Axis(1), &weights)
-            .unwrap()
-            .all_close(
-                &array![
-                    [0.50202721, 0.53347361, 0.29086033, 0.56995637, 0.37087139],
-                    [0.58028328, 0.50485216, 0.59349973, 0.70308937, 0.72280630]
-                ],
-                1e-8
-            ));
-        assert!(data
-            .weighted_mean_axis(Axis(2), &weights)
-            .unwrap()
-            .all_close(
-                &array![
-                    [0.33434378, 0.38365259, 0.56405781, 0.48676574, 0.55016179],
-                    [0.71112376, 0.55134174, 0.45566513, 0.74228516, 0.68405851]
-                ],
-                1e-8
-            ));
-        assert!(data
-            .weighted_sum_axis(Axis(1), &weights)
-            .unwrap()
-            .all_close(
-                &array![
-                    [0.60243266, 0.64016833, 0.34903240, 0.68394765, 0.44504567],
-                    [0.69633993, 0.60582259, 0.71219968, 0.84370724, 0.86736757]
-                ],
-                1e-8
-            ));
-        assert!(data
-            .weighted_sum_axis(Axis(2), &weights)
-            .unwrap()
-            .all_close(
-                &array![
-                    [0.40121254, 0.46038311, 0.67686937, 0.58411889, 0.66019415],
-                    [0.85334851, 0.66161009, 0.54679815, 0.89074219, 0.82087021]
-                ],
-                1e-8
-            ));
+        assert_abs_diff_eq!(
+            data.weighted_mean_axis(Axis(1), &weights).unwrap(),
+            array![
+                [0.50202721, 0.53347361, 0.29086033, 0.56995637, 0.37087139],
+                [0.58028328, 0.50485216, 0.59349973, 0.70308937, 0.72280630]
+            ],
+            epsilon = 1e-8
+        );
+        assert_abs_diff_eq!(
+            data.weighted_mean_axis(Axis(2), &weights).unwrap(),
+            array![
+                [0.33434378, 0.38365259, 0.56405781, 0.48676574, 0.55016179],
+                [0.71112376, 0.55134174, 0.45566513, 0.74228516, 0.68405851]
+            ],
+            epsilon = 1e-8
+        );
+        assert_abs_diff_eq!(
+            data.weighted_sum_axis(Axis(1), &weights).unwrap(),
+            array![
+                [0.60243266, 0.64016833, 0.34903240, 0.68394765, 0.44504567],
+                [0.69633993, 0.60582259, 0.71219968, 0.84370724, 0.86736757]
+            ],
+            epsilon = 1e-8
+        );
+        assert_abs_diff_eq!(
+            data.weighted_sum_axis(Axis(2), &weights).unwrap(),
+            array![
+                [0.40121254, 0.46038311, 0.67686937, 0.58411889, 0.66019415],
+                [0.85334851, 0.66161009, 0.54679815, 0.89074219, 0.82087021]
+            ],
+            epsilon = 1e-8
+        );
     }
 
     #[test]
@@ -409,7 +407,7 @@ mod tests {
             if a.len() < 1 {
                 return TestResult::discard();
             }
-            let a = Array1::from_vec(a);
+            let a = Array1::from(a);
             let weights = Array1::from_elem(a.len(), 1.0 / a.len() as f64);
             let m = a.mean().unwrap();
             let wm = a.weighted_mean(&weights).unwrap();
@@ -430,11 +428,13 @@ mod tests {
             let depth = a.len() / 12;
             a.truncate(depth * 3 * 4);
             let weights = Array1::from_elem(depth, 1.0 / depth as f64);
-            let a = Array1::from_vec(a).into_shape((depth, 3, 4)).unwrap();
-            let ma = a.mean_axis(Axis(0));
+            let a = Array1::from(a).into_shape((depth, 3, 4)).unwrap();
+            let ma = a.mean_axis(Axis(0)).unwrap();
             let wm = a.weighted_mean_axis(Axis(0), &weights).unwrap();
             let ws = a.weighted_sum_axis(Axis(0), &weights).unwrap();
-            TestResult::from_bool(ma.all_close(&wm, 1e-12) && wm.all_close(&ws, 1e-12))
+            TestResult::from_bool(
+                abs_diff_eq!(ma, wm, epsilon = 1e-12) && abs_diff_eq!(wm, ws, epsilon = 1e12),
+            )
         }
         quickcheck(prop as fn(Vec<f64>) -> TestResult);
     }
