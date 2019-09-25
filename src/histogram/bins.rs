@@ -349,7 +349,7 @@ mod edges_tests {
 
     #[quickcheck]
     fn check_sorted_from_array(v: Vec<i32>) -> bool {
-        let a = Array1::from_vec(v);
+        let a = Array1::from(v);
         let edges = Edges::from(a);
         let n = edges.len();
         for i in 1..n {

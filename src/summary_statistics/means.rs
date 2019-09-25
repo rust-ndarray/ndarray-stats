@@ -28,14 +28,20 @@ where
     where
         A: Float + FromPrimitive,
     {
-        self.map(|x| x.recip()).mean().map(|x| x.recip())
+        self.map(|x| x.recip())
+            .mean()
+            .map(|x| x.recip())
+            .ok_or(EmptyInput)
     }
 
     fn geometric_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive,
     {
-        self.map(|x| x.ln()).mean().map(|x| x.exp())
+        self.map(|x| x.ln())
+            .mean()
+            .map(|x| x.exp())
+            .ok_or(EmptyInput)
     }
 
     fn kurtosis(&self) -> Result<A, EmptyInput>
@@ -207,7 +213,7 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
-        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.mean(), None);
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
@@ -215,7 +221,7 @@ mod tests {
     #[test]
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
-        assert_eq!(a.mean(), Err(EmptyInput));
+        assert_eq!(a.mean(), None);
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
     }
