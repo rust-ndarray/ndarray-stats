@@ -255,9 +255,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::SummaryStatisticsExt;
-    use crate::errors::{EmptyInput, MultiInputError};
+    use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
     use approx::{abs_diff_eq, assert_abs_diff_eq};
-    use ndarray::{array, Array, Array1, Axis};
+    use ndarray::{arr0, array, Array, Array1, Array2, Axis};
     use ndarray_rand::RandomExt;
     use noisy_float::types::N64;
     use quickcheck::{quickcheck, TestResult};
@@ -293,19 +293,15 @@ mod tests {
             Err(MultiInputError::EmptyInput)
         );
         assert_eq!(
-            a.weighted_sum(&array![1.0]),
-            Err(MultiInputError::EmptyInput)
-        );
-        assert_eq!(
             a.weighted_mean_axis(Axis(0), &array![1.0]),
-            Err(MultiInputError::EmptyInput)
-        );
-        assert_eq!(
-            a.weighted_sum_axis(Axis(0), &array![1.0]),
             Err(MultiInputError::EmptyInput)
         );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
+
+        // The sum methods accept empty arrays
+        assert_eq!(a.weighted_sum(&array![]), Ok(0.0));
+        assert_eq!(a.weighted_sum_axis(Axis(0), &array![]), Ok(arr0(0.0)));
     }
 
     #[test]
@@ -313,17 +309,19 @@ mod tests {
         let a: Array1<N64> = array![];
         assert_eq!(a.mean(), None);
         assert_eq!(a.weighted_mean(&array![]), Err(MultiInputError::EmptyInput));
-        assert_eq!(a.weighted_sum(&array![]), Err(MultiInputError::EmptyInput));
         assert_eq!(
             a.weighted_mean_axis(Axis(0), &array![]),
             Err(MultiInputError::EmptyInput)
         );
-        assert_eq!(
-            a.weighted_sum_axis(Axis(0), &array![]),
-            Err(MultiInputError::EmptyInput)
-        );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
+
+        // The sum methods accept empty arrays
+        assert_eq!(a.weighted_sum(&array![]), Ok(N64::new(0.0)));
+        assert_eq!(
+            a.weighted_sum_axis(Axis(0), &array![]),
+            Ok(arr0(N64::new(0.0)))
+        );
     }
 
     #[test]
@@ -398,6 +396,33 @@ mod tests {
                 [0.85334851, 0.66161009, 0.54679815, 0.89074219, 0.82087021]
             ],
             epsilon = 1e-8
+        );
+    }
+
+    #[test]
+    fn weighted_sum_dimension_zero() {
+        let a = Array2::<usize>::zeros((0, 20));
+        assert_eq!(
+            a.weighted_sum_axis(Axis(0), &Array1::zeros(0)).unwrap(),
+            Array1::from_elem(20, 0)
+        );
+        assert_eq!(
+            a.weighted_sum_axis(Axis(1), &Array1::zeros(20)).unwrap(),
+            Array1::from_elem(0, 0)
+        );
+        assert_eq!(
+            a.weighted_sum_axis(Axis(0), &Array1::zeros(1)),
+            Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                first_shape: vec![0, 20],
+                second_shape: vec![1]
+            }))
+        );
+        assert_eq!(
+            a.weighted_sum(&Array2::zeros((10, 20))),
+            Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                first_shape: vec![0, 20],
+                second_shape: vec![10, 20]
+            }))
         );
     }
 
