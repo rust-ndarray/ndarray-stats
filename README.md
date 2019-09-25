@@ -14,6 +14,7 @@ Currently available routines include:
 - partitioning;
 - correlation analysis (covariance, pearson correlation);
 - measures from information theory (entropy, KL divergence, etc.);
+- deviation functions (distances, counts, errors, etc.);
 - histogram computation.
 
 See the [documentation](https://docs.rs/ndarray-stats) for more information.
@@ -26,11 +27,28 @@ Please feel free to contribute new functionality! A roadmap can be found [here](
 
 ```toml
 [dependencies]
-ndarray = "0.12.1"
-ndarray-stats = "0.2"
+ndarray = "0.13"
+ndarray-stats = "0.3"
 ```
 
 ## Releases
+
+* **0.3.0**
+
+  * New functionality:
+    * Deviation functions:
+      * Counts equal/unequal
+      * `l1`, `l2`, `linf` distances
+      * (Root) mean squared error
+      * Peak signal-to-noise ratio
+    * Summary statistics:
+      * Weighted sum
+      * Weighted mean
+  * Improvements / breaking changes:
+    * Updated to `ndarray:v0.13.0`
+    * Minimum supported Rust version: `1.37`
+  
+  *Contributors*: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker)
 
 * **0.2.0**
 
