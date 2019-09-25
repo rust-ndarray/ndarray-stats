@@ -43,6 +43,29 @@ pub use crate::summary_statistics::SummaryStatisticsExt;
 extern crate approx;
 
 #[macro_use]
+mod multi_input_error_macros {
+    macro_rules! return_err_if_empty {
+        ($arr:expr) => {
+            if $arr.len() == 0 {
+                return Err(MultiInputError::EmptyInput);
+            }
+        };
+    }
+    macro_rules! return_err_unless_same_shape {
+        ($arr_a:expr, $arr_b:expr) => {
+            use crate::errors::{MultiInputError, ShapeMismatch};
+            if $arr_a.shape() != $arr_b.shape() {
+                return Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                    first_shape: $arr_a.shape().to_vec(),
+                    second_shape: $arr_b.shape().to_vec(),
+                })
+                .into());
+            }
+        };
+    }
+}
+
+#[macro_use]
 mod private {
     /// This is a public type in a private module, so it can be included in
     /// public APIs, but other crates can't access it.

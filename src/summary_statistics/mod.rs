@@ -1,8 +1,8 @@
 //! Summary statistics (e.g. mean, variance, etc.).
-use crate::errors::EmptyInput;
-use ndarray::{Data, Dimension};
+use crate::errors::{EmptyInput, MultiInputError};
+use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_traits::{Float, FromPrimitive, Zero};
-use std::ops::{Add, Div};
+use std::ops::{Add, Div, Mul};
 
 /// Extension trait for `ArrayBase` providing methods
 /// to compute several summary statistics (e.g. mean, variance, etc.).
@@ -27,6 +27,100 @@ where
     fn mean(&self) -> Result<A, EmptyInput>
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero;
+
+    /// Returns the [`arithmetic weighted mean`] x̅ of all elements in the array. Use `weighted_sum`
+    /// if the `weights` are normalized (they sum up to 1.0).
+    ///
+    /// ```text
+    ///       n
+    ///       ∑ wᵢxᵢ
+    ///      i=1
+    /// x̅ = ―――――――――
+    ///        n
+    ///        ∑ wᵢ
+    ///       i=1
+    /// ```
+    ///
+    /// **Panics** if division by zero panics for type A.
+    ///
+    /// The following **errors** may be returned:
+    ///
+    /// * `MultiInputError::EmptyInput` if `self` is empty
+    /// * `MultiInputError::ShapeMismatch` if `self` and `weights` don't have the same shape
+    ///
+    /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+    fn weighted_mean(&self, weights: &Self) -> Result<A, MultiInputError>
+    where
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero;
+
+    /// Returns the weighted sum of all elements in the array, that is, the dot product of the
+    /// arrays `self` and `weights`. Equivalent to `weighted_mean` if the `weights` are normalized.
+    ///
+    /// ```text
+    ///      n
+    /// x̅ =  ∑ wᵢxᵢ
+    ///     i=1
+    /// ```
+    ///
+    /// The following **errors** may be returned:
+    ///
+    /// * `MultiInputError::ShapeMismatch` if `self` and `weights` don't have the same shape
+    fn weighted_sum(&self, weights: &Self) -> Result<A, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero;
+
+    /// Returns the [`arithmetic weighted mean`] x̅ along `axis`. Use `weighted_mean_axis ` if the
+    /// `weights` are normalized.
+    ///
+    /// ```text
+    ///       n
+    ///       ∑ wᵢxᵢ
+    ///      i=1
+    /// x̅ = ―――――――――
+    ///        n
+    ///        ∑ wᵢ
+    ///       i=1
+    /// ```
+    ///
+    /// **Panics** if `axis` is out of bounds.
+    ///
+    /// The following **errors** may be returned:
+    ///
+    /// * `MultiInputError::EmptyInput` if `self` is empty
+    /// * `MultiInputError::ShapeMismatch` if `self` length along axis is not equal to `weights` length
+    ///
+    /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+    fn weighted_mean_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
+        D: RemoveAxis;
+
+    /// Returns the weighted sum along `axis`, that is, the dot product of `weights` and each lane
+    /// of `self` along `axis`. Equivalent to `weighted_mean_axis` if the `weights` are normalized.
+    ///
+    /// ```text
+    ///      n
+    /// x̅ =  ∑ wᵢxᵢ
+    ///     i=1
+    /// ```
+    ///
+    /// **Panics** if `axis` is out of bounds.
+    ///
+    /// The following **errors** may be returned
+    ///
+    /// * `MultiInputError::ShapeMismatch` if `self` and `weights` don't have the same shape
+    fn weighted_sum_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero,
+        D: RemoveAxis;
 
     /// Returns the [`harmonic mean`] `HM(X)` of all elements in the array:
     ///

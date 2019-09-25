@@ -1,9 +1,9 @@
 use super::SummaryStatisticsExt;
-use crate::errors::EmptyInput;
-use ndarray::{ArrayBase, Data, Dimension};
+use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
+use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, Zero};
-use std::ops::{Add, Div};
+use std::ops::{Add, Div, Mul};
 
 impl<A, S, D> SummaryStatisticsExt<A, S, D> for ArrayBase<S, D>
 where
@@ -22,6 +22,67 @@ where
                 .expect("Converting number of elements to `A` must not fail.");
             Ok(self.sum() / n_elements)
         }
+    }
+
+    fn weighted_mean(&self, weights: &Self) -> Result<A, MultiInputError>
+    where
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
+    {
+        return_err_if_empty!(self);
+        let weighted_sum = self.weighted_sum(weights)?;
+        Ok(weighted_sum / weights.sum())
+    }
+
+    fn weighted_sum(&self, weights: &ArrayBase<S, D>) -> Result<A, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero,
+    {
+        return_err_unless_same_shape!(self, weights);
+        Ok(self
+            .iter()
+            .zip(weights)
+            .fold(A::zero(), |acc, (&d, &w)| acc + d * w))
+    }
+
+    fn weighted_mean_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
+        D: RemoveAxis,
+    {
+        return_err_if_empty!(self);
+        let mut weighted_sum = self.weighted_sum_axis(axis, weights)?;
+        let weights_sum = weights.sum();
+        weighted_sum.mapv_inplace(|v| v / weights_sum);
+        Ok(weighted_sum)
+    }
+
+    fn weighted_sum_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: Copy + Mul<Output = A> + Zero,
+        D: RemoveAxis,
+    {
+        if self.shape()[axis.index()] != weights.len() {
+            return Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                first_shape: self.shape().to_vec(),
+                second_shape: weights.shape().to_vec(),
+            }));
+        }
+
+        // We could use `lane.weighted_sum` here, but we're avoiding 2
+        // conditions and an unwrap per lane.
+        Ok(self.map_axis(axis, |lane| {
+            lane.iter()
+                .zip(weights)
+                .fold(A::zero(), |acc, (&d, &w)| acc + d * w)
+        }))
     }
 
     fn harmonic_mean(&self) -> Result<A, EmptyInput>
@@ -194,11 +255,12 @@ where
 #[cfg(test)]
 mod tests {
     use super::SummaryStatisticsExt;
-    use crate::errors::EmptyInput;
-    use approx::assert_abs_diff_eq;
-    use ndarray::{array, Array, Array1};
+    use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
+    use approx::{abs_diff_eq, assert_abs_diff_eq};
+    use ndarray::{arr0, array, Array, Array1, Array2, Axis};
     use ndarray_rand::RandomExt;
     use noisy_float::types::N64;
+    use quickcheck::{quickcheck, TestResult};
     use rand::distributions::Uniform;
     use std::f64;
 
@@ -206,6 +268,18 @@ mod tests {
     fn test_means_with_nan_values() {
         let a = array![f64::NAN, 1.];
         assert!(a.mean().unwrap().is_nan());
+        assert!(a.weighted_mean(&array![1.0, f64::NAN]).unwrap().is_nan());
+        assert!(a.weighted_sum(&array![1.0, f64::NAN]).unwrap().is_nan());
+        assert!(a
+            .weighted_mean_axis(Axis(0), &array![1.0, f64::NAN])
+            .unwrap()
+            .into_scalar()
+            .is_nan());
+        assert!(a
+            .weighted_sum_axis(Axis(0), &array![1.0, f64::NAN])
+            .unwrap()
+            .into_scalar()
+            .is_nan());
         assert!(a.harmonic_mean().unwrap().is_nan());
         assert!(a.geometric_mean().unwrap().is_nan());
     }
@@ -214,16 +288,40 @@ mod tests {
     fn test_means_with_empty_array_of_floats() {
         let a: Array1<f64> = array![];
         assert_eq!(a.mean(), None);
+        assert_eq!(
+            a.weighted_mean(&array![1.0]),
+            Err(MultiInputError::EmptyInput)
+        );
+        assert_eq!(
+            a.weighted_mean_axis(Axis(0), &array![1.0]),
+            Err(MultiInputError::EmptyInput)
+        );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
+
+        // The sum methods accept empty arrays
+        assert_eq!(a.weighted_sum(&array![]), Ok(0.0));
+        assert_eq!(a.weighted_sum_axis(Axis(0), &array![]), Ok(arr0(0.0)));
     }
 
     #[test]
     fn test_means_with_empty_array_of_noisy_floats() {
         let a: Array1<N64> = array![];
         assert_eq!(a.mean(), None);
+        assert_eq!(a.weighted_mean(&array![]), Err(MultiInputError::EmptyInput));
+        assert_eq!(
+            a.weighted_mean_axis(Axis(0), &array![]),
+            Err(MultiInputError::EmptyInput)
+        );
         assert_eq!(a.harmonic_mean(), Err(EmptyInput));
         assert_eq!(a.geometric_mean(), Err(EmptyInput));
+
+        // The sum methods accept empty arrays
+        assert_eq!(a.weighted_sum(&array![]), Ok(N64::new(0.0)));
+        assert_eq!(
+            a.weighted_sum_axis(Axis(0), &array![]),
+            Ok(arr0(N64::new(0.0)))
+        );
     }
 
     #[test]
@@ -240,9 +338,9 @@ mod tests {
         ];
         // Computed using NumPy
         let expected_mean = 0.5475494059146699;
+        let expected_weighted_mean = 0.6782420496397121;
         // Computed using SciPy
         let expected_harmonic_mean = 0.21790094950226022;
-        // Computed using SciPy
         let expected_geometric_mean = 0.4345897639796527;
 
         assert_abs_diff_eq!(a.mean().unwrap(), expected_mean, epsilon = 1e-9);
@@ -256,6 +354,114 @@ mod tests {
             expected_geometric_mean,
             epsilon = 1e-12
         );
+
+        // weighted_mean with itself, normalized
+        let weights = &a / a.sum();
+        assert_abs_diff_eq!(
+            a.weighted_sum(&weights).unwrap(),
+            expected_weighted_mean,
+            epsilon = 1e-12
+        );
+
+        let data = a.into_shape((2, 5, 5)).unwrap();
+        let weights = array![0.1, 0.5, 0.25, 0.15, 0.2];
+        assert_abs_diff_eq!(
+            data.weighted_mean_axis(Axis(1), &weights).unwrap(),
+            array![
+                [0.50202721, 0.53347361, 0.29086033, 0.56995637, 0.37087139],
+                [0.58028328, 0.50485216, 0.59349973, 0.70308937, 0.72280630]
+            ],
+            epsilon = 1e-8
+        );
+        assert_abs_diff_eq!(
+            data.weighted_mean_axis(Axis(2), &weights).unwrap(),
+            array![
+                [0.33434378, 0.38365259, 0.56405781, 0.48676574, 0.55016179],
+                [0.71112376, 0.55134174, 0.45566513, 0.74228516, 0.68405851]
+            ],
+            epsilon = 1e-8
+        );
+        assert_abs_diff_eq!(
+            data.weighted_sum_axis(Axis(1), &weights).unwrap(),
+            array![
+                [0.60243266, 0.64016833, 0.34903240, 0.68394765, 0.44504567],
+                [0.69633993, 0.60582259, 0.71219968, 0.84370724, 0.86736757]
+            ],
+            epsilon = 1e-8
+        );
+        assert_abs_diff_eq!(
+            data.weighted_sum_axis(Axis(2), &weights).unwrap(),
+            array![
+                [0.40121254, 0.46038311, 0.67686937, 0.58411889, 0.66019415],
+                [0.85334851, 0.66161009, 0.54679815, 0.89074219, 0.82087021]
+            ],
+            epsilon = 1e-8
+        );
+    }
+
+    #[test]
+    fn weighted_sum_dimension_zero() {
+        let a = Array2::<usize>::zeros((0, 20));
+        assert_eq!(
+            a.weighted_sum_axis(Axis(0), &Array1::zeros(0)).unwrap(),
+            Array1::from_elem(20, 0)
+        );
+        assert_eq!(
+            a.weighted_sum_axis(Axis(1), &Array1::zeros(20)).unwrap(),
+            Array1::from_elem(0, 0)
+        );
+        assert_eq!(
+            a.weighted_sum_axis(Axis(0), &Array1::zeros(1)),
+            Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                first_shape: vec![0, 20],
+                second_shape: vec![1]
+            }))
+        );
+        assert_eq!(
+            a.weighted_sum(&Array2::zeros((10, 20))),
+            Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                first_shape: vec![0, 20],
+                second_shape: vec![10, 20]
+            }))
+        );
+    }
+
+    #[test]
+    fn mean_eq_if_uniform_weights() {
+        fn prop(a: Vec<f64>) -> TestResult {
+            if a.len() < 1 {
+                return TestResult::discard();
+            }
+            let a = Array1::from(a);
+            let weights = Array1::from_elem(a.len(), 1.0 / a.len() as f64);
+            let m = a.mean().unwrap();
+            let wm = a.weighted_mean(&weights).unwrap();
+            let ws = a.weighted_sum(&weights).unwrap();
+            TestResult::from_bool(
+                abs_diff_eq!(m, wm, epsilon = 1e-9) && abs_diff_eq!(wm, ws, epsilon = 1e-9),
+            )
+        }
+        quickcheck(prop as fn(Vec<f64>) -> TestResult);
+    }
+
+    #[test]
+    fn mean_axis_eq_if_uniform_weights() {
+        fn prop(mut a: Vec<f64>) -> TestResult {
+            if a.len() < 24 {
+                return TestResult::discard();
+            }
+            let depth = a.len() / 12;
+            a.truncate(depth * 3 * 4);
+            let weights = Array1::from_elem(depth, 1.0 / depth as f64);
+            let a = Array1::from(a).into_shape((depth, 3, 4)).unwrap();
+            let ma = a.mean_axis(Axis(0)).unwrap();
+            let wm = a.weighted_mean_axis(Axis(0), &weights).unwrap();
+            let ws = a.weighted_sum_axis(Axis(0), &weights).unwrap();
+            TestResult::from_bool(
+                abs_diff_eq!(ma, wm, epsilon = 1e-12) && abs_diff_eq!(wm, ws, epsilon = 1e12),
+            )
+        }
+        quickcheck(prop as fn(Vec<f64>) -> TestResult);
     }
 
     #[test]
