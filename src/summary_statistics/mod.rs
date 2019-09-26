@@ -164,8 +164,7 @@ where
     /// The parameter `ddof` specifies the "delta degrees of freedom". For example, to calculate the
     /// population variance, use `ddof = 0`, or to calculate the sample variance, use `ddof = 1`.
     ///
-    /// **Panics** if `ddof` is less than zero or greater than one, if `axis` is out of bounds, or
-    /// if `A::from_usize()` fails for 0 or 1.
+    /// **Panics** if `ddof` is less than zero or greater than one, or if `axis` is out of bounds.
     ///
     /// [`West, D. H. D.`]: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
     fn weighted_var(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
@@ -174,19 +173,60 @@ where
 
     /// Return weighted standard deviation of all elements in the array.
     ///
-    /// The weighted weighted standard deviation is computed using the [`West, D. H. D.`]
-    /// incremental algorithm. Equivalent to `var_axis` if the `weights` are normalized.
+    /// The weighted standard deviation is computed using the [`West, D. H. D.`] incremental
+    /// algorithm. Equivalent to `var_axis` if the `weights` are normalized.
     ///
     /// The parameter `ddof` specifies the "delta degrees of freedom". For example, to calculate the
     /// population variance, use `ddof = 0`, or to calculate the sample variance, use `ddof = 1`.
     ///
-    /// **Panics** if `ddof` is less than zero or greater than one, if `axis` is out of bounds, or
-    /// if `A::from_usize()` fails for 0 or 1.
+    /// **Panics** if `ddof` is less than zero or greater than one, or if `axis` is out of bounds.
     ///
     /// [`West, D. H. D.`]: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
     fn weighted_std(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
     where
         A: AddAssign + Float + FromPrimitive;
+
+    /// Return weighted variance along `axis`.
+    ///
+    /// The weighted variance is computed using the [`West, D. H. D.`] incremental algorithm.
+    /// Equivalent to `var_axis` if the `weights` are normalized.
+    ///
+    /// The parameter `ddof` specifies the "delta degrees of freedom". For example, to calculate the
+    /// population variance, use `ddof = 0`, or to calculate the sample variance, use `ddof = 1`.
+    ///
+    /// **Panics** if `ddof` is less than zero or greater than one, or if `axis` is out of bounds.
+    ///
+    /// [`West, D. H. D.`]: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
+    fn weighted_var_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+        ddof: A,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive,
+        D: RemoveAxis;
+
+    /// Return weighted standard deviation along `axis`.
+    ///
+    /// The weighted standard deviation is computed using the [`West, D. H. D.`] incremental
+    /// algorithm. Equivalent to `var_axis` if the `weights` are normalized.
+    ///
+    /// The parameter `ddof` specifies the "delta degrees of freedom". For example, to calculate the
+    /// population variance, use `ddof = 0`, or to calculate the sample variance, use `ddof = 1`.
+    ///
+    /// **Panics** if `ddof` is less than zero or greater than one, or if `axis` is out of bounds.
+    ///
+    /// [`West, D. H. D.`]: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
+    fn weighted_std_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+        ddof: A,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive,
+        D: RemoveAxis;
 
     /// Returns the [kurtosis] `Kurt[X]` of all elements in the array:
     ///

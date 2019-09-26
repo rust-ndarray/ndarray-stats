@@ -112,22 +112,11 @@ where
         return_err_if_empty!(self);
         return_err_unless_same_shape!(self, weights);
         let zero = A::from_usize(0).expect("Converting 0 to `A` must not fail.");
-        let one = A::from_usize(1).expect("Converting 1 to `A` must not fail.");
         assert!(
-            !(ddof < zero || ddof > one),
-            "`ddof` must not be less than zero or greater than the length of the axis",
+            !(ddof < zero || ddof > A::from_usize(1).unwrap()),
+            "`ddof` must not be less than zero or greater than one",
         );
-
-        let mut weight_sum = zero;
-        let mut mean = zero;
-        let mut s = zero;
-        for (&x, &w) in self.iter().zip(weights.iter()) {
-            weight_sum += w;
-            let x_m_m = x - mean;
-            mean += (w / weight_sum) * x_m_m;
-            s += w * x_m_m * (x - mean);
-        }
-        Ok(s / (weight_sum - ddof))
+        inner_weighted_var(self, weights, ddof, zero)
     }
 
     fn weighted_std(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
@@ -135,6 +124,51 @@ where
         A: AddAssign + Float + FromPrimitive,
     {
         Ok(self.weighted_var(weights, ddof)?.sqrt())
+    }
+
+    fn weighted_var_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+        ddof: A,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive,
+        D: RemoveAxis,
+    {
+        return_err_if_empty!(self);
+        if self.shape()[axis.index()] != weights.len() {
+            return Err(MultiInputError::ShapeMismatch(ShapeMismatch {
+                first_shape: self.shape().to_vec(),
+                second_shape: weights.shape().to_vec(),
+            }));
+        }
+        let zero = A::from_usize(0).expect("Converting 0 to `A` must not fail.");
+        assert!(
+            !(ddof < zero || ddof > A::from_usize(1).unwrap()),
+            "`ddof` must not be less than zero or greater than one",
+        );
+
+        // `weights` must be a view because `lane` is a view in this context.
+        let weights = weights.view();
+        Ok(self.map_axis(axis, |lane| {
+            inner_weighted_var(&lane, &weights, ddof, zero).unwrap()
+        }))
+    }
+
+    fn weighted_std_axis(
+        &self,
+        axis: Axis,
+        weights: &ArrayBase<S, Ix1>,
+        ddof: A,
+    ) -> Result<Array<A, D::Smaller>, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive,
+        D: RemoveAxis,
+    {
+        Ok(self
+            .weighted_var_axis(axis, weights, ddof)?
+            .mapv_into(|x| x.sqrt()))
     }
 
     fn kurtosis(&self) -> Result<A, EmptyInput>
@@ -206,6 +240,30 @@ where
     }
 
     private_impl! {}
+}
+
+/// Private function for `weighted_var` without conditions and asserts.
+fn inner_weighted_var<A, S, D>(
+    arr: &ArrayBase<S, D>,
+    weights: &ArrayBase<S, D>,
+    ddof: A,
+    zero: A,
+) -> Result<A, MultiInputError>
+where
+    S: Data<Elem = A>,
+    A: AddAssign + Float + FromPrimitive,
+    D: Dimension,
+{
+    let mut weight_sum = zero;
+    let mut mean = zero;
+    let mut s = zero;
+    for (&x, &w) in arr.iter().zip(weights.iter()) {
+        weight_sum += w;
+        let x_m_m = x - mean;
+        mean += (w / weight_sum) * x_m_m;
+        s += w * x_m_m * (x - mean);
+    }
+    Ok(s / (weight_sum - ddof))
 }
 
 /// Returns a vector containing all moments of the array elements up to
