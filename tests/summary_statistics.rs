@@ -11,39 +11,48 @@ use rand::distributions::Uniform;
 use std::f64;
 
 #[test]
-fn test_means_with_nan_values() {
+fn test_with_nan_values() {
     let a = array![f64::NAN, 1.];
+    let weights = array![1.0, f64::NAN];
     assert!(a.mean().unwrap().is_nan());
-    assert!(a.weighted_mean(&array![1.0, f64::NAN]).unwrap().is_nan());
-    assert!(a.weighted_sum(&array![1.0, f64::NAN]).unwrap().is_nan());
+    assert!(a.weighted_mean(&weights).unwrap().is_nan());
+    assert!(a.weighted_sum(&weights).unwrap().is_nan());
     assert!(a
-        .weighted_mean_axis(Axis(0), &array![1.0, f64::NAN])
+        .weighted_mean_axis(Axis(0), &weights)
         .unwrap()
         .into_scalar()
         .is_nan());
     assert!(a
-        .weighted_sum_axis(Axis(0), &array![1.0, f64::NAN])
+        .weighted_sum_axis(Axis(0), &weights)
         .unwrap()
         .into_scalar()
         .is_nan());
     assert!(a.harmonic_mean().unwrap().is_nan());
     assert!(a.geometric_mean().unwrap().is_nan());
+    assert!(a.weighted_var(&weights, 0.0).unwrap().is_nan());
+    assert!(a.weighted_std(&weights, 0.0).unwrap().is_nan());
 }
 
 #[test]
-fn test_means_with_empty_array_of_floats() {
+fn test_with_empty_array_of_floats() {
     let a: Array1<f64> = array![];
+    let weights = array![1.0];
     assert_eq!(a.mean(), None);
+    assert_eq!(a.weighted_mean(&weights), Err(MultiInputError::EmptyInput));
     assert_eq!(
-        a.weighted_mean(&array![1.0]),
-        Err(MultiInputError::EmptyInput)
-    );
-    assert_eq!(
-        a.weighted_mean_axis(Axis(0), &array![1.0]),
+        a.weighted_mean_axis(Axis(0), &weights),
         Err(MultiInputError::EmptyInput)
     );
     assert_eq!(a.harmonic_mean(), Err(EmptyInput));
     assert_eq!(a.geometric_mean(), Err(EmptyInput));
+    assert_eq!(
+        a.weighted_var(&weights, 0.0),
+        Err(MultiInputError::EmptyInput)
+    );
+    assert_eq!(
+        a.weighted_std(&weights, 0.0),
+        Err(MultiInputError::EmptyInput)
+    );
 
     // The sum methods accept empty arrays
     assert_eq!(a.weighted_sum(&array![]), Ok(0.0));
@@ -51,27 +60,36 @@ fn test_means_with_empty_array_of_floats() {
 }
 
 #[test]
-fn test_means_with_empty_array_of_noisy_floats() {
+fn test_with_empty_array_of_noisy_floats() {
     let a: Array1<N64> = array![];
+    let weights = array![];
     assert_eq!(a.mean(), None);
-    assert_eq!(a.weighted_mean(&array![]), Err(MultiInputError::EmptyInput));
+    assert_eq!(a.weighted_mean(&weights), Err(MultiInputError::EmptyInput));
     assert_eq!(
-        a.weighted_mean_axis(Axis(0), &array![]),
+        a.weighted_mean_axis(Axis(0), &weights),
         Err(MultiInputError::EmptyInput)
     );
     assert_eq!(a.harmonic_mean(), Err(EmptyInput));
     assert_eq!(a.geometric_mean(), Err(EmptyInput));
+    assert_eq!(
+        a.weighted_var(&weights, N64::new(0.0)),
+        Err(MultiInputError::EmptyInput)
+    );
+    assert_eq!(
+        a.weighted_std(&weights, N64::new(0.0)),
+        Err(MultiInputError::EmptyInput)
+    );
 
     // The sum methods accept empty arrays
-    assert_eq!(a.weighted_sum(&array![]), Ok(N64::new(0.0)));
+    assert_eq!(a.weighted_sum(&weights), Ok(N64::new(0.0)));
     assert_eq!(
-        a.weighted_sum_axis(Axis(0), &array![]),
+        a.weighted_sum_axis(Axis(0), &weights),
         Ok(arr0(N64::new(0.0)))
     );
 }
 
 #[test]
-fn test_means_with_array_of_floats() {
+fn test_with_array_of_floats() {
     let a: Array1<f64> = array![
         0.99889651, 0.0150731, 0.28492482, 0.83819218, 0.48413156, 0.80710412, 0.41762936,
         0.22879429, 0.43997224, 0.23831807, 0.02416466, 0.6269962, 0.47420614, 0.56275487,
@@ -85,6 +103,7 @@ fn test_means_with_array_of_floats() {
     // Computed using NumPy
     let expected_mean = 0.5475494059146699;
     let expected_weighted_mean = 0.6782420496397121;
+    let expected_weighted_var = 0.04306695637838332;
     // Computed using SciPy
     let expected_harmonic_mean = 0.21790094950226022;
     let expected_geometric_mean = 0.4345897639796527;
@@ -101,11 +120,21 @@ fn test_means_with_array_of_floats() {
         epsilon = 1e-12
     );
 
-    // weighted_mean with itself, normalized
+    // Input array used as weights, normalized
     let weights = &a / a.sum();
     assert_abs_diff_eq!(
         a.weighted_sum(&weights).unwrap(),
         expected_weighted_mean,
+        epsilon = 1e-12
+    );
+    assert_abs_diff_eq!(
+        a.weighted_var(&weights, 0.0).unwrap(),
+        expected_weighted_var,
+        epsilon = 1e-12
+    );
+    assert_abs_diff_eq!(
+        a.weighted_std(&weights, 0.0).unwrap(),
+        expected_weighted_var.sqrt(),
         epsilon = 1e-12
     );
 
@@ -206,6 +235,40 @@ fn mean_axis_eq_if_uniform_weights() {
         TestResult::from_bool(
             abs_diff_eq!(ma, wm, epsilon = 1e-12) && abs_diff_eq!(wm, ws, epsilon = 1e12),
         )
+    }
+    quickcheck(prop as fn(Vec<f64>) -> TestResult);
+}
+
+#[test]
+fn weighted_var_eq_var_if_uniform_weight() {
+    fn prop(a: Vec<f64>) -> TestResult {
+        if a.len() < 1 {
+            return TestResult::discard();
+        }
+        let a = Array1::from(a);
+        let weights = Array1::from_elem(a.len(), 1.0 / a.len() as f64);
+        let weighted_var = a.weighted_var(&weights, 0.0).unwrap();
+        let var = a.var_axis(Axis(0), 0.0).into_scalar();
+        TestResult::from_bool(abs_diff_eq!(weighted_var, var, epsilon = 1e-10))
+    }
+    quickcheck(prop as fn(Vec<f64>) -> TestResult);
+}
+
+#[test]
+fn weighted_var_algo_eq_simple_algo() {
+    fn prop(a: Vec<f64>) -> TestResult {
+        if a.len() < 1 {
+            return TestResult::discard();
+        }
+        let a = Array1::from(a);
+        let weights = Array::random(a.len(), Uniform::new(0.0, 1.0));
+        let mean = a.weighted_mean(&weights).unwrap();
+        let res_1_pass = a.weighted_var(&weights, 0.0).unwrap();
+        let res_2_pass = (a - mean)
+            .mapv_into(|v| v.powi(2))
+            .weighted_mean(&weights)
+            .unwrap();
+        TestResult::from_bool(abs_diff_eq!(res_1_pass, res_2_pass, epsilon = 1e-10))
     }
     quickcheck(prop as fn(Vec<f64>) -> TestResult);
 }
