@@ -31,6 +31,16 @@ fn test_with_nan_values() {
     assert!(a.geometric_mean().unwrap().is_nan());
     assert!(a.weighted_var(&weights, 0.0).unwrap().is_nan());
     assert!(a.weighted_std(&weights, 0.0).unwrap().is_nan());
+    assert!(a
+        .weighted_var_axis(Axis(0), &weights, 0.0)
+        .unwrap()
+        .into_scalar()
+        .is_nan());
+    assert!(a
+        .weighted_std_axis(Axis(0), &weights, 0.0)
+        .unwrap()
+        .into_scalar()
+        .is_nan());
 }
 
 #[test]
@@ -51,6 +61,14 @@ fn test_with_empty_array_of_floats() {
     );
     assert_eq!(
         a.weighted_std(&weights, 0.0),
+        Err(MultiInputError::EmptyInput)
+    );
+    assert_eq!(
+        a.weighted_var_axis(Axis(0), &weights, 0.0),
+        Err(MultiInputError::EmptyInput)
+    );
+    assert_eq!(
+        a.weighted_std_axis(Axis(0), &weights, 0.0),
         Err(MultiInputError::EmptyInput)
     );
 
@@ -77,6 +95,14 @@ fn test_with_empty_array_of_noisy_floats() {
     );
     assert_eq!(
         a.weighted_std(&weights, N64::new(0.0)),
+        Err(MultiInputError::EmptyInput)
+    );
+    assert_eq!(
+        a.weighted_var_axis(Axis(0), &weights, N64::new(0.0)),
+        Err(MultiInputError::EmptyInput)
+    );
+    assert_eq!(
+        a.weighted_std_axis(Axis(0), &weights, N64::new(0.0)),
         Err(MultiInputError::EmptyInput)
     );
 
@@ -256,19 +282,27 @@ fn weighted_var_eq_var_if_uniform_weight() {
 
 #[test]
 fn weighted_var_algo_eq_simple_algo() {
-    fn prop(a: Vec<f64>) -> TestResult {
-        if a.len() < 1 {
+    fn prop(mut a: Vec<f64>) -> TestResult {
+        if a.len() < 24 {
             return TestResult::discard();
         }
-        let a = Array1::from(a);
-        let weights = Array::random(a.len(), Uniform::new(0.0, 1.0));
-        let mean = a.weighted_mean(&weights).unwrap();
-        let res_1_pass = a.weighted_var(&weights, 0.0).unwrap();
-        let res_2_pass = (a - mean)
-            .mapv_into(|v| v.powi(2))
-            .weighted_mean(&weights)
-            .unwrap();
-        TestResult::from_bool(abs_diff_eq!(res_1_pass, res_2_pass, epsilon = 1e-10))
+        let depth = a.len() / 12;
+        a.truncate(depth * 3 * 4);
+        let a = Array1::from(a).into_shape((depth, 3, 4)).unwrap();
+        let mut success = true;
+        for axis in 0..3 {
+            let axis = Axis(axis);
+
+            let weights = Array::random(a.len_of(axis), Uniform::new(0.0, 1.0));
+            let mean = a.weighted_mean_axis(axis, &weights).unwrap().insert_axis(axis);
+            let res_1_pass = a.weighted_var_axis(axis, &weights, 0.0).unwrap();
+            let res_2_pass = (&a - &mean)
+                .mapv_into(|v| v.powi(2))
+                .weighted_mean_axis(axis, &weights)
+                .unwrap();
+            success &= abs_diff_eq!(res_1_pass, res_2_pass, epsilon = 1e-10);
+        }
+        TestResult::from_bool(success)
     }
     quickcheck(prop as fn(Vec<f64>) -> TestResult);
 }
