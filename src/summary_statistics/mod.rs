@@ -2,7 +2,7 @@
 use crate::errors::{EmptyInput, MultiInputError};
 use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_traits::{Float, FromPrimitive, Zero};
-use std::ops::{Add, Div, Mul};
+use std::ops::{Add, AddAssign, Div, Mul};
 
 /// Extension trait for `ArrayBase` providing methods
 /// to compute several summary statistics (e.g. mean, variance, etc.).
@@ -155,6 +155,38 @@ where
     fn geometric_mean(&self) -> Result<A, EmptyInput>
     where
         A: Float + FromPrimitive;
+
+    /// Return weighted variance of all elements in the array.
+    ///
+    /// The weighted variance is computed using the [`West, D. H. D.`] incremental algorithm.
+    /// Equivalent to `var_axis` if the `weights` are normalized.
+    ///
+    /// The parameter `ddof` specifies the "delta degrees of freedom". For example, to calculate the
+    /// population variance, use `ddof = 0`, or to calculate the sample variance, use `ddof = 1`.
+    ///
+    /// **Panics** if `ddof` is less than zero or greater than one, if `axis` is out of bounds, or
+    /// if `A::from_usize()` fails for 0 or 1.
+    ///
+    /// [`West, D. H. D.`]: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
+    fn weighted_var(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive;
+
+    /// Return weighted standard deviation of all elements in the array.
+    ///
+    /// The weighted weighted standard deviation is computed using the [`West, D. H. D.`]
+    /// incremental algorithm. Equivalent to `var_axis` if the `weights` are normalized.
+    ///
+    /// The parameter `ddof` specifies the "delta degrees of freedom". For example, to calculate the
+    /// population variance, use `ddof = 0`, or to calculate the sample variance, use `ddof = 1`.
+    ///
+    /// **Panics** if `ddof` is less than zero or greater than one, if `axis` is out of bounds, or
+    /// if `A::from_usize()` fails for 0 or 1.
+    ///
+    /// [`West, D. H. D.`]: https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
+    fn weighted_std(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive;
 
     /// Returns the [kurtosis] `Kurt[X]` of all elements in the array:
     ///

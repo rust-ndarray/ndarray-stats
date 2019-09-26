@@ -3,7 +3,7 @@ use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
 use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, Zero};
-use std::ops::{Add, Div, Mul};
+use std::ops::{Add, AddAssign, Div, Mul};
 
 impl<A, S, D> SummaryStatisticsExt<A, S, D> for ArrayBase<S, D>
 where
@@ -103,6 +103,38 @@ where
             .mean()
             .map(|x| x.exp())
             .ok_or(EmptyInput)
+    }
+
+    fn weighted_var(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive,
+    {
+        return_err_if_empty!(self);
+        return_err_unless_same_shape!(self, weights);
+        let zero = A::from_usize(0).expect("Converting 0 to `A` must not fail.");
+        let one = A::from_usize(1).expect("Converting 1 to `A` must not fail.");
+        assert!(
+            !(ddof < zero || ddof > one),
+            "`ddof` must not be less than zero or greater than the length of the axis",
+        );
+
+        let mut weight_sum = zero;
+        let mut mean = zero;
+        let mut s = zero;
+        for (&x, &w) in self.iter().zip(weights.iter()) {
+            weight_sum += w;
+            let x_m_m = x - mean;
+            mean += (w / weight_sum) * x_m_m;
+            s += w * x_m_m * (x - mean);
+        }
+        Ok(s / (weight_sum - ddof))
+    }
+
+    fn weighted_std(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
+    where
+        A: AddAssign + Float + FromPrimitive,
+    {
+        Ok(self.weighted_var(weights, ddof)?.sqrt())
     }
 
     fn kurtosis(&self) -> Result<A, EmptyInput>
