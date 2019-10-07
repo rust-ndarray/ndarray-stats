@@ -112,8 +112,9 @@ where
         return_err_if_empty!(self);
         return_err_unless_same_shape!(self, weights);
         let zero = A::from_usize(0).expect("Converting 0 to `A` must not fail.");
+        let one = A::from_usize(1).expect("Converting 1 to `A` must not fail.");
         assert!(
-            !(ddof < zero || ddof > A::from_usize(1).unwrap()),
+            !(ddof < zero || ddof > one),
             "`ddof` must not be less than zero or greater than one",
         );
         inner_weighted_var(self, weights, ddof, zero)
@@ -144,8 +145,9 @@ where
             }));
         }
         let zero = A::from_usize(0).expect("Converting 0 to `A` must not fail.");
+        let one = A::from_usize(1).expect("Converting 1 to `A` must not fail.");
         assert!(
-            !(ddof < zero || ddof > A::from_usize(1).unwrap()),
+            !(ddof < zero || ddof > one),
             "`ddof` must not be less than zero or greater than one",
         );
 
@@ -259,9 +261,9 @@ where
     let mut s = zero;
     for (&x, &w) in arr.iter().zip(weights.iter()) {
         weight_sum += w;
-        let x_m_m = x - mean;
-        mean += (w / weight_sum) * x_m_m;
-        s += w * x_m_m * (x - mean);
+        let x_minus_mean = x - mean;
+        mean += (w / weight_sum) * x_minus_mean;
+        s += w * x_minus_mean * (x - mean);
     }
     Ok(s / (weight_sum - ddof))
 }
