@@ -294,7 +294,10 @@ fn weighted_var_algo_eq_simple_algo() {
             let axis = Axis(axis);
 
             let weights = Array::random(a.len_of(axis), Uniform::new(0.0, 1.0));
-            let mean = a.weighted_mean_axis(axis, &weights).unwrap().insert_axis(axis);
+            let mean = a
+                .weighted_mean_axis(axis, &weights)
+                .unwrap()
+                .insert_axis(axis);
             let res_1_pass = a.weighted_var_axis(axis, &weights, 0.0).unwrap();
             let res_2_pass = (&a - &mean)
                 .mapv_into(|v| v.powi(2))
