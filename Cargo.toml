@@ -36,3 +36,7 @@ num-bigint = "0.2.2"
 [[bench]]
 name = "sort"
 harness = false
+
+[[bench]]
+name = "summary_statistics"
+harness = false
