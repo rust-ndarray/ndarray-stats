@@ -40,3 +40,7 @@ harness = false
 [[bench]]
 name = "summary_statistics"
 harness = false
+
+[[bench]]
+name = "deviation"
+harness = false
