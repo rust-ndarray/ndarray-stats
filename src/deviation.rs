@@ -261,8 +261,8 @@ where
 
         Zip::from(self).and(other).apply(|self_i, other_i| {
             let (a, b) = (self_i.clone(), other_i.clone());
-            let abs_diff = (a - b).abs();
-            result += abs_diff.clone() * abs_diff;
+            let diff = a - b;
+            result += diff.clone() * diff;
         });
 
         Ok(result)
