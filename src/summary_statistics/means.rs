@@ -288,7 +288,7 @@ where
 {
     let n_elements =
         A::from_usize(a.len()).expect("Converting number of elements to `A` must not fail");
-    let order = order as i32;
+    let order = i32::from(order);
 
     // When k=0, we are raising each element to the 0th power
     // No need to waste CPU cycles going through the array

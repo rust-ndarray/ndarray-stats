@@ -43,7 +43,7 @@ pub trait MaybeNan: Sized {
 ///
 /// This modifies the input view by moving elements as necessary.
 fn remove_nan_mut<A: MaybeNan>(mut view: ArrayViewMut1<'_, A>) -> ArrayViewMut1<'_, A> {
-    if view.len() == 0 {
+    if view.is_empty() {
         return view.slice_move(s![..0]);
     }
     let mut i = 0;

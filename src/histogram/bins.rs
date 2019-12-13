@@ -123,6 +123,23 @@ impl<A: Ord> Edges<A> {
         self.edges.len()
     }
 
+    /// Returns `true` if `self` contains no edges.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::Edges;
+    /// use noisy_float::types::{N64, n64};
+    ///
+    /// let edges = Edges::<N64>::from(vec![]);
+    /// assert_eq!(edges.is_empty(), true);
+    /// let edges = Edges::from(vec![n64(0.), n64(2.), n64(5.)]);
+    /// assert_eq!(edges.is_empty(), false);
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.edges.is_empty()
+    }
+
     /// Borrow an immutable reference to the edges as a 1-dimensional
     /// array view.
     ///
@@ -238,6 +255,29 @@ impl<A: Ord> Bins<A> {
             0 => 0,
             n => n - 1,
         }
+    }
+
+    /// Returns `true` if the number of bins is zero, or in other words, if the
+    /// number of edges is 0 or 1.
+    ///
+    /// # Example:
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{Edges, Bins};
+    /// use noisy_float::types::{N64, n64};
+    ///
+    /// let edges = Edges::<N64>::from(vec![]);
+    /// let bins = Bins::new(edges);
+    /// assert_eq!(bins.is_empty(), true);
+    /// let edges = Edges::from(vec![n64(0.)]);
+    /// let bins = Bins::new(edges);
+    /// assert_eq!(bins.is_empty(), true);
+    /// let edges = Edges::from(vec![n64(0.), n64(1.), n64(3.)]);
+    /// let bins = Bins::new(edges);
+    /// assert_eq!(bins.is_empty(), false);
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     /// Given `value`, it returns:

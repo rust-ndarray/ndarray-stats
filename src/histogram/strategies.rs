@@ -171,7 +171,7 @@ where
     fn build(&self) -> Bins<T> {
         let n_bins = self.n_bins();
         let mut edges: Vec<T> = vec![];
-        for i in 0..(n_bins + 1) {
+        for i in 0..=n_bins {
             let edge = self.min.clone() + T::from_usize(i).unwrap() * self.bin_width.clone();
             edges.push(edge);
         }
@@ -185,7 +185,7 @@ where
             max_edge = max_edge + self.bin_width.clone();
             n_bins += 1;
         }
-        return n_bins;
+        n_bins
     }
 
     fn bin_width(&self) -> T {
@@ -361,8 +361,7 @@ where
 {
     fn compute_bin_width(n_bins: usize, iqr: T) -> T {
         let denominator = (n_bins as f64).powf(1. / 3.);
-        let bin_width = T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap();
-        bin_width
+        T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap()
     }
 
     /// The bin width (or bin length) according to the fitted strategy.
@@ -449,8 +448,7 @@ where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     let range = max.clone() - min.clone();
-    let bin_width = range / T::from_usize(n_bins).unwrap();
-    bin_width
+    range / T::from_usize(n_bins).unwrap()
 }
 
 #[cfg(test)]
