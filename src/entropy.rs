@@ -133,7 +133,7 @@ where
     where
         A: Float,
     {
-        if self.len() == 0 {
+        if self.is_empty() {
             Err(EmptyInput)
         } else {
             let entropy = -self
@@ -154,7 +154,7 @@ where
         A: Float,
         S2: Data<Elem = A>,
     {
-        if self.len() == 0 {
+        if self.is_empty() {
             return Err(MultiInputError::EmptyInput);
         }
         if self.shape() != q.shape() {
@@ -187,7 +187,7 @@ where
         S2: Data<Elem = A>,
         A: Float,
     {
-        if self.len() == 0 {
+        if self.is_empty() {
             return Err(MultiInputError::EmptyInput);
         }
         if self.shape() != q.shape() {

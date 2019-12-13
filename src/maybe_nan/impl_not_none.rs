@@ -35,9 +35,6 @@ impl<T: PartialEq> PartialEq for NotNone<T> {
     fn eq(&self, other: &Self) -> bool {
         self.deref().eq(other)
     }
-    fn ne(&self, other: &Self) -> bool {
-        self.deref().eq(other)
-    }
 }
 
 impl<T: Ord> Ord for NotNone<T> {
