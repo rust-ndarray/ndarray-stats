@@ -1,5 +1,5 @@
 //! Histogram functionalities.
-pub use self::binnedstatistic::BinnedStatistic;
+pub use self::binnedstatistic::{BinnedStatistic, BinnedStatisticExt};
 pub use self::bins::{Bins, Edges};
 pub use self::grid::{Grid, GridBuilder};
 pub use self::histograms::{Histogram, HistogramExt};

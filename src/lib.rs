@@ -8,7 +8,7 @@
 //! - [correlation analysis] (covariance, pearson correlation);
 //! - [measures from information theory] (entropy, KL divergence, etc.);
 //! - [measures of deviation] (count equal, L1, L2 distances, mean squared err etc.)
-//! - [histogram computation].
+//! - [histogram computation] (histograms, binned statistic).
 //!
 //! Please feel free to contribute new functionality! A roadmap can be found [here].
 //!
@@ -32,7 +32,7 @@
 pub use crate::correlation::CorrelationExt;
 pub use crate::deviation::DeviationExt;
 pub use crate::entropy::EntropyExt;
-pub use crate::histogram::HistogramExt;
+pub use crate::histogram::{BinnedStatisticExt, HistogramExt};
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
 pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
 pub use crate::sort::Sort1dExt;

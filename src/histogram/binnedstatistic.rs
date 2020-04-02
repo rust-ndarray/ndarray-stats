@@ -106,22 +106,23 @@ impl<A: Ord, T: Copy + num_traits::Num + Add<Output = T>> Add for BinnedStatisti
     }
 }
 
-/// Extension trait for `ArrayBase` providing methods to compute histograms.
+/// Extension trait for `ArrayBase` providing methods to compute binned statistics.
 pub trait BinnedStatisticExt<A, S, T>
 where
     S: Data<Elem = A>,
     T: Copy + num_traits::Num,
 {
-    /// Returns the [histogram](https://en.wikipedia.org/wiki/Histogram)
-    /// for a 2-dimensional array of points `M`.
+    /// Returns the binned statistic for a 2-dimensional array of samples `M`
+    /// and a 1-dimensional vector of values `N`.
     ///
-    /// Let `(n, d)` be the shape of `M`:
-    /// - `n` is the number of points;
+    /// Let `(n, d)` be the shape of `M` and `(n)` the shape of `N`:
+    /// - `n` is the number of samples/values;
     /// - `d` is the number of dimensions of the space those points belong to.
-    /// It follows that every column in `M` is a `d`-dimensional point.
+    /// It follows that every column in `M` is a `d`-dimensional sample
+    /// and every value in `N` is the corresponding value.
     ///
     /// For example: a (3, 4) matrix `M` is a collection of 3 points in a
-    /// 4-dimensional space.
+    /// 4-dimensional space with a corresponding (4) vector `N`.
     ///
     /// Important: points outside the grid are ignored!
     ///
@@ -132,39 +133,38 @@ where
     /// ```
     /// use ndarray::array;
     /// use ndarray_stats::{
-    ///     HistogramExt,
-    ///     histogram::{
-    ///         Histogram, Grid, GridBuilder,
-    ///         Edges, Bins,
-    ///         strategies::Sqrt},
+    ///     BinnedStatisticExt,
+    ///     histogram::{BinnedStatistic, Histogram, Grid, Edges, Bins},
     /// };
     /// use noisy_float::types::{N64, n64};
     ///
-    /// let observations = array![
-    ///     [n64(1.), n64(0.5)],
-    ///     [n64(-0.5), n64(1.)],
+    /// let samples = array![
+    ///     [n64(1.5), n64(0.5)],
+    ///     [n64(-0.5), n64(1.5)],
     ///     [n64(-1.), n64(-0.5)],
     ///     [n64(0.5), n64(-1.)]
     /// ];
-    /// let grid = GridBuilder::<Sqrt<N64>>::from_array(&observations).unwrap().build();
-    /// let expected_grid = Grid::from(
-    ///     vec![
-    ///         Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.), n64(2.)])),
-    ///         Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.), n64(2.)])),
-    ///     ]
-    /// );
-    /// assert_eq!(grid, expected_grid);
+    /// let values = array![n64(12.0), n64(-0.5), n64(1.0), n64(2.0)].into_dyn();
     ///
-    /// let histogram = observations.histogram(grid);
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.), n64(2.)]);
+    /// let bins = Bins::new(edges);
+    /// let grid = Grid::from(vec![bins.clone(), bins.clone()]);
     ///
-    /// let histogram_matrix = histogram.counts();
+    /// let binned_statistic = samples.binned_statistic(grid, values);
+    ///
     /// // Bins are left inclusive, right exclusive!
-    /// let expected = array![
+    /// let expected_counts = array![
     ///     [1, 0, 1],
     ///     [1, 0, 0],
-    ///     [0, 1, 0],
+    ///     [0, 1, 0]
     /// ];
-    /// assert_eq!(histogram_matrix, expected.into_dyn());
+    /// let expected_sum = array![
+    ///     [1.0, 0.0, -0.5],
+    ///     [2.0, 0.0, 0.0],
+    ///     [0.0, 12.0, 0.0]
+    /// ];
+    /// assert_eq!(binned_statistic.counts(), expected_counts.into_dyn());
+    /// assert_eq!(binned_statistic.sum(), expected_sum.into_dyn());
     /// ```
     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T>
     where
