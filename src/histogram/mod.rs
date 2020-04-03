@@ -1,9 +1,11 @@
 //! Histogram functionalities.
+pub use self::bincontent::BinContent;
 pub use self::binnedstatistic::{BinnedStatistic, BinnedStatisticExt};
 pub use self::bins::{Bins, Edges};
 pub use self::grid::{Grid, GridBuilder};
 pub use self::histograms::{Histogram, HistogramExt};
 
+pub mod bincontent;
 mod binnedstatistic;
 mod bins;
 pub mod errors;

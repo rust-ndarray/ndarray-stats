@@ -32,7 +32,7 @@
 pub use crate::correlation::CorrelationExt;
 pub use crate::deviation::DeviationExt;
 pub use crate::entropy::EntropyExt;
-pub use crate::histogram::{BinnedStatisticExt, HistogramExt};
+pub use crate::histogram::{BinContent, BinnedStatisticExt, HistogramExt};
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
 pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
 pub use crate::sort::Sort1dExt;
