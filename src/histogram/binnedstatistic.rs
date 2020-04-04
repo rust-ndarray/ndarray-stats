@@ -53,15 +53,15 @@ where
     ///     [0.0, 0.0],
     ///     [0.0, 3.0],
     /// ];
-    /// assert_eq!(binned_statistic_sum_value, expected.into_dyn());
+    /// assert_eq!(binned_statistic_sum, expected.into_dyn());
     ///
     /// let binned_statistic_bc = binned_statistic.sum_binned();
     /// let expected_value = array![
     ///     [Empty, Empty],
-    ///     [Empty, Value(3.0)],
+    ///     [Empty, Value(n64(3.0))],
     /// ];
     /// assert_eq!(binned_statistic_bc, expected_value.into_dyn());
-    /// # Ok::<(), dyn Box<std::error::Error>>(())
+    /// # Ok::<(), Box<std::error::Error>>(())
     /// ```
     pub fn add_sample<S>(&mut self, sample: &ArrayBase<S, Ix1>, value: T) -> Result<(), BinNotFound>
     where
@@ -122,9 +122,9 @@ where
             .and(&self.counts)
             .apply(|w, &x, &y| {
                 *w = if y == 0usize {
-                    BinContent::Value(x)
-                } else {
                     BinContent::Empty
+                } else {
+                    BinContent::Value(x)
                 }
             });
 
@@ -186,7 +186,7 @@ where
     ///     [n64(-1.), n64(-0.5)],
     ///     [n64(0.5), n64(-1.)]
     /// ];
-    /// let values = array![n64(12.0), n64(-0.5), n64(1.0), n64(2.0)].into_dyn();
+    /// let values = array![n64(12.), n64(-0.5), n64(1.), n64(2.)].into_dyn();
     ///
     /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.), n64(2.)]);
     /// let bins = Bins::new(edges);
@@ -201,9 +201,9 @@ where
     ///     [0, 1, 0]
     /// ];
     /// let expected_sum = array![
-    ///     [1.0, 0.0, -0.5],
-    ///     [2.0, 0.0, 0.0],
-    ///     [0.0, 12.0, 0.0]
+    ///     [n64(1.),  n64(0.),  n64(-0.5)],
+    ///     [n64(2.),  n64(0.),  n64(0.)],
+    ///     [n64(0.), n64(12.), n64(0.)]
     /// ];
     /// assert_eq!(binned_statistic.counts(), expected_counts.into_dyn());
     /// assert_eq!(binned_statistic.sum(), expected_sum.into_dyn());
