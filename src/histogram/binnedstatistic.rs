@@ -6,7 +6,6 @@ use num_traits::identities::{One, Zero};
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
-
 /// Binned statistic data structure.
 pub struct BinnedStatistic<A: Ord, T: num_traits::Num> {
     counts: ArrayD<usize>,
@@ -17,7 +16,7 @@ pub struct BinnedStatistic<A: Ord, T: num_traits::Num> {
 impl<A, T> BinnedStatistic<A, T>
 where
     A: Ord,
-    T: Copy + Clone + num_traits::Num,
+    T: Copy + num_traits::Num,
 {
     /// Returns a new instance of BinnedStatistic given a [`Grid`].
     ///
@@ -35,7 +34,9 @@ where
     /// # Example:
     /// ```
     /// use ndarray::array;
-    /// use ndarray_stats::histogram::{Edges, Bins, BinnedStatistic, Grid, BinContent::Empty, BinContent::Value};
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
     /// use noisy_float::types::n64;
     ///
     /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
@@ -176,7 +177,7 @@ where
     /// use ndarray::array;
     /// use ndarray_stats::{
     ///     BinnedStatisticExt,
-    ///     histogram::{BinnedStatistic, Histogram, Grid, Edges, Bins},
+    ///     histogram::{BinnedStatistic, Grid, Edges, Bins},
     /// };
     /// use noisy_float::types::{N64, n64};
     ///
