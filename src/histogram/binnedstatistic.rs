@@ -216,6 +216,7 @@ where
     private_decl! {}
 }
 
+/// Implementation of `BinnedStatisticExt` for `ArrayBase<S, Ix2>`.
 impl<A, S, T> BinnedStatisticExt<A, S, T> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
