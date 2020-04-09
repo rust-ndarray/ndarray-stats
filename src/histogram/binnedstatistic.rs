@@ -7,7 +7,7 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
 /// Binned statistic data structure.
-pub struct BinnedStatistic<A: Ord, T: num_traits::Num> {
+pub struct BinnedStatistic<A: Ord, T: num_traits::identities::Zero> {
     counts: ArrayD<usize>,
     sum: ArrayD<T>,
     grid: Grid<A>,
@@ -16,7 +16,7 @@ pub struct BinnedStatistic<A: Ord, T: num_traits::Num> {
 impl<A, T> BinnedStatistic<A, T>
 where
     A: Ord,
-    T: Copy + num_traits::Num,
+    T: Copy + num_traits::identities::Zero,
 {
     /// Returns a new instance of BinnedStatistic given a [`Grid`].
     ///
@@ -67,7 +67,7 @@ where
     pub fn add_sample<S>(&mut self, sample: &ArrayBase<S, Ix1>, value: T) -> Result<(), BinNotFound>
     where
         S: Data<Elem = A>,
-        T: Copy + num_traits::Num,
+        T: Copy + num_traits::identities::Zero,
     {
         match self.grid.index_of(sample) {
             Some(bin_index) => {
@@ -114,23 +114,23 @@ where
         counts_binned
     }
 
-    /// Returns an array of `BinContents`s of the `sum` matrix.
-    pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
-        let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.counts.shape());
+    // /// Returns an array of `BinContents`s of the `sum` matrix.
+    // pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
+    //     let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.counts.shape());
 
-        Zip::from(&mut sum_binned)
-            .and(&self.sum)
-            .and(&self.counts)
-            .apply(|w, &x, &y| {
-                *w = if y == 0usize {
-                    BinContent::Empty
-                } else {
-                    BinContent::Value(x)
-                }
-            });
+    //     Zip::from(&mut sum_binned)
+    //         .and(&self.sum)
+    //         .and(&self.counts)
+    //         .apply(|w, &x, &y| {
+    //             *w = if y == 0usize {
+    //                 BinContent::Empty
+    //             } else {
+    //                 BinContent::Value(x)
+    //             }
+    //         });
 
-        sum_binned
-    }
+    //     sum_binned
+    // }
 }
 
 impl<A: Ord, T: Copy + num_traits::Num + Add<Output = T>> Add for BinnedStatistic<A, T> {
@@ -153,7 +153,7 @@ impl<A: Ord, T: Copy + num_traits::Num + Add<Output = T>> Add for BinnedStatisti
 pub trait BinnedStatisticExt<A, S, T>
 where
     S: Data<Elem = A>,
-    T: Copy + num_traits::Num,
+    T: Copy + num_traits::identities::Zero,
 {
     /// Returns the binned statistic for a 2-dimensional array of samples `M`
     /// and a 1-dimensional vector of values `N`.
@@ -221,7 +221,7 @@ impl<A, S, T> BinnedStatisticExt<A, S, T> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
     A: Ord,
-    T: Copy + num_traits::Num,
+    T: Copy + num_traits::identities::Zero,
 {
     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
         let mut binned_statistic = BinnedStatistic::new(grid);
@@ -233,6 +233,24 @@ where
 
     private_impl! {}
 }
+
+// /// Implementation of `BinnedStatisticExt` for `ArrayBase<S, Ix1>`.
+// impl<A, S, T> BinnedStatisticExt<A, S, T> for ArrayBase<S, Ix1>
+// where
+//     S: Data<Elem = A>,
+//     A: Ord,
+//     T: Copy + num_traits::identities::Zero,
+// {
+//     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
+//         let mut binned_statistic = BinnedStatistic::new(grid);
+//         for (sample, value) in self.axis_iter(Axis(0)).zip(&values) {
+//             let _ = binned_statistic.add_sample(&sample, *value);
+//         }
+//         binned_statistic
+//     }
+
+//     private_impl! {}
+// }
 
 /// Indicator for empty fields or values for binned statistic
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
