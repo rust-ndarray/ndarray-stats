@@ -34,13 +34,14 @@ use std::ops::Range;
 /// +---+-------+-+
 /// ```
 ///
-/// # Example:
+/// # Examples
 ///
 /// ```
 /// use ndarray::{Array, array};
-/// use ndarray_stats::{HistogramExt,
-///                     histogram::{Histogram, Grid, GridBuilder,
-///                                 Edges, Bins, strategies::Auto}};
+/// use ndarray_stats::{
+///     histogram::{strategies::Auto, Bins, Edges, Grid, GridBuilder, Histogram},
+///     HistogramExt,
+/// };
 /// use noisy_float::types::{N64, n64};
 ///
 /// // 1-dimensional observations, as a (n_observations, 1) 2-d matrix
@@ -84,11 +85,37 @@ impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
 
 impl<A: Ord> Grid<A> {
     /// Returns `n`, the number of dimensions of the region partitioned by the grid.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{Edges, Bins, Grid};
+    ///
+    /// let edges = Edges::from(vec![0, 1]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    ///
+    /// assert_eq!(square_grid.ndim(), 2usize)
+    /// ```
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
 
     /// Returns the number of bins along each coordinate axis.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{Edges, Bins, Grid};
+    ///
+    /// let edges_x = Edges::from(vec![0, 1]);
+    /// let edges_y = Edges::from(vec![-1, 0, 1]);
+    /// let bins_x = Bins::new(edges_x);
+    /// let bins_y = Bins::new(edges_y);
+    /// let square_grid = Grid::from(vec![bins_x, bins_y]);
+    ///
+    /// assert_eq!(square_grid.shape(), vec![1usize, 2usize]);
+    /// ```
     pub fn shape(&self) -> Vec<usize> {
         self.projections.iter().map(|e| e.len()).collect()
     }
@@ -103,7 +130,49 @@ impl<A: Ord> Grid<A> {
     ///
     /// Returns `None` if the point is outside the grid.
     ///
-    /// **Panics** if `point.len()` does not equal `self.ndim()`.
+    /// # Panics
+    ///
+    /// Panics if `point.len()` does not equal `self.ndim()`.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{Edges, Bins, Grid};
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    ///
+    /// // `0.` and `-0.7` falls in 1-st and 0-th bin respectively
+    /// assert_eq!(
+    ///     square_grid.index_of(&array![n64(0.), n64(-0.7)]),
+    ///     Some(vec![1, 0]),
+    /// );
+    /// // `1.` is outside of the grid, return `None`
+    /// assert_eq!(
+    ///     square_grid.index_of(&array![n64(0.), n64(1.)]),
+    ///     None,
+    /// );
+    /// ```
+    /// A panic upon incompatible `point` length:
+    ///
+    /// ```should_panic
+    /// # use ndarray::array;
+    /// # use ndarray_stats::histogram::{Edges, Bins, Grid};
+    /// # use noisy_float::types::n64;
+    /// # let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// # let bins = Bins::new(edges);
+    /// # let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// assert_eq!(
+    ///     // the point has 3 dimensions, the grid expected 2 dimensions
+    ///     square_grid.index_of(&array![n64(0.), n64(-0.7), n64(0.5)]),
+    ///     Some(vec![1, 0, 1]),
+    /// );
+    /// ```
     pub fn index_of<S>(&self, point: &ArrayBase<S, Ix1>) -> Option<Vec<usize>>
     where
         S: Data<Elem = A>,
@@ -129,8 +198,47 @@ impl<A: Ord + Clone> Grid<A> {
     /// `I_{i_0}x...xI_{i_{n-1}}`, an `n`-dimensional bin, where `I_{i_j}` is
     /// the `i_j`-th interval on the `j`-th projection of the grid on the coordinate axes.
     ///
-    /// **Panics** if at least one among `(i_0, ..., i_{n-1})` is out of bounds on the respective
+    /// # Panics
+    ///
+    /// Panics if at least one among `(i_0, ..., i_{n-1})` is out of bounds on the respective
     /// coordinate axis - i.e. if there exists `j` such that `i_j >= self.projections[j].len()`.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{Edges, Bins, Grid};
+    ///
+    /// let edges_x = Edges::from(vec![0, 1, 2]);
+    /// let edges_y = Edges::from(vec![3, 4, 5]);
+    /// let bins_x = Bins::new(edges_x);
+    /// let bins_y = Bins::new(edges_y);
+    /// let square_grid = Grid::from(vec![bins_x, bins_y]);
+    ///
+    /// assert_eq!(
+    ///     square_grid.index(&[0, 1]),
+    ///     vec![0..1, 4..5],
+    /// );
+    /// ```
+    ///
+    /// A panic upon out-of-bound:
+    ///
+    /// ```should_panic
+    /// # use ndarray::array;
+    /// # use ndarray_stats::histogram::{Edges, Bins, Grid};
+    /// # let edges_x = Edges::from(vec![0, 1, 2]);
+    /// # let edges_y = Edges::from(vec![3, 4, 5]);
+    /// # let bins_x = Bins::new(edges_x);
+    /// # let bins_y = Bins::new(edges_y);
+    /// # let square_grid = Grid::from(vec![bins_x, bins_y]);
+    /// assert_eq!(
+    ///     // out-of-bound on `edges_y`
+    ///     square_grid.index(&[0, 2]),
+    ///     vec![0..1, 1..2],
+    /// );
+    /// ```
     pub fn index(&self, index: &[usize]) -> Vec<Range<A>> {
         assert_eq!(
             index.len(),
@@ -146,8 +254,8 @@ impl<A: Ord + Clone> Grid<A> {
     }
 }
 
-/// `GridBuilder`, given a [`strategy`] and some observations, returns a [`Grid`]
-/// instance for [`histogram`] computation.
+/// Given a [`strategy`] and some observations, returns a [`Grid`] instance for [`histogram`]
+/// computation.
 ///
 /// [`Grid`]: struct.Grid.html
 /// [`histogram`]: trait.HistogramExt.html
@@ -165,11 +273,14 @@ where
     /// it returns a `GridBuilder` instance that has learned the required parameter
     /// to build a [`Grid`] according to the specified [`strategy`].
     ///
-    /// It returns `Err` if it is not possible to build a [`Grid`] given
+    /// # Errors
+    ///
+    /// It returns [`BinsBuildError`] if it is not possible to build a [`Grid`] given
     /// the observed data according to the chosen [`strategy`].
     ///
     /// [`Grid`]: struct.Grid.html
     /// [`strategy`]: strategies/index.html
+    /// [`BinsBuildError`]: errors/enum.BinsBuildError.html
     pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Result<Self, BinsBuildError>
     where
         S: Data<Elem = A>,
