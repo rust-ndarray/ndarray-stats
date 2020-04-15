@@ -228,7 +228,7 @@ impl<A: Ord + Clone> Grid<A> {
     ///
     /// # Panics
     ///
-    /// Panics if at least one in the index, `(i_0, ..., i_{n-1})`, is out of bound on the
+    /// Panics if at least one in the index, `(i_0, ..., i_{n-1})`, is out of bounds on the
     /// corresponding coordinate axis, i.e. if there exists `j` s.t.
     /// `i_j >= self.projections[j].len()`.
     ///
@@ -253,7 +253,7 @@ impl<A: Ord + Clone> Grid<A> {
     /// );
     /// ```
     ///
-    /// A panic upon out-of-bound:
+    /// A panic upon out-of-bounds:
     ///
     /// ```should_panic
     /// # use ndarray::array;
