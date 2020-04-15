@@ -1,6 +1,6 @@
-use super::bins::Bins;
-use super::errors::BinsBuildError;
-use super::strategies::BinsBuildingStrategy;
+#![warn(clippy::all, clippy::pedantic)]
+
+use super::{bins::Bins, errors::BinsBuildError, strategies::BinsBuildingStrategy};
 use itertools::izip;
 use ndarray::{ArrayBase, Axis, Data, Ix1, Ix2};
 use std::ops::Range;
@@ -121,6 +121,7 @@ impl<A: Ord> Grid<A> {
     ///
     /// assert_eq!(square_grid.ndim(), 2usize)
     /// ```
+    #[must_use]
     pub fn ndim(&self) -> usize {
         self.projections.len()
     }
@@ -140,11 +141,13 @@ impl<A: Ord> Grid<A> {
     ///
     /// assert_eq!(square_grid.shape(), vec![1usize, 2usize]);
     /// ```
+    #[must_use]
     pub fn shape(&self) -> Vec<usize> {
-        self.projections.iter().map(|e| e.len()).collect()
+        self.projections.iter().map(Bins::len).collect()
     }
 
     /// Returns the grid projections on each coordinate axis as a slice of immutable references.
+    #[must_use]
     pub fn projections(&self) -> &[Bins<A>] {
         &self.projections
     }
@@ -266,6 +269,7 @@ impl<A: Ord + Clone> Grid<A> {
     ///     vec![0..1, 3..4],
     /// );
     /// ```
+    #[must_use]
     pub fn index(&self, index: &[usize]) -> Vec<Range<A>> {
         assert_eq!(
             index.len(),
@@ -311,6 +315,7 @@ impl<A: Ord + Clone> Grid<A> {
 /// [`Grid`]: struct.Grid.html
 /// [`histogram`]: trait.HistogramExt.html
 /// [`strategy`]: strategies/index.html
+#[allow(clippy::module_name_repetitions)]
 pub struct GridBuilder<B: BinsBuildingStrategy> {
     bin_builders: Vec<B>,
 }
@@ -357,6 +362,7 @@ where
     /// [`Grid`]: struct.Grid.html
     /// [`strategy`]: strategies/index.html
     /// [`from_array`]: #method.from_array.html
+    #[must_use]
     pub fn build(&self) -> Grid<A> {
         let projections: Vec<_> = self.bin_builders.iter().map(|b| b.build()).collect();
         Grid::from(projections)
