@@ -1,11 +1,15 @@
 use super::errors::BinNotFound;
 use super::grid::Grid;
-use ndarray::prelude::{array, ArrayBase, ArrayD, ArrayViewD, Axis, Ix1, Ix2};
-use ndarray::Data;
-use num_traits::identities::{One, Zero};
-use std::ops::{
+use core::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
+use ndarray::prelude::{array, ArrayBase, ArrayD, ArrayViewD, Axis, Ix1, Ix2};
+use ndarray::{Data, Zip};
+use num_traits::identities::{One, Zero};
+use std::cmp::PartialEq;
+// use std::ops::{
+//     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
+// };
 
 /// Binned statistic data structure.
 #[derive(Clone, Debug)]
@@ -116,40 +120,40 @@ where
         counts_binned
     }
 
-    // /// Returns an array of `BinContents`s of the `sum` matrix.
-    // pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
-    //     let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.counts.shape());
+    /// Returns an array of `BinContents`s of the `sum` matrix.
+    pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.counts.shape());
 
-    //     Zip::from(&mut sum_binned)
-    //         .and(&self.sum)
-    //         .and(&self.counts)
-    //         .apply(|w, &x, &y| {
-    //             *w = if y == 0usize {
-    //                 BinContent::Empty
-    //             } else {
-    //                 BinContent::Value(x)
-    //             }
-    //         });
+        Zip::from(&mut sum_binned)
+            .and(&self.sum)
+            .and(&self.counts)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
 
-    //     sum_binned
-    // }
-}
-
-impl<A: Ord, T: Copy + num_traits::Num + Add<Output = T>> Add for BinnedStatistic<A, T> {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        if self.grid != other.grid {
-            panic!("`BinnedStatistics` can only be added for the same `grid`!")
-        };
-
-        BinnedStatistic {
-            counts: &self.counts + &other.counts,
-            sum: &self.sum + &other.sum,
-            grid: self.grid,
-        }
+        sum_binned
     }
 }
+
+// impl<A: Ord, T: Copy + num_traits::Num + Add<Output = T>> Add for BinnedStatistic<A, T> {
+//     type Output = Self;
+
+//     fn add(self, other: Self) -> Self {
+//         if self.grid != other.grid {
+//             panic!("`BinnedStatistics` can only be added for the same `grid`!")
+//         };
+
+//         BinnedStatistic {
+//             counts: &self.counts + &other.counts,
+//             sum: &self.sum + &other.sum,
+//             grid: self.grid,
+//         }
+//     }
+// }
 
 /// Extension trait for `ArrayBase` providing methods to compute binned statistics.
 pub trait BinnedStatisticExt<A, S, T>
@@ -157,10 +161,10 @@ where
     S: Data<Elem = A>,
     T: Copy + num_traits::identities::Zero,
 {
-    /// Returns the binned statistic for a 2-dimensional array of samples `M`
+    /// Returns the binned statistic for a 1- or 2-dimensional array of samples `M`
     /// and a 1-dimensional vector of values `N`.
     ///
-    /// Let `(n, d)` be the shape of `M` and `(n)` the shape of `N`:
+    /// Let `(n)` or `(n, d)` be the shape of `M` and `(n)` the shape of `N`:
     /// - `n` is the number of samples/values;
     /// - `d` is the number of dimensions of the space those points belong to.
     /// It follows that every column in `M` is a `d`-dimensional sample
@@ -256,15 +260,152 @@ where
 }
 
 /// Indicator for empty fields or values for binned statistic
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum BinContent<T>
-where
-    T: num_traits::Num,
-{
+#[derive(Clone, Copy, Debug)]
+pub enum BinContent<T> {
     /// Empty bin
     Empty,
     /// Non-empty bin with some value `T`
     Value(T),
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// Type implementation
+/////////////////////////////////////////////////////////////////////////////
+
+impl<T> BinContent<T> {
+    /// Returns `true` if the bin contains a [`Value`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
+    ///
+    /// let x: BinContent<u32> = Value(2);
+    /// assert_eq!(x.is_value(), true);
+    ///
+    /// let x: BinContent<u32> = Empty;
+    /// assert_eq!(x.is_some(), false);
+    /// ```
+    pub fn is_value(&self) -> bool {
+        matches!(*self, Self::Value(_))
+    }
+
+    /// Returns `true` if the BinContent is [`Empty`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
+    ///
+    /// let x: BinContent<u32> = Value(2);
+    /// assert_eq!(x.is_none(), false);
+    ///
+    /// let x: BinContent<u32> = Empty;
+    /// assert_eq!(x.is_none(), true);
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        !self.is_value()
+    }
+
+    /// Returns `true` if the BinContent is a [`Value`] containing the given value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
+    ///
+    /// let x: BinContent<u32> = Value(2);
+    /// assert_eq!(x.contains(&2), true);
+    ///
+    /// let x: BinContent<u32> = Value(3);
+    /// assert_eq!(x.contains(&2), false);
+    ///
+    /// let x: BinContent<u32> = Empty;
+    /// assert_eq!(x.contains(&2), false);
+    /// ```
+    pub fn contains<U>(&self, x: &U) -> bool
+    where
+        U: PartialEq<T>,
+    {
+        match self {
+            Self::Value(y) => x == y,
+            Self::Empty => false,
+        }
+    }
+
+    /// Moves the value `v` out of the `BinContent<T>` if it is [`Value(v)`].
+    ///
+    /// In general, because this function may panic, its use is discouraged.
+    /// Instead, prefer to use pattern matching and handle the [`Empty`]
+    /// case explicitly.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the self value equals [`Empty`].
+    ///
+    /// [`Value(v)`]: #variant.Value
+    /// [`Empty`]: #variant.Empty
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
+    ///
+    /// let x: BinContent<u32> = Value("2");
+    /// assert_eq!(x.unwrap(), 2);
+    /// ```
+    ///
+    /// ```{.should_panic}
+    /// let x: Value<u32> = Empty;
+    /// assert_eq!(x.unwrap(), 2); // fails
+    /// ```
+    pub fn unwrap(self) -> T {
+        match self {
+            Self::Value(val) => val,
+            Self::Empty => panic!("called `BinContent::unwrap()` on a `Empty` value"),
+        }
+    }
+
+    /// Returns the contained value or a default.
+    ///
+    /// Arguments passed to `unwrap_or` are eagerly evaluated; if you are passing
+    /// the result of a function call, it is recommended to use [`unwrap_or_else`],
+    /// which is lazily evaluated.
+    ///
+    /// [`unwrap_or_else`]: #method.unwrap_or_else
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
+    ///
+    /// assert_eq!(Value(2).unwrap_or(5), 2);
+    /// assert_eq!(Empty.unwrap_or(2), 2);
+    /// ```
+    pub fn unwrap_or(self, default: T) -> T {
+        match self {
+            Self::Value(x) => x,
+            Self::Empty => default,
+        }
+    }
+
+    /// Returns the contained value or computes it from a closure.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
+    ///
+    /// let k = 10;
+    /// assert_eq!(Value(4).unwrap_or_else(|| 2 * k), 4);
+    /// assert_eq!(Empty.unwrap_or_else(|| 2 * k), 20);
+    /// ```
+    pub fn unwrap_or_else<F: FnOnce() -> T>(self, f: F) -> T {
+        match self {
+            Self::Value(x) => x,
+            Self::Empty => f(),
+        }
+    }
 }
 
 /// Implementation of negation operator for binned statistic indicator `BinContent`.
@@ -276,7 +417,7 @@ where
 /// let bin = BinContent::Value(2.0);
 /// assert_eq!(-bin, BinContent::Value(-2.0));
 /// ```
-impl<T: num_traits::Num + core::ops::Neg + Neg<Output = T>> Neg for BinContent<T> {
+impl<T: Neg<Output = T>> Neg for BinContent<T> {
     type Output = Self;
 
     fn neg(self) -> Self {
@@ -301,7 +442,7 @@ impl<T: num_traits::Num + core::ops::Neg + Neg<Output = T>> Neg for BinContent<T
 /// assert_eq!(empty_bin + bin, BinContent::Value(2.0));
 /// assert_eq!(empty_bin + empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Add<Output = T>> Add for BinContent<T> {
+impl<T: Add<Output = T>> Add for BinContent<T> {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
@@ -336,7 +477,7 @@ impl<T: num_traits::Num + Add<Output = T>> Add for BinContent<T> {
 /// empty_bin += empty_bin;
 /// assert_eq!(empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Copy> AddAssign for BinContent<T> {
+impl<T: Add<Output = T> + Copy> AddAssign for BinContent<T> {
     fn add_assign(&mut self, other: Self) {
         *self = match (&self, other) {
             (BinContent::Empty, BinContent::Empty) => Self::Empty,
@@ -361,16 +502,14 @@ impl<T: num_traits::Num + Copy> AddAssign for BinContent<T> {
 /// assert_eq!(empty_bin - bin, BinContent::Value(-2.0));
 /// assert_eq!(empty_bin - empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Sub<Output = T>> Sub for BinContent<T> {
+impl<T: Neg<Output = T> + Sub<Output = T>> Sub for BinContent<T> {
     type Output = Self;
 
     fn sub(self, other: Self) -> Self {
         match (self, other) {
             (BinContent::Empty, BinContent::Empty) => Self::Empty,
             (BinContent::Value(v), BinContent::Empty) => Self::Value(v),
-            (BinContent::Empty, BinContent::Value(w)) => {
-                Self::Value(num_traits::identities::zero::<T>() - w)
-            }
+            (BinContent::Empty, BinContent::Value(w)) => Self::Value(-w),
             (BinContent::Value(v), BinContent::Value(w)) => Self::Value(v - w),
         }
     }
@@ -398,14 +537,12 @@ impl<T: num_traits::Num + Sub<Output = T>> Sub for BinContent<T> {
 /// empty_bin += empty_bin;
 /// assert_eq!(empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Copy> SubAssign for BinContent<T> {
+impl<T: Neg<Output = T> + Sub<Output = T> + Copy> SubAssign for BinContent<T> {
     fn sub_assign(&mut self, other: Self) {
         *self = match (&self, other) {
             (BinContent::Empty, BinContent::Empty) => Self::Empty,
             (BinContent::Value(v), BinContent::Empty) => Self::Value(*v),
-            (BinContent::Empty, BinContent::Value(w)) => {
-                Self::Value(num_traits::identities::zero::<T>() - w)
-            }
+            (BinContent::Empty, BinContent::Value(w)) => Self::Value(-w),
             (BinContent::Value(v), BinContent::Value(ref w)) => Self::Value(*v - *w),
         };
     }
@@ -425,7 +562,7 @@ impl<T: num_traits::Num + Copy> SubAssign for BinContent<T> {
 /// assert_eq!(empty_bin * bin, BinContent::<f64>::Empty);
 /// assert_eq!(empty_bin * empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Mul<Output = T>> Mul for BinContent<T> {
+impl<T: Mul<Output = T>> Mul for BinContent<T> {
     type Output = Self;
 
     fn mul(self, other: Self) -> Self {
@@ -460,7 +597,7 @@ impl<T: num_traits::Num + Mul<Output = T>> Mul for BinContent<T> {
 /// empty_bin *= empty_bin;
 /// assert_eq!(empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Copy> MulAssign for BinContent<T> {
+impl<T: Mul<Output = T> + Copy> MulAssign for BinContent<T> {
     fn mul_assign(&mut self, other: Self) {
         *self = match (&self, other) {
             (BinContent::Empty, BinContent::Empty) => Self::Empty,
@@ -485,7 +622,7 @@ impl<T: num_traits::Num + Copy> MulAssign for BinContent<T> {
 /// assert_eq!(empty_bin / bin, BinContent::<f64>::Empty);
 /// assert_eq!(empty_bin / empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Div<Output = T>> Div for BinContent<T> {
+impl<T: Div<Output = T>> Div for BinContent<T> {
     type Output = Self;
 
     fn div(self, other: Self) -> Self {
@@ -520,7 +657,7 @@ impl<T: num_traits::Num + Div<Output = T>> Div for BinContent<T> {
 /// empty_bin /= empty_bin;
 /// assert_eq!(empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Copy> DivAssign for BinContent<T> {
+impl<T: Div<Output = T> + Copy> DivAssign for BinContent<T> {
     fn div_assign(&mut self, other: Self) {
         *self = match (&self, other) {
             (BinContent::Empty, BinContent::Empty) => Self::Empty,
@@ -546,7 +683,7 @@ impl<T: num_traits::Num + Copy> DivAssign for BinContent<T> {
 /// assert_eq!(empty_bin % bin, BinContent::<f64>::Empty);
 /// assert_eq!(empty_bin % empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Div<Output = T>> Rem for BinContent<T> {
+impl<T: Rem<Output = T>> Rem for BinContent<T> {
     type Output = Self;
 
     fn rem(self, other: Self) -> Self {
@@ -582,7 +719,7 @@ impl<T: num_traits::Num + Div<Output = T>> Rem for BinContent<T> {
 /// empty_bin %= empty_bin;
 /// assert_eq!(empty_bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num + Copy> RemAssign for BinContent<T> {
+impl<T: Rem<Output = T> + Copy> RemAssign for BinContent<T> {
     fn rem_assign(&mut self, other: Self) {
         *self = match (&self, other) {
             (BinContent::Empty, BinContent::Empty) => Self::Empty,
@@ -603,12 +740,15 @@ impl<T: num_traits::Num + Copy> RemAssign for BinContent<T> {
 /// let bin = BinContent::zero();
 /// assert_eq!(bin, BinContent::<f64>::Empty);
 /// ```
-impl<T: num_traits::Num> Zero for BinContent<T> {
+impl<T: Add<Output = T>> Zero for BinContent<T> {
     fn zero() -> Self {
         Self::Empty
     }
     fn is_zero(&self) -> bool {
-        *self == Self::Empty
+        match self {
+            Self::Empty => true,
+            Self::Value(_) => false,
+        }
     }
 }
 
@@ -622,11 +762,14 @@ impl<T: num_traits::Num> Zero for BinContent<T> {
 /// let bin = BinContent::one();
 /// assert_eq!(bin, BinContent::Value(1.0));
 /// ```
-impl<T: num_traits::Num + One> One for BinContent<T> {
+impl<T: num_traits::identities::One + PartialEq> One for BinContent<T> {
     fn one() -> Self {
         Self::Value(num_traits::identities::one())
     }
     fn is_one(&self) -> bool {
-        *self == Self::Value(num_traits::identities::one())
+        match self {
+            Self::Empty => false,
+            Self::Value(v) => *v == num_traits::identities::one(),
+        }
     }
 }
