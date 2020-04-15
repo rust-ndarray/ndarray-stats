@@ -1,3 +1,5 @@
+#![warn(missing_docs, clippy::all, clippy::pedantic)]
+
 use ndarray::prelude::*;
 use std::ops::{Index, Range};
 
@@ -144,6 +146,7 @@ impl<A: Ord> Edges<A> {
     ///     3
     /// );
     /// ```
+    #[must_use]
     pub fn len(&self) -> usize {
         self.edges.len()
     }
@@ -162,6 +165,7 @@ impl<A: Ord> Edges<A> {
     /// let edges = Edges::from(vec![n64(0.), n64(2.), n64(5.)]);
     /// assert_eq!(edges.is_empty(), false);
     /// ```
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.edges.is_empty()
     }
@@ -180,6 +184,7 @@ impl<A: Ord> Edges<A> {
     ///     array![0, 3, 5].view()
     /// );
     /// ```
+    #[must_use]
     pub fn as_array_view(&self) -> ArrayView1<'_, A> {
         ArrayView1::from(&self.edges)
     }
@@ -262,6 +267,7 @@ impl<A: Ord> Bins<A> {
     /// [`Edges`], consuming the edges.
     ///
     /// [`Edges`]: struct.Edges.html
+    #[must_use]
     pub fn new(edges: Edges<A>) -> Self {
         Bins { edges }
     }
@@ -281,6 +287,7 @@ impl<A: Ord> Bins<A> {
     ///     2
     /// );
     /// ```
+    #[must_use]
     pub fn len(&self) -> usize {
         match self.edges.len() {
             0 => 0,
@@ -309,6 +316,7 @@ impl<A: Ord> Bins<A> {
     /// let bins = Bins::new(edges);
     /// assert_eq!(bins.is_empty(), true);
     /// ```
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -405,6 +413,7 @@ impl<A: Ord> Bins<A> {
     ///     5..10
     /// );
     /// ```
+    #[must_use]
     pub fn index(&self, index: usize) -> Range<A>
     where
         A: Clone,
@@ -422,7 +431,7 @@ impl<A: Ord> Bins<A> {
 
 #[cfg(test)]
 mod edges_tests {
-    use super::*;
+    use super::{Array1, Edges};
     use quickcheck_macros::quickcheck;
     use std::collections::BTreeSet;
     use std::iter::FromIterator;
@@ -456,7 +465,7 @@ mod edges_tests {
     fn edges_are_right_open(v: Vec<i32>) -> bool {
         let edges = Edges::from(v);
         let view = edges.as_array_view();
-        if view.len() == 0 {
+        if view.is_empty() {
             true
         } else {
             let last = view[view.len() - 1];
@@ -467,21 +476,21 @@ mod edges_tests {
     #[quickcheck]
     fn edges_are_left_closed(v: Vec<i32>) -> bool {
         let edges = Edges::from(v);
-        match edges.len() {
-            1 => true,
-            _ => {
-                let view = edges.as_array_view();
-                if view.len() == 0 {
-                    true
-                } else {
-                    let first = view[0];
-                    edges.indices_of(&first).is_some()
-                }
+        if let 1 = edges.len() {
+            true
+        } else {
+            let view = edges.as_array_view();
+            if view.is_empty() {
+                true
+            } else {
+                let first = view[0];
+                edges.indices_of(&first).is_some()
             }
         }
     }
 
     #[quickcheck]
+    #[allow(clippy::needless_pass_by_value)]
     fn edges_are_deduped(v: Vec<i32>) -> bool {
         let unique_elements = BTreeSet::from_iter(v.iter());
         let edges = Edges::from(v.clone());
@@ -493,10 +502,11 @@ mod edges_tests {
 
 #[cfg(test)]
 mod bins_tests {
-    use super::*;
+    use super::{Bins, Edges};
 
     #[test]
     #[should_panic]
+    #[allow(unused_must_use)]
     fn get_panics_for_out_of_bounds_indexes() {
         let edges = Edges::from(vec![0]);
         let bins = Bins::new(edges);
