@@ -1,12 +1,14 @@
 use super::errors::BinNotFound;
 use super::grid::Grid;
-use ndarray::prelude::{ArrayBase, ArrayD, ArrayViewD, Axis, Ix1, Ix2};
-use ndarray::{Data, Zip};
+use ndarray::prelude::{array, ArrayBase, ArrayD, ArrayViewD, Axis, Ix1, Ix2};
+use ndarray::Data;
 use num_traits::identities::{One, Zero};
 use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
 };
+
 /// Binned statistic data structure.
+#[derive(Clone, Debug)]
 pub struct BinnedStatistic<A: Ord, T: num_traits::identities::Zero> {
     counts: ArrayD<usize>,
     sum: ArrayD<T>,
@@ -234,23 +236,24 @@ where
     private_impl! {}
 }
 
-// /// Implementation of `BinnedStatisticExt` for `ArrayBase<S, Ix1>`.
-// impl<A, S, T> BinnedStatisticExt<A, S, T> for ArrayBase<S, Ix1>
-// where
-//     S: Data<Elem = A>,
-//     A: Ord,
-//     T: Copy + num_traits::identities::Zero,
-// {
-//     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
-//         let mut binned_statistic = BinnedStatistic::new(grid);
-//         for (sample, value) in self.axis_iter(Axis(0)).zip(&values) {
-//             let _ = binned_statistic.add_sample(&sample, *value);
-//         }
-//         binned_statistic
-//     }
+/// Implementation of `BinnedStatisticExt` for `ArrayBase<S, Ix1>`.
+impl<A, S, T> BinnedStatisticExt<A, S, T> for ArrayBase<S, Ix1>
+where
+    S: Data<Elem = A>,
+    A: Ord + Copy,
+    T: Copy + num_traits::identities::Zero,
+{
+    fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
+        let mut binned_statistic = BinnedStatistic::new(grid);
+        for (sample, value) in self.iter().zip(&values) {
+            let s = array![*sample];
+            let _ = binned_statistic.add_sample(&s, *value);
+        }
+        binned_statistic
+    }
 
-//     private_impl! {}
-// }
+    private_impl! {}
+}
 
 /// Indicator for empty fields or values for binned statistic
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
