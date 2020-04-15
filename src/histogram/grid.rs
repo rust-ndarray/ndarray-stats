@@ -80,7 +80,7 @@ use std::ops::Range;
 /// let histogram = observations.histogram(grid);
 ///
 /// let histogram_matrix = histogram.counts();
-/// // Bins are left inclusive, right exclusive!
+/// // Bins are left-closed, right-open!
 /// let expected = array![4, 3, 3, 1, 0, 1];
 /// assert_eq!(histogram_matrix, expected.into_dyn());
 /// ```
@@ -179,7 +179,7 @@ impl<A: Ord> Grid<A> {
     ///     square_grid.index_of(&array![n64(0.), n64(-0.7)]),
     ///     Some(vec![1, 0]),
     /// );
-    /// // Returns `None`, as `1.` is outside the grid since bins are right exclusive
+    /// // Returns `None`, as `1.` is outside the grid since bins are right-open
     /// assert_eq!(
     ///     square_grid.index_of(&array![n64(0.), n64(1.)]),
     ///     None,
