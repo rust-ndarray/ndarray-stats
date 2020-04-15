@@ -260,7 +260,7 @@ where
 }
 
 /// Indicator for empty fields or values for binned statistic
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BinContent<T> {
     /// Empty bin
     Empty,
@@ -284,7 +284,7 @@ impl<T> BinContent<T> {
     /// assert_eq!(x.is_value(), true);
     ///
     /// let x: BinContent<u32> = Empty;
-    /// assert_eq!(x.is_some(), false);
+    /// assert_eq!(x.is_value(), false);
     /// ```
     pub fn is_value(&self) -> bool {
         matches!(*self, Self::Value(_))
@@ -298,10 +298,10 @@ impl<T> BinContent<T> {
     /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
     ///
     /// let x: BinContent<u32> = Value(2);
-    /// assert_eq!(x.is_none(), false);
+    /// assert_eq!(x.is_empty(), false);
     ///
     /// let x: BinContent<u32> = Empty;
-    /// assert_eq!(x.is_none(), true);
+    /// assert_eq!(x.is_empty(), true);
     /// ```
     pub fn is_empty(&self) -> bool {
         !self.is_value()
@@ -351,12 +351,14 @@ impl<T> BinContent<T> {
     /// ```
     /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
     ///
-    /// let x: BinContent<u32> = Value("2");
+    /// let x: BinContent<u32> = Value(2);
     /// assert_eq!(x.unwrap(), 2);
     /// ```
     ///
     /// ```{.should_panic}
-    /// let x: Value<u32> = Empty;
+    /// use ndarray_stats::histogram::{BinContent, BinContent::Value, BinContent::Empty};
+    ///
+    /// let x: BinContent<u32> = Empty;
     /// assert_eq!(x.unwrap(), 2); // fails
     /// ```
     pub fn unwrap(self) -> T {
