@@ -1,4 +1,4 @@
-#![warn(clippy::all, clippy::pedantic)]
+#![warn(missing_docs, clippy::all, clippy::pedantic)]
 
 use super::{bins::Bins, errors::BinsBuildError, strategies::BinsBuildingStrategy};
 use itertools::izip;
