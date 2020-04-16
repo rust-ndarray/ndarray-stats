@@ -5,7 +5,11 @@ use core::ops::{
 };
 use ndarray::prelude::{array, ArrayBase, ArrayD, ArrayViewD, Axis, Ix1, Ix2};
 use ndarray::{Data, Zip};
-use num_traits::identities::{One, Zero};
+use num_traits::{
+    identities::{One, Zero},
+    Float,
+};
+use std::clone::Clone;
 use std::cmp::PartialEq;
 // use std::ops::{
 //     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
@@ -15,22 +19,44 @@ use std::cmp::PartialEq;
 #[derive(Clone, Debug)]
 pub struct BinnedStatistic<A: Ord, T: num_traits::identities::Zero> {
     counts: ArrayD<usize>,
+    number: ArrayD<T>,
     sum: ArrayD<T>,
+    mean: ArrayD<T>,
+    variance: ArrayD<T>,
+    standard_deviation: ArrayD<T>,
+    min: ArrayD<T>,
+    max: ArrayD<T>,
     grid: Grid<A>,
 }
 
 impl<A, T> BinnedStatistic<A, T>
 where
     A: Ord,
-    T: Copy + num_traits::identities::Zero,
+    T: Float,
 {
     /// Returns a new instance of BinnedStatistic given a [`Grid`].
     ///
     /// [`Grid`]: struct.Grid.html
     pub fn new(grid: Grid<A>) -> Self {
         let counts = ArrayD::zeros(grid.shape());
+        let number = ArrayD::zeros(grid.shape());
         let sum = ArrayD::zeros(grid.shape());
-        BinnedStatistic { counts, sum, grid }
+        let mean = ArrayD::zeros(grid.shape());
+        let variance = ArrayD::zeros(grid.shape());
+        let standard_deviation = ArrayD::zeros(grid.shape());
+        let min = ArrayD::from_elem(grid.shape(), T::infinity());
+        let max = ArrayD::from_elem(grid.shape(), T::neg_infinity());
+        BinnedStatistic {
+            counts,
+            number,
+            sum,
+            mean,
+            variance,
+            standard_deviation,
+            min,
+            max,
+            grid,
+        }
     }
 
     /// Adds a single sample to the binned statistic.
@@ -73,12 +99,34 @@ where
     pub fn add_sample<S>(&mut self, sample: &ArrayBase<S, Ix1>, value: T) -> Result<(), BinNotFound>
     where
         S: Data<Elem = A>,
-        T: Copy + num_traits::identities::Zero,
+        T: Float,
     {
         match self.grid.index_of(sample) {
             Some(bin_index) => {
-                self.counts[&*bin_index] += 1usize;
-                self.sum[&*bin_index] = self.sum[&*bin_index] + value;
+                let id = &*bin_index;
+
+                // Saving counts
+                let n1 = self.number[id];
+
+                // Calculate counts & sum
+                self.counts[id] = self.counts[id] + 1usize;
+                self.number[id] = self.number[id] + T::one();
+                self.sum[id] = self.sum[id] + value;
+
+                // M1 & M2
+                let n = self.number[id];
+                let delta = value - self.mean[id];
+                let delta_n = delta / n;
+                let term1 = delta * delta_n * n1;
+
+                self.mean[id] = self.mean[id] + delta_n;
+                self.variance[id] = (self.variance[id] * n1 + term1) / n;
+                self.standard_deviation[id] = self.variance[id].sqrt();
+
+                // Min & max
+                self.min[id] = Float::min(self.min[id], value);
+                self.max[id] = Float::max(self.max[id], value);
+
                 Ok(())
             }
             None => Err(BinNotFound),
@@ -91,14 +139,39 @@ where
         self.counts.ndim()
     }
 
+    /// Borrows a view on the binned statistic `counts` matrix (equivalent to histogram).
+    pub fn counts(&self) -> ArrayViewD<'_, usize> {
+        self.counts.view()
+    }
+
+    /// Borrows a view on the binned statistic `number` matrix (equivalent to histogram).
+    pub fn number(&self) -> ArrayViewD<'_, T> {
+        self.number.view()
+    }
+
     /// Borrows a view on the binned statistic `sum` matrix.
     pub fn sum(&self) -> ArrayViewD<'_, T> {
         self.sum.view()
     }
 
-    /// Borrows a view on the binned statistic `counts` matrix (equivalent to histogram).
-    pub fn counts(&self) -> ArrayViewD<'_, usize> {
-        self.counts.view()
+    /// Borrows a view on the binned statistic `mean` matrix.
+    pub fn mean(&self) -> ArrayViewD<'_, T> {
+        self.mean.view()
+    }
+
+    /// Borrows a view on the binned statistic `variance` matrix.
+    pub fn variance(&self) -> ArrayViewD<'_, T> {
+        self.variance.view()
+    }
+
+    /// Borrows a view on the binned statistic `min` matrix.
+    pub fn min(&self) -> ArrayViewD<'_, T> {
+        self.min.view()
+    }
+
+    /// Borrows a view on the binned statistic `max` matrix.
+    pub fn max(&self) -> ArrayViewD<'_, T> {
+        self.max.view()
     }
 
     /// Borrows an immutable reference to the binned statistic grid.
@@ -106,37 +179,37 @@ where
         &self.grid
     }
 
-    /// Returns an array of `BinContent`s of the `counts` matrix (equivalent to histogram).
-    pub fn counts_binned(&self) -> ArrayD<BinContent<usize>> {
-        let mut counts_binned = ArrayD::<BinContent<usize>>::zeros(self.counts.shape());
+    // /// Returns an array of `BinContent`s of the `counts` matrix (equivalent to histogram).
+    // pub fn counts_binned(&self) -> ArrayD<BinContent<usize>> {
+    //     let mut counts_binned = ArrayD::<BinContent<usize>>::zeros(self.counts.shape());
 
-        for (counts_arr, binned) in self.counts.iter().zip(&mut counts_binned) {
-            *binned = if *counts_arr == 0usize {
-                BinContent::Empty
-            } else {
-                BinContent::Value(*counts_arr)
-            };
-        }
-        counts_binned
-    }
+    //     for (counts_arr, binned) in self.counts.iter().zip(&mut counts_binned) {
+    //         *binned = if *counts_arr == 0usize {
+    //             BinContent::Empty
+    //         } else {
+    //             BinContent::Value(*counts_arr)
+    //         };
+    //     }
+    //     counts_binned
+    // }
 
-    /// Returns an array of `BinContents`s of the `sum` matrix.
-    pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
-        let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.counts.shape());
+    // /// Returns an array of `BinContents`s of the `sum` matrix.
+    // pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
+    //     let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.counts.shape());
 
-        Zip::from(&mut sum_binned)
-            .and(&self.sum)
-            .and(&self.counts)
-            .apply(|w, &x, &y| {
-                *w = if y == 0usize {
-                    BinContent::Empty
-                } else {
-                    BinContent::Value(x)
-                }
-            });
+    //     Zip::from(&mut sum_binned)
+    //         .and(&self.sum)
+    //         .and(&self.counts)
+    //         .apply(|w, &x, &y| {
+    //             *w = if y == 0usize {
+    //                 BinContent::Empty
+    //             } else {
+    //                 BinContent::Value(x)
+    //             }
+    //         });
 
-        sum_binned
-    }
+    //     sum_binned
+    // }
 }
 
 // impl<A: Ord, T: Copy + num_traits::Num + Add<Output = T>> Add for BinnedStatistic<A, T> {
@@ -227,7 +300,8 @@ impl<A, S, T> BinnedStatisticExt<A, S, T> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
     A: Ord,
-    T: Copy + num_traits::identities::Zero,
+    T: Float,
+    //T: Copy + num_traits::identities::Zero + Neg<Output = T>,
 {
     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
         let mut binned_statistic = BinnedStatistic::new(grid);
@@ -245,7 +319,8 @@ impl<A, S, T> BinnedStatisticExt<A, S, T> for ArrayBase<S, Ix1>
 where
     S: Data<Elem = A>,
     A: Ord + Copy,
-    T: Copy + num_traits::identities::Zero,
+    T: Float,
+    //T: Copy + num_traits::identities::Zero + Neg<Output = T>,
 {
     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
         let mut binned_statistic = BinnedStatistic::new(grid);
