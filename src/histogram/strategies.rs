@@ -44,6 +44,8 @@
 //! [`Rice`]: struct.Rice.html
 //! [`Sqrt`]: struct.Sqrt.html
 //! [iqr]: https://www.wikiwand.com/en/Interquartile_range
+#![warn(missing_docs, clippy::all, clippy::pedantic)]
+
 use crate::{
     histogram::{errors::BinsBuildError, Bins, Edges},
     quantile::{interpolate::Nearest, Quantile1dExt, QuantileExt},
@@ -62,6 +64,7 @@ use num_traits::{FromPrimitive, NumOps, Zero};
 /// [`GridBuilder`]: ../struct.GridBuilder.html
 /// [`Grid`]: ../struct.Grid.html
 pub trait BinsBuildingStrategy {
+    #[allow(missing_docs)]
     type Elem: Ord;
     /// Returns a strategy that has learnt the required parameter fo building [`Bins`] for given
     /// 1-dimensional array, or an `Err` if it is not possible to infer the required parameter
@@ -265,6 +268,11 @@ where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
+        // casting `n_elems: usize` to `f64` may casus off-by-one error here if `n_elems` > 2 ^ 53,
+        // but it's not relevant here
+        #[allow(clippy::cast_precision_loss)]
+        // casting the rounded square root from `f64` to `usize` is safe
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let n_bins = (n_elems as f64).sqrt().round() as usize;
         let min = a.min()?;
         let max = a.max()?;
@@ -306,6 +314,11 @@ where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
+        // casting `n_elems: usize` to `f64` may casus off-by-one error here if `n_elems` > 2 ^ 53,
+        // but it's not relevant here
+        #[allow(clippy::cast_precision_loss)]
+        // casting the rounded cube root from `f64` to `usize` is safe
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let n_bins = (2. * (n_elems as f64).powf(1. / 3.)).round() as usize;
         let min = a.min()?;
         let max = a.max()?;
@@ -347,6 +360,11 @@ where
         S: Data<Elem = Self::Elem>,
     {
         let n_elems = a.len();
+        // casting `n_elems: usize` to `f64` may casus off-by-one error here if `n_elems` > 2 ^ 53,
+        // but it's not relevant here
+        #[allow(clippy::cast_precision_loss)]
+        // casting the rounded base-2 log from `f64` to `usize` is safe
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
         let n_bins = (n_elems as f64).log2().round() as usize + 1;
         let min = a.min()?;
         let max = a.max()?;
@@ -418,6 +436,9 @@ where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
     fn compute_bin_width(n_bins: usize, iqr: T) -> T {
+        // casting `n_bins: usize` to `f64` may casus off-by-one error here if `n_bins` > 2 ^ 53,
+        // but it's not relevant here
+        #[allow(clippy::cast_precision_loss)]
         let denominator = (n_bins as f64).powf(1. / 3.);
         T::from_usize(2).unwrap() * iqr / T::from_f64(denominator).unwrap()
     }
@@ -495,8 +516,8 @@ where
     }
 }
 
-/// Given a range (max, min) and the number of bins, it returns
-/// the associated bin_width:
+/// Returns the `bin_width`, given the two end points of a range (`max`, `min`), and the number of
+/// bins, consuming endpoints
 ///
 /// `bin_width = (max - min)/n`
 ///
@@ -505,13 +526,13 @@ fn compute_bin_width<T>(min: T, max: T, n_bins: usize) -> T
 where
     T: Ord + Clone + FromPrimitive + NumOps + Zero,
 {
-    let range = max.clone() - min.clone();
+    let range = max - min;
     range / T::from_usize(n_bins).unwrap()
 }
 
 #[cfg(test)]
 mod equispaced_tests {
-    use super::*;
+    use super::EquiSpaced;
 
     #[test]
     fn bin_width_has_to_be_positive() {
@@ -526,7 +547,7 @@ mod equispaced_tests {
 
 #[cfg(test)]
 mod sqrt_tests {
-    use super::*;
+    use super::{BinsBuildingStrategy, Sqrt};
     use ndarray::array;
 
     #[test]
@@ -546,7 +567,7 @@ mod sqrt_tests {
 
 #[cfg(test)]
 mod rice_tests {
-    use super::*;
+    use super::{BinsBuildingStrategy, Rice};
     use ndarray::array;
 
     #[test]
@@ -566,7 +587,7 @@ mod rice_tests {
 
 #[cfg(test)]
 mod sturges_tests {
-    use super::*;
+    use super::{BinsBuildingStrategy, Sturges};
     use ndarray::array;
 
     #[test]
@@ -586,7 +607,7 @@ mod sturges_tests {
 
 #[cfg(test)]
 mod fd_tests {
-    use super::*;
+    use super::{BinsBuildingStrategy, FreedmanDiaconis};
     use ndarray::array;
 
     #[test]
@@ -615,7 +636,7 @@ mod fd_tests {
 
 #[cfg(test)]
 mod auto_tests {
-    use super::*;
+    use super::{Auto, BinsBuildingStrategy};
     use ndarray::array;
 
     #[test]
