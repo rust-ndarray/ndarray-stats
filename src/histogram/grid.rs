@@ -63,10 +63,9 @@ use std::ops::Range;
 /// ```
 /// use ndarray::{Array, array};
 /// use ndarray_stats::{
-///     histogram::{strategies::Auto, Bins, Edges, Grid, GridBuilder, Histogram},
+///     histogram::{strategies::Auto, Bins, Edges, Grid, GridBuilder},
 ///     HistogramExt,
 /// };
-/// use noisy_float::types::{N64, n64};
 ///
 /// // 1-dimensional observations, as a (n_observations, n_dimension) 2-d matrix
 /// let observations = Array::from_shape_vec(
@@ -292,11 +291,8 @@ impl<A: Ord + Clone> Grid<A> {
 /// Basic usage, creating a `Grid` with some observations and a given [`strategy`]:
 ///
 /// ```
-/// use ndarray::{Array, array};
-/// use noisy_float::types::{N64, n64};
-/// use ndarray_stats::histogram::{
-///     strategies::Auto, Bins, Edges, Grid, GridBuilder, Histogram,
-/// };
+/// use ndarray::Array;
+/// use ndarray_stats::histogram::{strategies::Auto, Bins, Edges, Grid, GridBuilder};
 ///
 /// // 1-dimensional observations, as a (n_observations, n_dimension) 2-d matrix
 /// let observations = Array::from_shape_vec(
