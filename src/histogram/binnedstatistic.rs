@@ -913,7 +913,10 @@ impl<T> BinContent<T> {
     /// assert_eq!(x.is_value(), false);
     /// ```
     pub fn is_value(&self) -> bool {
-        matches!(*self, Self::Value(_))
+        match *self {
+            Self::Value(_) => true,
+            Self::Empty => false,
+        }
     }
 
     /// Returns `true` if the BinContent is [`Empty`].
