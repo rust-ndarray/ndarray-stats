@@ -9,16 +9,11 @@ use num_traits::{
     identities::{One, Zero},
     Float,
 };
-use std::clone::Clone;
-use std::cmp::PartialEq;
-// use std::ops::{
-//     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
-// };
 
 /// Binned statistic data structure.
 #[derive(Clone, Debug)]
 pub struct BinnedStatistic<A: Ord, T: num_traits::identities::Zero> {
-    counts: ArrayD<usize>,
+    count: ArrayD<usize>,
     number: ArrayD<T>,
     sum: ArrayD<T>,
     mean: ArrayD<T>,
@@ -38,7 +33,7 @@ where
     ///
     /// [`Grid`]: struct.Grid.html
     pub fn new(grid: Grid<A>) -> Self {
-        let counts = ArrayD::zeros(grid.shape());
+        let count = ArrayD::zeros(grid.shape());
         let number = ArrayD::zeros(grid.shape());
         let sum = ArrayD::zeros(grid.shape());
         let mean = ArrayD::zeros(grid.shape());
@@ -47,7 +42,7 @@ where
         let min = ArrayD::from_elem(grid.shape(), T::infinity());
         let max = ArrayD::from_elem(grid.shape(), T::neg_infinity());
         BinnedStatistic {
-            counts,
+            count,
             number,
             sum,
             mean,
@@ -60,6 +55,25 @@ where
     }
 
     /// Adds a single sample to the binned statistic.
+    ///
+    /// Possible binned statistics are:
+    /// * `count`: (equivalent to histogram).  
+    /// * `number`: (equivalent to histogram but different data type).
+    /// * `sum` computes the sum of values for points within each bin. This is identical to
+    /// a weighted histogram.
+    /// * `mean`: computes the mean of values for points within each bin. Empty bins will be
+    /// represented by zero.
+    /// * `variance`: computes the variance of values for points within each bin. Empty bins will be
+    /// represented by zero.
+    /// * `standard_deviation`: computes the standard deviation of values for points within each bin.
+    /// Empty bins will be represented by zero.
+    /// * `min`: computes the minimum of values for points within each bin. Empty bins will be
+    /// represented by `inf`.
+    /// * `max`: computes the maximum of values for points within each bin. Empty bins will be
+    /// represented by `-inf`.
+    ///
+    /// Alternatively arrays of `BinContent`s can be computed indicating empty bins with `Empty`
+    /// and filled bins with `Value(x)`.
     ///
     /// **Panics** if dimensions do not match: `self.ndim() != sample.len()`.
     ///
@@ -105,15 +119,15 @@ where
             Some(bin_index) => {
                 let id = &*bin_index;
 
-                // Saving counts
+                // Saving count
                 let n1 = self.number[id];
 
-                // Calculate counts & sum
-                self.counts[id] = self.counts[id] + 1usize;
+                // Calculate count & sum
+                self.count[id] = self.count[id] + 1usize;
                 self.number[id] = self.number[id] + T::one();
                 self.sum[id] = self.sum[id] + value;
 
-                // M1 & M2
+                // Mean & variance
                 let n = self.number[id];
                 let delta = value - self.mean[id];
                 let delta_n = delta / n;
@@ -135,41 +149,256 @@ where
 
     /// Returns the number of dimensions of the space the binned statistic is covering.
     pub fn ndim(&self) -> usize {
-        debug_assert_eq!(self.counts.ndim(), self.grid.ndim());
-        self.counts.ndim()
+        debug_assert_eq!(self.count.ndim(), self.grid.ndim());
+        self.count.ndim()
     }
 
-    /// Borrows a view on the binned statistic `counts` matrix (equivalent to histogram).
-    pub fn counts(&self) -> ArrayViewD<'_, usize> {
-        self.counts.view()
+    /// Borrows a view on the binned statistic `count` matrix (equivalent to histogram).
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_count = binned_statistic.count();
+    /// let expected = array![
+    ///     [0, 0],
+    ///     [0, 2],
+    /// ];
+    /// assert_eq!(binned_statistic_count, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn count(&self) -> ArrayViewD<'_, usize> {
+        self.count.view()
     }
 
     /// Borrows a view on the binned statistic `number` matrix (equivalent to histogram).
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_number = binned_statistic.number();
+    /// let expected = array![
+    ///     [0.0, 0.0],
+    ///     [0.0, 2.0],
+    /// ];
+    /// assert_eq!(binned_statistic_number, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
     pub fn number(&self) -> ArrayViewD<'_, T> {
         self.number.view()
     }
 
     /// Borrows a view on the binned statistic `sum` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_sum = binned_statistic.sum();
+    /// let expected = array![
+    ///     [0.0, 0.0],
+    ///     [0.0, 3.0],
+    /// ];
+    /// assert_eq!(binned_statistic_sum, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
     pub fn sum(&self) -> ArrayViewD<'_, T> {
         self.sum.view()
     }
 
     /// Borrows a view on the binned statistic `mean` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_mean = binned_statistic.mean();
+    /// let expected = array![
+    ///     [0.0, 0.0],
+    ///     [0.0, 1.5],
+    /// ];
+    /// assert_eq!(binned_statistic_mean, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
     pub fn mean(&self) -> ArrayViewD<'_, T> {
         self.mean.view()
     }
 
     /// Borrows a view on the binned statistic `variance` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_variance = binned_statistic.variance();
+    /// let expected = array![
+    ///     [0.0, 0.0],
+    ///     [0.0, 0.25],
+    /// ];
+    /// assert_eq!(binned_statistic_variance, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
     pub fn variance(&self) -> ArrayViewD<'_, T> {
         self.variance.view()
     }
 
+    /// Borrows a view on the binned statistic `standard_deviation` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_standard_deviation = binned_statistic.standard_deviation();
+    /// let expected = array![
+    ///     [0.0, 0.0],
+    ///     [0.0, 0.5],
+    /// ];
+    /// assert_eq!(binned_statistic_standard_deviation, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn standard_deviation(&self) -> ArrayViewD<'_, T> {
+        self.standard_deviation.view()
+    }
+
     /// Borrows a view on the binned statistic `min` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    /// use num_traits::Float;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_min = binned_statistic.min();
+    /// let expected = array![
+    ///     [f64::infinity(), f64::infinity()],
+    ///     [f64::infinity(), 1.0],
+    /// ];
+    /// assert_eq!(binned_statistic_min, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
     pub fn min(&self) -> ArrayViewD<'_, T> {
         self.min.view()
     }
 
     /// Borrows a view on the binned statistic `max` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    /// use num_traits::Float;
+    ///
+    /// let bins = Bins::new(Edges::from(vec![n64(-1.), n64(0.), n64(1.)]));
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_max = binned_statistic.max();
+    /// let expected = array![
+    ///     [f64::neg_infinity(), f64::neg_infinity()],
+    ///     [f64::neg_infinity(), 2.0],
+    /// ];
+    /// assert_eq!(binned_statistic_max, expected.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
     pub fn max(&self) -> ArrayViewD<'_, T> {
         self.max.view()
     }
@@ -179,37 +408,361 @@ where
         &self.grid
     }
 
-    // /// Returns an array of `BinContent`s of the `counts` matrix (equivalent to histogram).
-    // pub fn counts_binned(&self) -> ArrayD<BinContent<usize>> {
-    //     let mut counts_binned = ArrayD::<BinContent<usize>>::zeros(self.counts.shape());
+    /// Returns an array of `BinContent`s of the `count` matrix (equivalent to histogram).
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_count = binned_statistic.count_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(2)],
+    /// ];
+    /// assert_eq!(binned_statistic_count, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn count_binned(&self) -> ArrayD<BinContent<usize>> {
+        let mut count_binned = ArrayD::<BinContent<usize>>::zeros(self.count.shape());
 
-    //     for (counts_arr, binned) in self.counts.iter().zip(&mut counts_binned) {
-    //         *binned = if *counts_arr == 0usize {
-    //             BinContent::Empty
-    //         } else {
-    //             BinContent::Value(*counts_arr)
-    //         };
-    //     }
-    //     counts_binned
-    // }
+        for (count_arr, binned) in self.count.iter().zip(&mut count_binned) {
+            *binned = if *count_arr == 0usize {
+                BinContent::Empty
+            } else {
+                BinContent::Value(*count_arr)
+            };
+        }
+        count_binned
+    }
 
-    // /// Returns an array of `BinContents`s of the `sum` matrix.
-    // pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
-    //     let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.counts.shape());
+    /// Returns an array of `BinContents`s of the `number` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_number = binned_statistic.number_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(n64(2.0))],
+    /// ];
+    /// assert_eq!(binned_statistic_number, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn number_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut number_binned = ArrayD::<BinContent<T>>::zeros(self.count.shape());
 
-    //     Zip::from(&mut sum_binned)
-    //         .and(&self.sum)
-    //         .and(&self.counts)
-    //         .apply(|w, &x, &y| {
-    //             *w = if y == 0usize {
-    //                 BinContent::Empty
-    //             } else {
-    //                 BinContent::Value(x)
-    //             }
-    //         });
+        Zip::from(&mut number_binned)
+            .and(&self.number)
+            .and(&self.count)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
 
-    //     sum_binned
-    // }
+        number_binned
+    }
+
+    /// Returns an array of `BinContents`s of the `sum` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_sum = binned_statistic.sum_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(n64(3.0))],
+    /// ];
+    /// assert_eq!(binned_statistic_sum, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn sum_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut sum_binned = ArrayD::<BinContent<T>>::zeros(self.count.shape());
+
+        Zip::from(&mut sum_binned)
+            .and(&self.sum)
+            .and(&self.count)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
+
+        sum_binned
+    }
+
+    /// Returns an array of `BinContents`s of the `mean` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_mean = binned_statistic.mean_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(n64(1.5))],
+    /// ];
+    /// assert_eq!(binned_statistic_mean, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn mean_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut mean_binned = ArrayD::<BinContent<T>>::zeros(self.count.shape());
+
+        Zip::from(&mut mean_binned)
+            .and(&self.mean)
+            .and(&self.count)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
+
+        mean_binned
+    }
+
+    /// Returns an array of `BinContents`s of the `variance` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_variance = binned_statistic.variance_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(n64(0.25))],
+    /// ];
+    /// assert_eq!(binned_statistic_variance, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn variance_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut variance_binned = ArrayD::<BinContent<T>>::zeros(self.count.shape());
+
+        Zip::from(&mut variance_binned)
+            .and(&self.variance)
+            .and(&self.count)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
+
+        variance_binned
+    }
+
+    /// Returns an array of `BinContents`s of the `standard_deviation` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_standard_deviation = binned_statistic.standard_deviation_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(n64(0.5))],
+    /// ];
+    /// assert_eq!(binned_statistic_standard_deviation, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn standard_deviation_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut standard_deviation_binned = ArrayD::<BinContent<T>>::zeros(self.count.shape());
+
+        Zip::from(&mut standard_deviation_binned)
+            .and(&self.standard_deviation)
+            .and(&self.count)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
+
+        standard_deviation_binned
+    }
+
+    /// Returns an array of `BinContents`s of the `min` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_min = binned_statistic.min_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(n64(1.0))],
+    /// ];
+    /// assert_eq!(binned_statistic_min, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn min_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut min_binned = ArrayD::<BinContent<T>>::zeros(self.count.shape());
+
+        Zip::from(&mut min_binned)
+            .and(&self.min)
+            .and(&self.count)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
+
+        min_binned
+    }
+
+    /// Returns an array of `BinContents`s of the `max` matrix.
+    ///
+    /// # Example:
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{
+    /// BinContent::Empty, BinContent::Value, BinnedStatistic, Bins, Edges, Grid,
+    /// };
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let square_grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    /// let mut binned_statistic = BinnedStatistic::new(square_grid);
+    ///
+    /// let sample = array![n64(0.5), n64(0.6)];
+    ///
+    /// binned_statistic.add_sample(&sample, n64(1.0))?;
+    /// binned_statistic.add_sample(&sample, n64(2.0))?;
+    ///
+    /// let binned_statistic_mxa = binned_statistic.max_binned();
+    /// let expected_value = array![
+    ///     [Empty, Empty],
+    ///     [Empty, Value(n64(2.0))],
+    /// ];
+    /// assert_eq!(binned_statistic_mxa, expected_value.into_dyn());
+    /// # Ok::<(), Box<std::error::Error>>(())
+    /// ```
+    pub fn max_binned(&self) -> ArrayD<BinContent<T>> {
+        let mut max_binned = ArrayD::<BinContent<T>>::zeros(self.count.shape());
+
+        Zip::from(&mut max_binned)
+            .and(&self.max)
+            .and(&self.count)
+            .apply(|w, &x, &y| {
+                *w = if y == 0usize {
+                    BinContent::Empty
+                } else {
+                    BinContent::Value(x)
+                }
+            });
+
+        max_binned
+    }
 }
 
 // impl<A: Ord, T: Copy + num_traits::Num + Add<Output = T>> Add for BinnedStatistic<A, T> {
@@ -221,7 +774,7 @@ where
 //         };
 
 //         BinnedStatistic {
-//             counts: &self.counts + &other.counts,
+//             count: &self.count + &other.count,
 //             sum: &self.sum + &other.sum,
 //             grid: self.grid,
 //         }
@@ -275,7 +828,7 @@ where
     /// let binned_statistic = samples.binned_statistic(grid, values);
     ///
     /// // Bins are left inclusive, right exclusive!
-    /// let expected_counts = array![
+    /// let expected_count = array![
     ///     [1, 0, 1],
     ///     [1, 0, 0],
     ///     [0, 1, 0]
@@ -285,7 +838,7 @@ where
     ///     [n64(2.),  n64(0.),  n64(0.)],
     ///     [n64(0.), n64(12.), n64(0.)]
     /// ];
-    /// assert_eq!(binned_statistic.counts(), expected_counts.into_dyn());
+    /// assert_eq!(binned_statistic.count(), expected_count.into_dyn());
     /// assert_eq!(binned_statistic.sum(), expected_sum.into_dyn());
     /// ```
     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T>
@@ -301,7 +854,6 @@ where
     S: Data<Elem = A>,
     A: Ord,
     T: Float,
-    //T: Copy + num_traits::identities::Zero + Neg<Output = T>,
 {
     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
         let mut binned_statistic = BinnedStatistic::new(grid);
@@ -320,7 +872,6 @@ where
     S: Data<Elem = A>,
     A: Ord + Copy,
     T: Float,
-    //T: Copy + num_traits::identities::Zero + Neg<Output = T>,
 {
     fn binned_statistic(&self, grid: Grid<A>, values: ArrayD<T>) -> BinnedStatistic<A, T> {
         let mut binned_statistic = BinnedStatistic::new(grid);
