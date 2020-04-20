@@ -12,7 +12,7 @@ use num_traits::{
 
 /// Binned statistic data structure.
 #[derive(Clone, Debug)]
-pub struct BinnedStatistic<A: Ord, T: num_traits::identities::Zero> {
+pub struct BinnedStatistic<A: Ord, T: Zero> {
     count: ArrayD<usize>,
     number: ArrayD<T>,
     sum: ArrayD<T>,
@@ -785,7 +785,7 @@ where
 pub trait BinnedStatisticExt<A, S, T>
 where
     S: Data<Elem = A>,
-    T: Copy + num_traits::identities::Zero,
+    T: Copy + Zero,
 {
     /// Returns the binned statistic for a 1- or 2-dimensional array of samples `M`
     /// and a 1-dimensional vector of values `N`.
