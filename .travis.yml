@@ -7,7 +7,7 @@ addons:
       - libssl-dev
 cache: cargo
 rust:
-  - 1.37.0
+  - 1.42.0
   - stable
   - beta
   - nightly
@@ -16,7 +16,7 @@ matrix:
     - rust: nightly
 before_cache: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
-    RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin -f
+    cargo install cargo-tarpaulin -f
   fi
 before_script:
 - rustup component add rustfmt
