@@ -27,11 +27,23 @@ Please feel free to contribute new functionality! A roadmap can be found [here](
 
 ```toml
 [dependencies]
-ndarray = "0.13"
-ndarray-stats = "0.3"
+ndarray = "0.14"
+ndarray-stats = "0.4"
 ```
 
 ## Releases
+
+* **0.4.0**
+  * New functionality:
+    * Summary statistics:
+      * Weighted variance
+      * Weighted standard deviation
+  * Improvements / breaking changes:
+    * Documentation improvements for Histograms
+    * Updated to `ndarray:v0.14.0`
+    * Minimum supported Rust version: `1.42.0`
+ 
+  *Contributors*: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@LukeMathWalker](https://github.com/LukeMathWalker), [@lebensterben](https://github.com/lebensterben), [@xd009642](https://github.com/xd009642)
 
 * **0.3.0**
 
