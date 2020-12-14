@@ -27,14 +27,29 @@ Please feel free to contribute new functionality! A roadmap can be found [here](
 
 ```toml
 [dependencies]
-ndarray = "0.13"
-ndarray-stats = "0.3"
+ndarray = "0.14"
+ndarray-stats = "0.4"
 ```
 
 ## Releases
 
+* **0.4.0**
+  * Breaking changes
+    * Minimum supported Rust version: `1.42.0`
+  * New functionality:
+    * Summary statistics:
+      * Weighted variance
+      * Weighted standard deviation
+  * Improvements / breaking changes:
+    * Documentation improvements for Histograms
+    * Updated to `ndarray:v0.14.0`
+ 
+  *Contributors*: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@LukeMathWalker](https://github.com/LukeMathWalker), [@lebensterben](https://github.com/lebensterben), [@xd009642](https://github.com/xd009642)
+
 * **0.3.0**
 
+  * Breaking changes
+    * Minimum supported Rust version: `1.37`
   * New functionality:
     * Deviation functions:
       * Counts equal/unequal
@@ -46,12 +61,15 @@ ndarray-stats = "0.3"
       * Weighted mean
   * Improvements / breaking changes:
     * Updated to `ndarray:v0.13.0`
-    * Minimum supported Rust version: `1.37`
   
   *Contributors*: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker)
 
 * **0.2.0**
 
+  * Breaking changes
+    * All `ndarray-stats`' extension traits are now impossible to implement by
+      users of the library (see [#34])
+    * Redesigned error handling across the whole crate, standardising on `Result`
   * New functionality:
     * Summary statistics:
       * Harmonic mean
@@ -69,10 +87,6 @@ ndarray-stats = "0.3"
       * Optimized bulk quantile computation (`quantiles_mut`, `quantiles_axis_mut`)
   * Fixes:
     * Reduced occurrences of overflow for `interpolate::midpoint`
-  * Improvements / breaking changes:
-    * Redesigned error handling across the whole crate, standardising on `Result`
-    * All `ndarray-stats`' extension traits are now impossible to implement by
-      users of the library (see [#34])
 
   *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
 
