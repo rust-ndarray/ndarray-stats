@@ -22,7 +22,7 @@ num-integer = "0.1"
 num-traits = "0.2"
 rand = "0.7"
 itertools = { version = "0.10.0", default-features = false }
-indexmap = "1.0"
+indexmap = "1.6.2"
 
 [dev-dependencies]
 ndarray = { version = "0.14", features = ["approx"] }
