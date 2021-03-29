@@ -169,7 +169,7 @@ where
         Zip::from(&mut temp)
             .and(self)
             .and(q)
-            .apply(|result, &p, &q| {
+            .for_each(|result, &p, &q| {
                 *result = {
                     if p == A::zero() {
                         A::zero()
@@ -202,7 +202,7 @@ where
         Zip::from(&mut temp)
             .and(self)
             .and(q)
-            .apply(|result, &p, &q| {
+            .for_each(|result, &p, &q| {
                 *result = {
                     if p == A::zero() {
                         A::zero()

@@ -332,7 +332,7 @@ where
         A: 'a,
         F: FnMut(&'a A::NotNan),
     {
-        self.visit(|elem| {
+        self.for_each(|elem| {
             if let Some(not_nan) = elem.try_as_not_nan() {
                 f(not_nan)
             }
