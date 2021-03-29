@@ -7,7 +7,7 @@ use ndarray_stats::{
 };
 use noisy_float::types::N64;
 use quickcheck::{quickcheck, TestResult};
-use rand::distributions::Uniform;
+use ndarray_rand::rand_distr::Uniform;
 use std::f64;
 
 #[test]

@@ -5,7 +5,7 @@ use criterion::{
 use ndarray::prelude::*;
 use ndarray_rand::RandomExt;
 use ndarray_stats::DeviationExt;
-use rand::distributions::Uniform;
+use ndarray_rand::rand_distr::Uniform;
 
 fn sq_l2_dist(c: &mut Criterion) {
     let lens = vec![10, 100, 1000, 10000];
