@@ -116,7 +116,7 @@ where
             self[0].clone()
         } else {
             let mut rng = thread_rng();
-            let pivot_index = rng.gen_range(0, n);
+            let pivot_index = rng.gen_range(0..n);
             let partition_index = self.partition_mut(pivot_index);
             if i < partition_index {
                 self.slice_axis_mut(Axis(0), Slice::from(..partition_index))
@@ -251,7 +251,7 @@ fn _get_many_from_sorted_mut_unchecked<A>(
 
     // We pick a random pivot index: the corresponding element is the pivot value
     let mut rng = thread_rng();
-    let pivot_index = rng.gen_range(0, n);
+    let pivot_index = rng.gen_range(0..n);
 
     // We partition the array with respect to the pivot value.
     // The pivot value moves to `array_partition_index`.

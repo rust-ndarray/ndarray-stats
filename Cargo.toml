@@ -20,7 +20,7 @@ ndarray = "0.14"
 noisy_float = "0.2.0"
 num-integer = "0.1"
 num-traits = "0.2"
-rand = "0.7"
+rand = "0.8.3"
 itertools = { version = "0.10.0", default-features = false }
 indexmap = "1.6.2"
 
