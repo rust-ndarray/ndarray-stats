@@ -185,10 +185,10 @@ where
 mod cov_tests {
     use super::*;
     use ndarray::array;
-    use ndarray_rand::RandomExt;
-    use quickcheck_macros::quickcheck;
     use ndarray_rand::rand;
     use ndarray_rand::rand_distr::Uniform;
+    use ndarray_rand::RandomExt;
+    use quickcheck_macros::quickcheck;
 
     #[quickcheck]
     fn constant_random_variables_have_zero_covariance_matrix(value: f64) -> bool {
@@ -289,9 +289,9 @@ mod pearson_correlation_tests {
     use super::*;
     use ndarray::array;
     use ndarray::Array;
-    use quickcheck_macros::quickcheck;
-    use ndarray_rand::RandomExt;
     use ndarray_rand::rand_distr::Uniform;
+    use ndarray_rand::RandomExt;
+    use quickcheck_macros::quickcheck;
 
     #[quickcheck]
     fn output_matrix_is_symmetric(bound: f64) -> bool {
