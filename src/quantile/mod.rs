@@ -477,7 +477,7 @@ where
             let mut results = Array::from_elem(results_shape, data.first().unwrap().clone());
             Zip::from(results.lanes_mut(axis))
                 .and(data.lanes_mut(axis))
-                .apply(|mut results, mut data| {
+                .for_each(|mut results, mut data| {
                     let index_map =
                         get_many_from_sorted_mut_unchecked(&mut data, &searched_indexes);
                     for (result, &q) in results.iter_mut().zip(qs) {

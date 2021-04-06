@@ -232,7 +232,7 @@ where
 
         let mut count = 0;
 
-        Zip::from(self).and(other).apply(|a, b| {
+        Zip::from(self).and(other).for_each(|a, b| {
             if a == b {
                 count += 1;
             }
@@ -259,7 +259,7 @@ where
 
         let mut result = A::zero();
 
-        Zip::from(self).and(other).apply(|self_i, other_i| {
+        Zip::from(self).and(other).for_each(|self_i, other_i| {
             let (a, b) = (self_i.clone(), other_i.clone());
             let diff = a - b;
             result += diff.clone() * diff;
@@ -291,7 +291,7 @@ where
 
         let mut result = A::zero();
 
-        Zip::from(self).and(other).apply(|self_i, other_i| {
+        Zip::from(self).and(other).for_each(|self_i, other_i| {
             let (a, b) = (self_i.clone(), other_i.clone());
             result += (a - b).abs();
         });
@@ -309,7 +309,7 @@ where
 
         let mut max = A::zero();
 
-        Zip::from(self).and(other).apply(|self_i, other_i| {
+        Zip::from(self).and(other).for_each(|self_i, other_i| {
             let (a, b) = (self_i.clone(), other_i.clone());
             let diff = (a - b).abs();
             if diff > max {

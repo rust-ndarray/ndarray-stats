@@ -1,5 +1,6 @@
 use approx::{abs_diff_eq, assert_abs_diff_eq};
 use ndarray::{arr0, array, Array, Array1, Array2, Axis};
+use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use ndarray_stats::{
     errors::{EmptyInput, MultiInputError, ShapeMismatch},
@@ -7,7 +8,6 @@ use ndarray_stats::{
 };
 use noisy_float::types::N64;
 use quickcheck::{quickcheck, TestResult};
-use rand::distributions::Uniform;
 use std::f64;
 
 #[test]
