@@ -33,6 +33,13 @@ ndarray-stats = "0.4"
 
 ## Releases
 
+* **0.5.0**
+  * Breaking changes
+    * Minimum supported Rust version: `1.49.0`
+    * Updated to `ndarray:v0.15.0`
+
+  *Contributors*: [@Armavica](https://github.com/armavica), [@cassiersg](https://github.com/cassiersg)
+
 * **0.4.0**
   * Breaking changes
     * Minimum supported Rust version: `1.42.0`
