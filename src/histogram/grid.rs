@@ -58,7 +58,7 @@ use std::ops::Range;
 /// # Examples
 ///
 /// Basic usage, building a `Grid` via [`GridBuilder`], with optimal grid layout determined by
-/// a given [`strategy`], and genrating a [`histogram`]:
+/// a given [`strategy`], and generating a [`histogram`]:
 ///
 /// ```
 /// use ndarray::{Array, array};
