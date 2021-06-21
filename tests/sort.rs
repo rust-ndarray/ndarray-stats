@@ -19,15 +19,22 @@ fn test_partition_mut() {
     ];
     for a in l.iter_mut() {
         let n = a.len();
-        let pivot_index = n - 1;
-        let pivot_value = a[pivot_index].clone();
-        let partition_index = a.partition_mut(pivot_index);
-        for i in 0..partition_index {
-            assert!(a[i] < pivot_value);
+        let (mut lower_value, mut upper_value) = (a[0].clone(), a[n - 1].clone());
+        if lower_value > upper_value {
+            std::mem::swap(&mut lower_value, &mut upper_value);
         }
-        assert_eq!(a[partition_index], pivot_value);
-        for j in (partition_index + 1)..n {
-            assert!(pivot_value <= a[j]);
+        let (lower_index, upper_index) = a.partition_mut();
+        for i in 0..lower_index {
+            assert!(a[i] < lower_value);
+        }
+        assert_eq!(a[lower_index], lower_value);
+        for i in lower_index + 1..upper_index {
+            assert!(lower_value <= a[i]);
+            assert!(a[i] <= upper_value);
+        }
+        assert_eq!(a[upper_index], upper_value);
+        for i in (upper_index + 1)..n {
+            assert!(upper_value <= a[i]);
         }
     }
 }
