@@ -48,21 +48,21 @@ where
         S: DataMut,
         S2: Data<Elem = usize>;
 
-    /// Partitions the array in increasing order based on the values initially located at `0` and
-    /// `n - 1` where `n` is the number of elements in the array and returns the new indexes of the
-    /// values.
+    /// Partitions the array in increasing order at two skewed pivot values as 1st and 3rd element
+    /// of a sorted sample of 5 equally spaced elements around the center and returns their indexes.
+    /// For arrays of less than 42 elements the outermost elements serve as sample for pivot values.
     ///
-    /// The elements are rearranged in such a way that the values initially located at `0` and
-    /// `n - 1` are moved to the position it would be in an array sorted in increasing order. The
-    /// return values are the new indexes of the values after rearrangement. All elements less than
-    /// the values are moved to their left and all elements equal or greater than the values are
-    /// moved to their right. The ordering of the elements in the three partitions is undefined.
+    /// The elements are rearranged in such a way that the two pivot values are moved to the indexes
+    /// they would be in an array sorted in increasing order. The return values are the new indexes
+    /// of the values after rearrangement. All elements less than the values are moved to their left
+    /// and all elements equal or greater than the values are moved to their right. The ordering of
+    /// the elements in the three partitions is undefined.
     ///
     /// The array is shuffled **in place**, no copy of the array is allocated.
     ///
-    /// This method implements the partitioning scheme of [Yaroslavskiy-Bentley-Bloch Quicksort].
+    /// This method performs [dual-pivot partitioning] with skewed pivot sampling.
     ///
-    /// [Yaroslavskiy-Bentley-Bloch Quicksort]: https://api.semanticscholar.org/CorpusID:51871084
+    /// [dual-pivot partitioning]: https://www.wild-inter.net/publications/wild-2018b.pdf
     ///
     /// # Example
     ///
@@ -151,11 +151,33 @@ where
         A: Ord + Clone,
         S: DataMut,
     {
-        // Sort `lowermost` and `uppermost` elements and use them as dual pivot.
         let lowermost = 0;
         let uppermost = self.len() - 1;
-        if self[lowermost] > self[uppermost] {
-            self.swap(lowermost, uppermost);
+        if self.len() < 42 {
+            // Sort outermost elements and use them as pivots.
+            if self[lowermost] > self[uppermost] {
+                self.swap(lowermost, uppermost);
+            }
+        } else {
+            // Sample indexes of 5 evenly spaced elements around the center element.
+            let mut samples = [0; 5];
+            // Assume array of at least 7 elements.
+            let seventh = self.len() / (samples.len() + 2);
+            samples[2] = self.len() / 2;
+            samples[1] = samples[2] - seventh;
+            samples[0] = samples[1] - seventh;
+            samples[3] = samples[2] + seventh;
+            samples[4] = samples[3] + seventh;
+            // Use insertion sort for sample elements by looking up their indexes.
+            for mut index in 1..samples.len() {
+                while index > 0 && self[samples[index - 1]] > self[samples[index]] {
+                    self.swap(samples[index - 1], samples[index]);
+                    index -= 1;
+                }
+            }
+            // Use 1st and 3rd element of sorted sample as skewed pivots.
+            self.swap(lowermost, samples[0]);
+            self.swap(uppermost, samples[2]);
         }
         // Increasing running and partition index starting after lower pivot.
         let mut index = lowermost + 1;
