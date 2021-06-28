@@ -19,22 +19,46 @@ fn test_partition_mut() {
     ];
     for a in l.iter_mut() {
         let n = a.len();
-        let (mut lower_value, mut upper_value) = (a[0].clone(), a[n - 1].clone());
-        if lower_value > upper_value {
-            std::mem::swap(&mut lower_value, &mut upper_value);
+        let pivot_index = n - 1;
+        let pivot_value = a[pivot_index].clone();
+        let partition_index = a.partition_mut(pivot_index);
+        for i in 0..partition_index {
+            assert!(a[i] < pivot_value);
         }
-        let (lower_index, upper_index) = a.partition_mut();
+        assert_eq!(a[partition_index], pivot_value);
+        for j in (partition_index + 1)..n {
+            assert!(pivot_value <= a[j]);
+        }
+    }
+}
+
+#[test]
+fn test_dual_partition_mut() {
+    let mut l = vec![
+        arr1(&[1, 1, 1, 1, 1]),
+        arr1(&[1, 3, 2, 10, 10]),
+        arr1(&[2, 3, 4, 1]),
+        arr1(&[
+            355, 453, 452, 391, 289, 343, 44, 154, 271, 44, 314, 276, 160, 469, 191, 138, 163, 308,
+            395, 3, 416, 391, 210, 354, 200,
+        ]),
+        arr1(&[
+            84, 192, 216, 159, 89, 296, 35, 213, 456, 278, 98, 52, 308, 418, 329, 173, 286, 106,
+            366, 129, 125, 450, 23, 463, 151,
+        ]),
+    ];
+    for a in l.iter_mut() {
+        let n = a.len();
+        let (lower_index, upper_index) = a.dual_partition_mut(1, a.len() / 2);
         for i in 0..lower_index {
-            assert!(a[i] < lower_value);
+            assert!(a[i] < a[lower_index]);
         }
-        assert_eq!(a[lower_index], lower_value);
         for i in lower_index + 1..upper_index {
-            assert!(lower_value <= a[i]);
-            assert!(a[i] <= upper_value);
+            assert!(a[lower_index] <= a[i]);
+            assert!(a[i] <= a[upper_index]);
         }
-        assert_eq!(a[upper_index], upper_value);
         for i in (upper_index + 1)..n {
-            assert!(upper_value <= a[i]);
+            assert!(a[upper_index] <= a[i]);
         }
     }
 }
