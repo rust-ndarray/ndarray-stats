@@ -20,8 +20,7 @@ where
     /// No other assumptions should be made on the ordering of the
     /// elements after this computation.
     ///
-    /// This method performs a variant of [Sesquickselect] with pivot samples of 5 equally spaced
-    /// elements around the center.
+    /// This method performs [Sesquickselect].
     ///
     /// [Sesquickselect]: https://www.wild-inter.net/publications/martinez-nebel-wild-2019.pdf
     ///
@@ -47,14 +46,6 @@ where
         A: Ord + Clone,
         S: DataMut,
         S2: Data<Elem = usize>;
-
-    /// Sorts a sample of 5 equally spaced elements around the center and returns their indexes.
-    ///
-    /// **Panics** for arrays of less than 7 elements.
-    fn sample_mut(&mut self) -> [usize; 5]
-    where
-        A: Ord + Clone,
-        S: DataMut;
 
     /// Partitions the array in increasing order based on the value initially
     /// located at `pivot_index` and returns the new index of the value.
@@ -182,6 +173,8 @@ where
         } else {
             // Adapt pivot sampling to relative sought rank and switch from dual-pivot to
             // single-pivot partitioning for extreme sought ranks.
+            let mut sample = [0; 5];
+            sample_mut(self, &mut sample);
             let sought_rank = i as f64 / n as f64;
             if (0.036..=0.964).contains(&sought_rank) {
                 let (lower_index, upper_index) = if sought_rank <= 0.5 {
@@ -197,7 +190,6 @@ where
                         (3, 4) // (3, 0, 0)
                     }
                 };
-                let sample = self.sample_mut();
                 let (lower_index, upper_index) =
                     self.dual_partition_mut(sample[lower_index], sample[upper_index]);
                 if i < lower_index {
@@ -215,7 +207,6 @@ where
                         .get_from_sorted_mut(i - (upper_index + 1))
                 }
             } else {
-                let sample = self.sample_mut();
                 let pivot_index = if sought_rank <= 0.5 {
                     0 // (0, 4)
                 } else {
@@ -246,29 +237,6 @@ where
         deduped_indexes.dedup();
 
         get_many_from_sorted_mut_unchecked(self, &deduped_indexes)
-    }
-
-    fn sample_mut(&mut self) -> [usize; 5]
-    where
-        A: Ord + Clone,
-        S: DataMut,
-    {
-        // Space between sample indexes.
-        let space = self.len() / 7;
-        assert!(space > 0, "Cannot sample array of less then 7 elements");
-        // Initialize sample indexes with their lowermost index.
-        let mut samples = [self.len() / 2 - 2 * space; 5];
-        // Equally space sample indexes and sort by their values by looking up their indexes.
-        for mut index in 1..samples.len() {
-            // Equally space sample indexes based on their lowermost index.
-            samples[index] += index * space;
-            // Insertion sort looking up only the already equally spaced sample indexes.
-            while index > 0 && self[samples[index - 1]] > self[samples[index]] {
-                self.swap(samples[index - 1], samples[index]);
-                index -= 1;
-            }
-        }
-        samples
     }
 
     fn partition_mut(&mut self, pivot_index: usize) -> usize
@@ -434,7 +402,8 @@ fn _get_many_from_sorted_mut_unchecked<A>(
 
     // Since there is no single sought rank to adapt pivot sampling to, the recommended skewed pivot
     // sampling of dual-pivot Quicksort is used.
-    let sample = array.sample_mut();
+    let mut sample = [0; 5];
+    sample_mut(&mut array, &mut sample);
     let (lower_index, upper_index) = (sample[0], sample[2]); // (0, 1, 2)
 
     // We partition the array with respect to the two pivot values. The pivot values move to the new
@@ -505,4 +474,30 @@ fn _get_many_from_sorted_mut_unchecked<A>(
         upper_indexes,
         upper_values,
     );
+}
+
+/// Equally space `sample` indexes around the center of `array` and sort them by their values.
+///
+/// `sample` content is ignored but its length defines the sample size and the sample space divider.
+///
+/// Assumes arrays of at least `sample.len() + 2` elements.
+pub(crate) fn sample_mut<A, S>(array: &mut ArrayBase<S, Ix1>, sample: &mut [usize])
+where
+    A: Ord + Clone,
+    S: DataMut<Elem = A>,
+{
+    // Space between sample indexes.
+    let space = array.len() / (sample.len() + 2);
+    // Lowermost sample index.
+    let lowermost = array.len() / 2 - (sample.len() / 2) * space;
+    // Equally space sample indexes and sort them by their values by looking up their indexes.
+    for mut index in 1..sample.len() {
+        // Equally space sample indexes based on their lowermost index.
+        sample[index] = lowermost + index * space;
+        // Insertion sort looking up only the already equally spaced sample indexes.
+        while index > 0 && array[sample[index - 1]] > array[sample[index]] {
+            array.swap(sample[index - 1], sample[index]);
+            index -= 1;
+        }
+    }
 }
