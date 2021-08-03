@@ -1,6 +1,6 @@
 use crate::errors::EmptyInput;
 use ndarray::prelude::*;
-use ndarray::{Data, ShapeError};
+use ndarray::{Data};
 use num_traits::{Float, FromPrimitive};
 use itertools::Itertools;
 use std::error::Error;
