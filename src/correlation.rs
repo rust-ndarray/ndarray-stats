@@ -1,5 +1,4 @@
 use crate::errors::EmptyInput;
-use itertools::Itertools;
 use ndarray::prelude::*;
 use ndarray::Data;
 use num_traits::{Float, FromPrimitive};
@@ -213,7 +212,7 @@ where
                 // rho_ij = sigma_ij / sqrt(sigma_ii * sigma_jj)
                 *v / (self[[x, x]] * self[[y, y]]).powf(A::from_f64(0.5).unwrap())
             })
-            .collect_vec();
+            .collect();
 
         match Array2::from_shape_vec(self.raw_dim(), vals) {
             Ok(x) => Ok(x),
