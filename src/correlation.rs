@@ -1,8 +1,8 @@
 use crate::errors::EmptyInput;
-use ndarray::prelude::*;
-use ndarray::{Data};
-use num_traits::{Float, FromPrimitive};
 use itertools::Itertools;
+use ndarray::prelude::*;
+use ndarray::Data;
+use num_traits::{Float, FromPrimitive};
 use std::error::Error;
 
 /// Extension trait for `ArrayBase` providing functions
@@ -140,7 +140,8 @@ where
     /// assert_eq!(covariance.cov_to_corr().unwrap(), corr);
     /// ```
     fn cov_to_corr(&self) -> Result<Array2<A>, Box<dyn Error>>
-        where A: Float + FromPrimitive;
+    where
+        A: Float + FromPrimitive;
 }
 
 impl<A: 'static, S> CorrelationExt<A, S> for ArrayBase<S, Ix2>
@@ -199,7 +200,8 @@ where
     private_impl! {}
 
     fn cov_to_corr<'a>(&self) -> Result<Array2<A>, Box<dyn Error>>
-    where A: Float + FromPrimitive
+    where
+        A: Float + FromPrimitive,
     {
         if !self.is_square() {
             return Err("A covariance matrix must be square".into());
@@ -213,9 +215,9 @@ where
             })
             .collect_vec();
 
-        match Array2::from_shape_vec(self.raw_dim(), vals){
+        match Array2::from_shape_vec(self.raw_dim(), vals) {
             Ok(x) => Ok(x),
-            Err(e) => Err(Box::new(e))
+            Err(e) => Err(Box::new(e)),
         }
     }
 }
@@ -313,7 +315,6 @@ mod cov_tests {
         assert_abs_diff_eq!(a.cov(1.).unwrap(), &numpy_covariance, epsilon = 1e-8);
     }
 
-
     #[test]
     #[should_panic]
     // We lose precision, hence the failing assert
@@ -409,34 +410,26 @@ mod pearson_correlation_tests {
 }
 
 #[cfg(test)]
-mod cov_to_corr_tests{
-    use ndarray::array;
+mod cov_to_corr_tests {
     use super::*;
+    use ndarray::array;
 
     #[test]
-    fn test_cov_2_corr_known(){
+    fn test_cov_2_corr_known() {
         // Very basic maths that can be done in your head
-        let cov = array![
-            [ 4., 1. ],
-            [ 3., 4. ],
-        ];
-        assert_eq!(cov.cov_to_corr().unwrap(), array![
-            [1., 0.25],
-            [0.75, 1.]
-        ])
+        let cov = array![[4., 1.], [3., 4.],];
+        assert_eq!(cov.cov_to_corr().unwrap(), array![[1., 0.25], [0.75, 1.]])
     }
 
     #[test]
-    fn test_cov_2_corr_failure(){
+    fn test_cov_2_corr_failure() {
         // A 1D array can't be a covariance matrix
-        let cov = array![
-            [ 4., 1. ],
-        ];
+        let cov = array![[4., 1.],];
         cov.cov_to_corr().unwrap_err();
     }
 
     #[test]
-    fn test_cov_2_corr_random(){
+    fn test_cov_2_corr_random() {
         let a = array![
             [0.72009497, 0.12568055, 0.55705966, 0.5959984, 0.69471457],
             [0.56717131, 0.47619486, 0.21526298, 0.88915366, 0.91971245],
