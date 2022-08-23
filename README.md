@@ -1,6 +1,5 @@
 # ndarray-stats
 
-[![Build status](https://travis-ci.org/rust-ndarray/ndarray-stats.svg?branch=master)](https://travis-ci.org/rust-ndarray/ndarray-stats)
 [![Coverage](https://codecov.io/gh/rust-ndarray/ndarray-stats/branch/master/graph/badge.svg)](https://codecov.io/gh/rust-ndarray/ndarray-stats)
 [![Dependencies status](https://deps.rs/repo/github/rust-ndarray/ndarray-stats/status.svg)](https://deps.rs/repo/github/rust-ndarray/ndarray-stats)
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
