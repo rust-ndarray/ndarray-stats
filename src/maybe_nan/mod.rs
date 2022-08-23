@@ -1,6 +1,7 @@
 use ndarray::prelude::*;
 use ndarray::{s, Data, DataMut, RemoveAxis};
 use noisy_float::types::{N32, N64};
+use std::mem;
 
 /// A number type that can have not-a-number values.
 pub trait MaybeNan: Sized {
@@ -69,6 +70,42 @@ fn remove_nan_mut<A: MaybeNan>(mut view: ArrayViewMut1<'_, A>) -> ArrayViewMut1<
     }
 }
 
+/// Casts a view from one element type to another.
+///
+/// # Panics
+///
+/// Panics if `T` and `U` differ in size or alignment.
+///
+/// # Safety
+///
+/// The caller must ensure that qll elements in `view` are valid values for type `U`.
+unsafe fn cast_view_mut<T, U>(mut view: ArrayViewMut1<'_, T>) -> ArrayViewMut1<'_, U> {
+    assert_eq!(mem::size_of::<T>(), mem::size_of::<U>());
+    assert_eq!(mem::align_of::<T>(), mem::align_of::<U>());
+    let ptr: *mut U = view.as_mut_ptr().cast();
+    let len: usize = view.len_of(Axis(0));
+    let stride: isize = view.stride_of(Axis(0));
+    if len <= 1 {
+        // We can use a stride of `0` because the stride is irrelevant for the `len == 1` case.
+        let stride = 0;
+        ArrayViewMut1::from_shape_ptr([len].strides([stride]), ptr)
+    } else if stride >= 0 {
+        let stride = stride as usize;
+        ArrayViewMut1::from_shape_ptr([len].strides([stride]), ptr)
+    } else {
+        // At this point, stride < 0. We have to construct the view by using the inverse of the
+        // stride and then inverting the axis, since `ArrayViewMut::from_shape_ptr` requires the
+        // stride to be nonnegative.
+        let neg_stride = stride.checked_neg().unwrap() as usize;
+        // This is safe because `ndarray` guarantees that it's safe to offset the
+        // pointer anywhere in the array.
+        let neg_ptr = ptr.offset((len - 1) as isize * stride);
+        let mut v = ArrayViewMut1::from_shape_ptr([len].strides([neg_stride]), neg_ptr);
+        v.invert_axis(Axis(0));
+        v
+    }
+}
+
 macro_rules! impl_maybenan_for_fxx {
     ($fxx:ident, $Nxx:ident) => {
         impl MaybeNan for $fxx {
@@ -102,11 +139,9 @@ macro_rules! impl_maybenan_for_fxx {
 
             fn remove_nan_mut(view: ArrayViewMut1<'_, $fxx>) -> ArrayViewMut1<'_, $Nxx> {
                 let not_nan = remove_nan_mut(view);
-                // This is safe because `remove_nan_mut` has removed the NaN
-                // values, and `$Nxx` is a thin wrapper around `$fxx`.
-                unsafe {
-                    ArrayViewMut1::from_shape_ptr(not_nan.dim(), not_nan.as_ptr() as *mut $Nxx)
-                }
+                // This is safe because `remove_nan_mut` has removed the NaN values, and `$Nxx` is
+                // a thin wrapper around `$fxx`.
+                unsafe { cast_view_mut(not_nan) }
             }
         }
     };
