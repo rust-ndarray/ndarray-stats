@@ -1,6 +1,5 @@
 # ndarray-stats
 
-[![Build status](https://travis-ci.org/rust-ndarray/ndarray-stats.svg?branch=master)](https://travis-ci.org/rust-ndarray/ndarray-stats)
 [![Coverage](https://codecov.io/gh/rust-ndarray/ndarray-stats/branch/master/graph/badge.svg)](https://codecov.io/gh/rust-ndarray/ndarray-stats)
 [![Dependencies status](https://deps.rs/repo/github/rust-ndarray/ndarray-stats/status.svg)](https://deps.rs/repo/github/rust-ndarray/ndarray-stats)
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
@@ -28,10 +27,20 @@ Please feel free to contribute new functionality! A roadmap can be found [here](
 ```toml
 [dependencies]
 ndarray = "0.15"
-ndarray-stats = "0.5"
+ndarray-stats = "0.5.1"
 ```
 
 ## Releases
+
+* **0.5.1**
+  * Fixed bug in implementation of `MaybeNaN::remove_nan_mut` for `f32` and
+    `f64` for views with non-standard layouts. Before this fix, the bug could
+    cause incorrect results, buffer overflows, etc., in this method and others
+    which use it. Thanks to [@JacekCzupyt](https://github.com/JacekCzupyt) for
+    reporting the issue (#89).
+  * Minor docs improvements.
+
+  *Contributors*: [@jturner314](https://github.com/jturner314), [@BenMoon](https://github.com/BenMoon)
 
 * **0.5.0**
   * Breaking changes
@@ -109,7 +118,7 @@ Please feel free to create issues and submit PRs.
 
 ## License
 
-Copyright 2018 `ndarray-stats` developers
+Copyright 2018–2022 `ndarray-stats` developers
 
 Licensed under the [Apache License, Version 2.0](LICENSE-APACHE), or the [MIT
 license](LICENSE-MIT), at your option. You may not use this project except in
