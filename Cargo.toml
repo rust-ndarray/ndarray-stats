@@ -23,6 +23,7 @@ num-traits = "0.2"
 rand = "0.8.3"
 itertools = { version = "0.10.0", default-features = false }
 indexmap = "1.6.2"
+stacker = "0.1.15"
 
 [dev-dependencies]
 ndarray = { version = "0.15.0", features = ["approx"] }
@@ -44,3 +45,6 @@ harness = false
 [[bench]]
 name = "deviation"
 harness = false
+
+[profile.test]
+opt-level = 2

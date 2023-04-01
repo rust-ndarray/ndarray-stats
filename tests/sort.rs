@@ -1,5 +1,7 @@
 use ndarray::prelude::*;
 use ndarray_stats::Sort1dExt;
+use ndarray_stats::{interpolate::Linear, Quantile1dExt};
+use noisy_float::types::{n64, N64};
 use quickcheck_macros::quickcheck;
 
 #[test]
@@ -61,6 +63,12 @@ fn test_dual_partition_mut() {
             assert!(a[upper_index] <= a[i]);
         }
     }
+}
+
+#[test]
+fn test_quantile_mut_with_large_array_of_equal_floats() {
+    let mut array: Array1<N64> = Array1::ones(100000);
+    array.quantile_mut(n64(0.5), &Linear).unwrap();
 }
 
 #[test]

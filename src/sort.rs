@@ -1,6 +1,12 @@
 use indexmap::IndexMap;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, Slice};
+use stacker::maybe_grow;
+
+/// Guaranteed stack size per recursion step of 1 MiB.
+const RED_ZONE: usize = 1_024 * 1_024;
+/// New stack space of 8 MiB to allocate if within [`RED_ZONE`].
+const STACK_SIZE: usize = 8 * RED_ZONE;
 
 /// Methods for sorting and partitioning 1-D arrays.
 pub trait Sort1dExt<A, S>
@@ -357,7 +363,9 @@ where
     // Since `!indexes.is_empty()` and indexes must be in-bounds, `array` must
     // be non-empty.
     let mut values = vec![array[0].clone(); indexes.len()];
-    _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
+    maybe_grow(RED_ZONE, STACK_SIZE, || {
+        _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
+    });
 
     // We convert the vector to a more search-friendly `IndexMap`.
     indexes.iter().cloned().zip(values.into_iter()).collect()
@@ -451,21 +459,25 @@ fn _get_many_from_sorted_mut_unchecked<A>(
 
             // We search recursively for the values corresponding to indexes strictly less than
             // `pivot_index` in the lower partition.
-            _get_many_from_sorted_mut_unchecked(
-                array.slice_axis_mut(Axis(0), Slice::from(..pivot_index)),
-                lower_indexes,
-                lower_values,
-            );
+            maybe_grow(RED_ZONE, STACK_SIZE, || {
+                _get_many_from_sorted_mut_unchecked(
+                    array.slice_axis_mut(Axis(0), Slice::from(..pivot_index)),
+                    lower_indexes,
+                    lower_values,
+                );
+            });
 
             // We search recursively for the values corresponding to indexes greater than or equal
             // `pivot_index` in the upper partition. Since only the upper partition of the array is
             // passed in, the indexes need to be shifted by length of the lower partition.
             upper_indexes.iter_mut().for_each(|x| *x -= pivot_index + 1);
-            _get_many_from_sorted_mut_unchecked(
-                array.slice_axis_mut(Axis(0), Slice::from(pivot_index + 1..)),
-                upper_indexes,
-                upper_values,
-            );
+            maybe_grow(RED_ZONE, STACK_SIZE, || {
+                _get_many_from_sorted_mut_unchecked(
+                    array.slice_axis_mut(Axis(0), Slice::from(pivot_index + 1..)),
+                    upper_indexes,
+                    upper_values,
+                );
+            });
 
             return;
         }
@@ -519,32 +531,38 @@ fn _get_many_from_sorted_mut_unchecked<A>(
 
     // We search recursively for the values corresponding to indexes strictly less than
     // `lower_index` in the lower partition.
-    _get_many_from_sorted_mut_unchecked(
-        array.slice_axis_mut(Axis(0), Slice::from(..lower_index)),
-        lower_indexes,
-        lower_values,
-    );
+    maybe_grow(RED_ZONE, STACK_SIZE, || {
+        _get_many_from_sorted_mut_unchecked(
+            array.slice_axis_mut(Axis(0), Slice::from(..lower_index)),
+            lower_indexes,
+            lower_values,
+        );
+    });
 
     // We search recursively for the values corresponding to indexes greater than or equal
     // `lower_index` in the inner partition, that is between the lower and upper partition. Since
     // only the inner partition of the array is passed in, the indexes need to be shifted by length
     // of the lower partition.
     inner_indexes.iter_mut().for_each(|x| *x -= lower_index + 1);
-    _get_many_from_sorted_mut_unchecked(
-        array.slice_axis_mut(Axis(0), Slice::from(lower_index + 1..upper_index)),
-        inner_indexes,
-        inner_values,
-    );
+    maybe_grow(RED_ZONE, STACK_SIZE, || {
+        _get_many_from_sorted_mut_unchecked(
+            array.slice_axis_mut(Axis(0), Slice::from(lower_index + 1..upper_index)),
+            inner_indexes,
+            inner_values,
+        );
+    });
 
     // We search recursively for the values corresponding to indexes greater than or equal
     // `upper_index` in the upper partition. Since only the upper partition of the array is passed
     // in, the indexes need to be shifted by the combined length of the lower and inner partition.
     upper_indexes.iter_mut().for_each(|x| *x -= upper_index + 1);
-    _get_many_from_sorted_mut_unchecked(
-        array.slice_axis_mut(Axis(0), Slice::from(upper_index + 1..)),
-        upper_indexes,
-        upper_values,
-    );
+    maybe_grow(RED_ZONE, STACK_SIZE, || {
+        _get_many_from_sorted_mut_unchecked(
+            array.slice_axis_mut(Axis(0), Slice::from(upper_index + 1..)),
+            upper_indexes,
+            upper_values,
+        );
+    });
 }
 
 /// Equally space `sample` indexes around the center of `array` and sort them by their values.
