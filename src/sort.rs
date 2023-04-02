@@ -183,7 +183,7 @@ where
             // Adapt pivot sampling to relative sought rank and switch from dual-pivot to
             // single-pivot partitioning for extreme sought ranks.
             let sought_rank = i as f64 / n as f64;
-            if (0.036..=0.964).contains(&sought_rank) {
+            if (0.036..=0.964).contains(&sought_rank) || self[sample[0]] == self[sample[4]] {
                 let (lower_index, upper_index) = if sought_rank <= 0.5 {
                     if sought_rank <= 0.153 {
                         (0, 1) // (0, 0, 3)
@@ -366,23 +366,17 @@ where
     A: Ord + Clone,
     S: DataMut<Elem = A>,
 {
-    match indexes.len() {
-        0 => IndexMap::new(),
-        1 => IndexMap::from([(indexes[0], array.get_from_sorted_mut(indexes[0]))]),
-        _ => {
-            // Since `!indexes.is_empty()` and indexes must be in-bounds, `array` must
-            // be non-empty.
-            let mut values = vec![array[0].clone(); indexes.len()];
-            _get_many_from_sorted_mut_unchecked(
-                array.view_mut(),
-                &mut indexes.to_owned(),
-                &mut values,
-            );
-
-            // We convert the vector to a more search-friendly `IndexMap`.
-            indexes.iter().cloned().zip(values.into_iter()).collect()
-        }
+    if indexes.is_empty() {
+        return IndexMap::new();
     }
+
+    // Since `!indexes.is_empty()` and indexes must be in-bounds, `array` must
+    // be non-empty.
+    let mut values = vec![array[0].clone(); indexes.len()];
+    _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
+
+    // We convert the vector to a more search-friendly `IndexMap`.
+    indexes.iter().cloned().zip(values.into_iter()).collect()
 }
 
 /// This is the recursive portion of `get_many_from_sorted_mut_unchecked`.
@@ -406,6 +400,10 @@ fn _get_many_from_sorted_mut_unchecked<A>(
 
     if indexes.is_empty() {
         // Nothing to do in this case.
+        return;
+    }
+    if indexes.len() == 1 {
+        values[0] = array.get_from_sorted_mut(indexes[0]);
         return;
     }
 
@@ -523,7 +521,7 @@ where
     // Lowermost sample index.
     let lowermost = array.len() / 2 - (sample.len() / 2) * space;
     // Equally space sample indexes and sort them by their values by looking up their indexes.
-    for mut index in 1..sample.len() {
+    for mut index in 0..sample.len() {
         // Equally space sample indexes based on their lowermost index.
         sample[index] = lowermost + index * space;
         // Insertion sort looking up only the already equally spaced sample indexes.
