@@ -366,17 +366,23 @@ where
     A: Ord + Clone,
     S: DataMut<Elem = A>,
 {
-    if indexes.is_empty() {
-        return IndexMap::new();
+    match indexes.len() {
+        0 => IndexMap::new(),
+        1 => IndexMap::from([(indexes[0], array.get_from_sorted_mut(indexes[0]))]),
+        _ => {
+            // Since `!indexes.is_empty()` and indexes must be in-bounds, `array` must
+            // be non-empty.
+            let mut values = vec![array[0].clone(); indexes.len()];
+            _get_many_from_sorted_mut_unchecked(
+                array.view_mut(),
+                &mut indexes.to_owned(),
+                &mut values,
+            );
+
+            // We convert the vector to a more search-friendly `IndexMap`.
+            indexes.iter().cloned().zip(values.into_iter()).collect()
+        }
     }
-
-    // Since `!indexes.is_empty()` and indexes must be in-bounds, `array` must
-    // be non-empty.
-    let mut values = vec![array[0].clone(); indexes.len()];
-    _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
-
-    // We convert the vector to a more search-friendly `IndexMap`.
-    indexes.iter().cloned().zip(values.into_iter()).collect()
 }
 
 /// This is the recursive portion of `get_many_from_sorted_mut_unchecked`.
@@ -420,81 +426,10 @@ fn _get_many_from_sorted_mut_unchecked<A>(
     // Sorted sample of 5 equally spaced elements around the center.
     let mut sample = [0; 5];
     sample_mut(&mut array, &mut sample);
-    let (lower_index, upper_index) = if indexes.len() == 1 {
-        // Adapt pivot sampling to relative sought rank and switch from dual-pivot to single-pivot
-        // partitioning for extreme sought ranks.
-        let sought_rank = indexes[0] as f64 / n as f64;
-        if (0.036..=0.964).contains(&sought_rank) {
-            if sought_rank <= 0.5 {
-                if sought_rank <= 0.153 {
-                    (0, 1) // (0, 0, 3)
-                } else {
-                    (0, 2) // (0, 1, 2)
-                }
-            } else {
-                if sought_rank <= 0.847 {
-                    (2, 4) // (2, 1, 0)
-                } else {
-                    (3, 4) // (3, 0, 0)
-                }
-            }
-        } else {
-            let pivot_index = if sought_rank <= 0.5 {
-                0 // (0, 4)
-            } else {
-                4 // (4, 0)
-            };
-
-            // We partition the array with respect to the pivot value. The pivot value moves to the
-            // new `pivot_index`.
-            //
-            // Elements strictly less than the pivot value have indexes < `pivot_index`.
-            //
-            // Elements greater than or equal the pivot value have indexes > `pivot_index`.
-            let pivot_index = array.partition_mut(sample[pivot_index]);
-            let (found_exact, split_index) = match indexes.binary_search(&pivot_index) {
-                Ok(index) => (true, index),
-                Err(index) => (false, index),
-            };
-            let (lower_indexes, upper_indexes) = indexes.split_at_mut(split_index);
-            let (lower_values, upper_values) = values.split_at_mut(split_index);
-            let (upper_indexes, upper_values) = if found_exact {
-                upper_values[0] = array[pivot_index].clone(); // Write exactly found value.
-                (&mut upper_indexes[1..], &mut upper_values[1..])
-            } else {
-                (upper_indexes, upper_values)
-            };
-
-            // We search recursively for the values corresponding to indexes strictly less than
-            // `pivot_index` in the lower partition.
-            maybe_grow(RED_ZONE, STACK_SIZE, || {
-                _get_many_from_sorted_mut_unchecked(
-                    array.slice_axis_mut(Axis(0), Slice::from(..pivot_index)),
-                    lower_indexes,
-                    lower_values,
-                );
-            });
-
-            // We search recursively for the values corresponding to indexes greater than or equal
-            // `pivot_index` in the upper partition. Since only the upper partition of the array is
-            // passed in, the indexes need to be shifted by length of the lower partition.
-            upper_indexes.iter_mut().for_each(|x| *x -= pivot_index + 1);
-            maybe_grow(RED_ZONE, STACK_SIZE, || {
-                _get_many_from_sorted_mut_unchecked(
-                    array.slice_axis_mut(Axis(0), Slice::from(pivot_index + 1..)),
-                    upper_indexes,
-                    upper_values,
-                );
-            });
-
-            return;
-        }
-    } else {
-        // Since there is no single sought rank to adapt pivot sampling to, the recommended skewed
-        // pivot sampling of dual-pivot Quicksort is used in the assumption that multiple indexes
-        // change characteristics from Quickselect towards Quicksort.
-        (0, 2) // (0, 1, 2)
-    };
+    // Since there is no single sought rank to adapt pivot sampling to, the recommended skewed
+    // pivot sampling of dual-pivot Quicksort is used in the assumption that multiple indexes
+    // change characteristics from Quickselect towards Quicksort.
+    let (lower_index, upper_index) = (0, 2); // (0, 1, 2)
 
     // We partition the array with respect to the two pivot values. The pivot values move to the new
     // `lower_index` and `upper_index`.
