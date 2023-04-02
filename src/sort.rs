@@ -200,18 +200,24 @@ where
                 let (lower_index, upper_index) =
                     self.dual_partition_mut(sample[lower_index], sample[upper_index]);
                 if i < lower_index {
-                    self.slice_axis_mut(Axis(0), Slice::from(..lower_index))
-                        .get_from_sorted_mut(i)
+                    maybe_grow(RED_ZONE, STACK_SIZE, || {
+                        self.slice_axis_mut(Axis(0), Slice::from(..lower_index))
+                            .get_from_sorted_mut(i)
+                    })
                 } else if i == lower_index {
                     self[i].clone()
                 } else if i < upper_index {
-                    self.slice_axis_mut(Axis(0), Slice::from(lower_index + 1..upper_index))
-                        .get_from_sorted_mut(i - (lower_index + 1))
+                    maybe_grow(RED_ZONE, STACK_SIZE, || {
+                        self.slice_axis_mut(Axis(0), Slice::from(lower_index + 1..upper_index))
+                            .get_from_sorted_mut(i - (lower_index + 1))
+                    })
                 } else if i == upper_index {
                     self[i].clone()
                 } else {
-                    self.slice_axis_mut(Axis(0), Slice::from(upper_index + 1..))
-                        .get_from_sorted_mut(i - (upper_index + 1))
+                    maybe_grow(RED_ZONE, STACK_SIZE, || {
+                        self.slice_axis_mut(Axis(0), Slice::from(upper_index + 1..))
+                            .get_from_sorted_mut(i - (upper_index + 1))
+                    })
                 }
             } else {
                 let pivot_index = if sought_rank <= 0.5 {
@@ -221,13 +227,17 @@ where
                 };
                 let pivot_index = self.partition_mut(sample[pivot_index]);
                 if i < pivot_index {
-                    self.slice_axis_mut(Axis(0), Slice::from(..pivot_index))
-                        .get_from_sorted_mut(i)
+                    maybe_grow(RED_ZONE, STACK_SIZE, || {
+                        self.slice_axis_mut(Axis(0), Slice::from(..pivot_index))
+                            .get_from_sorted_mut(i)
+                    })
                 } else if i == pivot_index {
                     self[i].clone()
                 } else {
-                    self.slice_axis_mut(Axis(0), Slice::from(pivot_index + 1..))
-                        .get_from_sorted_mut(i - (pivot_index + 1))
+                    maybe_grow(RED_ZONE, STACK_SIZE, || {
+                        self.slice_axis_mut(Axis(0), Slice::from(pivot_index + 1..))
+                            .get_from_sorted_mut(i - (pivot_index + 1))
+                    })
                 }
             }
         }
@@ -363,9 +373,7 @@ where
     // Since `!indexes.is_empty()` and indexes must be in-bounds, `array` must
     // be non-empty.
     let mut values = vec![array[0].clone(); indexes.len()];
-    maybe_grow(RED_ZONE, STACK_SIZE, || {
-        _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
-    });
+    _get_many_from_sorted_mut_unchecked(array.view_mut(), &mut indexes.to_owned(), &mut values);
 
     // We convert the vector to a more search-friendly `IndexMap`.
     indexes.iter().cloned().zip(values.into_iter()).collect()

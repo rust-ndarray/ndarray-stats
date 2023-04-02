@@ -67,7 +67,7 @@ fn test_dual_partition_mut() {
 
 #[test]
 fn test_quantile_mut_with_large_array_of_equal_floats() {
-    let mut array: Array1<N64> = Array1::ones(100000);
+    let mut array: Array1<N64> = Array1::ones(100_000);
     array.quantile_mut(n64(0.5), &Linear).unwrap();
 }
 
