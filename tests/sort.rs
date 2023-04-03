@@ -119,6 +119,18 @@ fn test_quantile_mut_with_large_array_of_equal_floats() {
 }
 
 #[test]
+fn test_quantile_mut_with_large_array_of_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(0.0), n64(1_000_000.0), n64(1.0));
+    array.quantile_mut(n64(0.5), &Linear).unwrap();
+}
+
+#[test]
+fn test_quantile_mut_with_large_array_of_rev_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(1_000_000.0), n64(0.0), n64(-1.0));
+    array.quantile_mut(n64(0.5), &Linear).unwrap();
+}
+
+#[test]
 fn test_sorted_get_mut() {
     let a = arr1(&[1, 3, 2, 10]);
     let j = a.clone().view_mut().get_from_sorted_mut(2);
