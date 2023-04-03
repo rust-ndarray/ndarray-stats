@@ -66,6 +66,53 @@ fn test_dual_partition_mut() {
 }
 
 #[test]
+fn test_sample_mut() {
+    let mut sample = [0; 5];
+
+    let assert = [1, 2, 3, 4, 5];
+    let mut array = Array1::range(n64(0.0), n64(7.0), n64(1.0));
+    assert_eq!(array.len(), 7);
+    array.sample_mut(&mut sample);
+    assert_eq!(sample, &assert[..]);
+
+    let assert = [2, 3, 4, 5, 6];
+    let mut array = Array1::range(n64(0.0), n64(8.0), n64(1.0));
+    assert_eq!(array.len(), 8);
+    array.sample_mut(&mut sample);
+    assert_eq!(sample, &assert[..]);
+    let mut array = Array1::range(n64(0.0), n64(9.0), n64(1.0));
+    assert_eq!(array.len(), 9);
+    array.sample_mut(&mut sample);
+    assert_eq!(sample, &assert[..]);
+
+    let assert = [3, 4, 5, 6, 7];
+    let mut array = Array1::range(n64(0.0), n64(10.0), n64(1.0));
+    assert_eq!(array.len(), 10);
+    array.sample_mut(&mut sample);
+    assert_eq!(sample, &assert[..]);
+
+    let assert = [3, 5, 7, 9, 11];
+    let mut array = Array1::range(n64(0.0), n64(14.0), n64(1.0));
+    assert_eq!(array.len(), 14);
+    array.sample_mut(&mut sample);
+    assert_eq!(sample, &assert[..]);
+
+    let assert = [22, 36, 50, 64, 78];
+    let mut array = Array1::range(n64(0.0), n64(100.0), n64(1.0));
+    assert_eq!(array.len(), 100);
+    array.sample_mut(&mut sample);
+    assert_eq!(sample, &assert[..]);
+    assert_eq!(sample.map(|s| array[s]), assert.map(|s| s as f64));
+
+    let assert = [22, 36, 50, 64, 78];
+    let mut array = Array1::range(n64(100.0), n64(0.0), n64(-1.0));
+    assert_eq!(array.len(), 100);
+    array.sample_mut(&mut sample);
+    assert_eq!(sample, &assert[..]);
+    assert_eq!(sample.map(|s| array[s]), assert.map(|s| s as f64));
+}
+
+#[test]
 fn test_quantile_mut_with_large_array_of_equal_floats() {
     let mut array: Array1<N64> = Array1::ones(1_000_000);
     array.quantile_mut(n64(0.5), &Linear).unwrap();

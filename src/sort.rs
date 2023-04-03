@@ -154,6 +154,41 @@ where
         A: Ord + Clone,
         S: DataMut;
 
+    /// Equally spaces `sample` indexes around the center of `array` and sorts them by their values.
+    ///
+    /// `sample` content is ignored but its length defines the sample size and sample space divider.
+    ///
+    /// **Panics** if `self.len() < sample.len() + 2`.
+    ///
+    /// ```
+    /// use ndarray::Array1;
+    /// use ndarray_stats::Sort1dExt;
+    /// use noisy_float::types::n64;
+    ///
+    /// // Define sample size of 5.
+    /// let mut sample = [0; 5];
+    ///
+    /// // Create array from 100 down to 1;
+    /// let mut array = Array1::range(n64(100.0), n64(0.0), n64(-1.0));
+    /// assert_eq!(array.len(), 100);
+    ///
+    /// // Find `sample` indices and sort their values `array[sample[s]]`.
+    /// array.sample_mut(&mut sample);
+    ///
+    /// // Equally spaced by 13 non-sample elements around center of 50.
+    /// let assert = [22, 36, 50, 64, 78];
+    /// assert_eq!(sample, &assert[..]);
+    /// // Ensure `array[sample[s]]` is sorted.
+    /// assert_eq!(sample.map(|s| array[s]), assert.map(|s| s as f64));
+    /// // Ensure reverse order of non-sample elements is preserved.
+    /// assert_eq!(array[49], n64(51.0));
+    /// assert_eq!(array[51], n64(49.0));
+    /// ```
+    fn sample_mut(&mut self, sample: &mut [usize])
+    where
+        A: Ord + Clone,
+        S: DataMut;
+
     private_decl! {}
 }
 
@@ -179,7 +214,7 @@ where
         } else {
             // Sorted sample of 5 equally spaced elements around the center.
             let mut sample = [0; 5];
-            sample_mut(self, &mut sample);
+            self.sample_mut(&mut sample);
             // Adapt pivot sampling to relative sought rank and switch from dual-pivot to
             // single-pivot partitioning for extreme sought ranks.
             let sought_rank = i as f64 / n as f64;
@@ -344,6 +379,29 @@ where
         (lower, upper)
     }
 
+    fn sample_mut(&mut self, sample: &mut [usize])
+    where
+        A: Ord + Clone,
+        S: DataMut,
+    {
+        // Assumes arrays of at least `sample.len() + 2` elements.
+        assert!(self.len() >= sample.len() + 2);
+        // Space between sample indexes.
+        let space = self.len() / (sample.len() + 2);
+        // Lowermost sample index.
+        let lowermost = self.len() / 2 - (sample.len() / 2) * space;
+        // Equally space sample indexes and sort them by their values by looking up their indexes.
+        for mut index in 0..sample.len() {
+            // Equally space sample indexes based on their lowermost index.
+            sample[index] = lowermost + index * space;
+            // Insertion sort looking up only the already equally spaced sample indexes.
+            while index > 0 && self[sample[index - 1]] > self[sample[index]] {
+                self.swap(sample[index - 1], sample[index]);
+                index -= 1;
+            }
+        }
+    }
+
     private_impl! {}
 }
 
@@ -423,7 +481,7 @@ fn _get_many_from_sorted_mut_unchecked<A>(
 
     // Sorted sample of 5 equally spaced elements around the center.
     let mut sample = [0; 5];
-    sample_mut(&mut array, &mut sample);
+    array.sample_mut(&mut sample);
     // Since there is no single sought rank to adapt pivot sampling to, the recommended skewed
     // pivot sampling of dual-pivot Quicksort is used in the assumption that multiple indexes
     // change characteristics from Quickselect towards Quicksort.
@@ -504,30 +562,4 @@ fn _get_many_from_sorted_mut_unchecked<A>(
             upper_values,
         );
     });
-}
-
-/// Equally space `sample` indexes around the center of `array` and sort them by their values.
-///
-/// `sample` content is ignored but its length defines the sample size and the sample space divider.
-///
-/// Assumes arrays of at least `sample.len() + 2` elements.
-pub(crate) fn sample_mut<A, S>(array: &mut ArrayBase<S, Ix1>, sample: &mut [usize])
-where
-    A: Ord + Clone,
-    S: DataMut<Elem = A>,
-{
-    // Space between sample indexes.
-    let space = array.len() / (sample.len() + 2);
-    // Lowermost sample index.
-    let lowermost = array.len() / 2 - (sample.len() / 2) * space;
-    // Equally space sample indexes and sort them by their values by looking up their indexes.
-    for mut index in 0..sample.len() {
-        // Equally space sample indexes based on their lowermost index.
-        sample[index] = lowermost + index * space;
-        // Insertion sort looking up only the already equally spaced sample indexes.
-        while index > 0 && array[sample[index - 1]] > array[sample[index]] {
-            array.swap(sample[index - 1], sample[index]);
-            index -= 1;
-        }
-    }
 }
