@@ -114,20 +114,41 @@ fn test_sample_mut() {
 
 #[test]
 fn test_quantile_mut_with_large_array_of_equal_floats() {
-    let mut array: Array1<N64> = Array1::ones(1_000_000);
+    let mut array: Array1<N64> = Array1::ones(10_000_000);
     array.quantile_mut(n64(0.5), &Linear).unwrap();
 }
 
 #[test]
 fn test_quantile_mut_with_large_array_of_sorted_floats() {
-    let mut array: Array1<N64> = Array1::range(n64(0.0), n64(1_000_000.0), n64(1.0));
+    let mut array: Array1<N64> = Array1::range(n64(0.0), n64(1e7), n64(1.0));
     array.quantile_mut(n64(0.5), &Linear).unwrap();
 }
 
 #[test]
 fn test_quantile_mut_with_large_array_of_rev_sorted_floats() {
-    let mut array: Array1<N64> = Array1::range(n64(1_000_000.0), n64(0.0), n64(-1.0));
+    let mut array: Array1<N64> = Array1::range(n64(1e7), n64(0.0), n64(-1.0));
     array.quantile_mut(n64(0.5), &Linear).unwrap();
+}
+
+#[test]
+fn test_quantiles_mut_with_large_array_of_equal_floats() {
+    let mut array: Array1<N64> = Array1::ones(10_000_000);
+    let quantiles: Array1<N64> = Array1::range(n64(0.0), n64(1.0), n64(1e-6));
+    array.quantiles_mut(&quantiles, &Linear).unwrap();
+}
+
+#[test]
+fn test_quantiles_mut_with_large_array_of_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(0.0), n64(1e7), n64(1.0));
+    let quantiles: Array1<N64> = Array1::range(n64(0.0), n64(1.0), n64(1e-6));
+    array.quantiles_mut(&quantiles, &Linear).unwrap();
+}
+
+#[test]
+fn test_quantiles_mut_with_large_array_of_rev_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(1e7), n64(0.0), n64(-1.0));
+    let quantiles: Array1<N64> = Array1::range(n64(0.0), n64(1.0), n64(1e-6));
+    array.quantiles_mut(&quantiles, &Linear).unwrap();
 }
 
 #[test]
