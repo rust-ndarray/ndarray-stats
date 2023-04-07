@@ -2,7 +2,7 @@ use criterion::{
     black_box, criterion_group, criterion_main, AxisScale, BatchSize, Criterion, PlotConfiguration,
 };
 use ndarray::prelude::*;
-use ndarray_stats::Sort1dExt;
+use ndarray_slice::Slice1Ext;
 use rand::prelude::*;
 
 fn get_from_sorted_mut(c: &mut Criterion) {
@@ -19,7 +19,7 @@ fn get_from_sorted_mut(c: &mut Criterion) {
                 || Array1::from(data.clone()),
                 |mut arr| {
                     for &i in &indices {
-                        black_box(arr.get_from_sorted_mut(i));
+                        black_box(arr.select_nth_unstable(i));
                     }
                 },
                 BatchSize::SmallInput,
@@ -42,7 +42,7 @@ fn get_many_from_sorted_mut(c: &mut Criterion) {
             b.iter_batched(
                 || Array1::from(data.clone()),
                 |mut arr| {
-                    black_box(arr.get_many_from_sorted_mut(&indices));
+                    black_box(arr.select_many_nth_unstable(&indices));
                 },
                 BatchSize::SmallInput,
             )

@@ -1,10 +1,11 @@
 use self::interpolate::{higher_index, lower_index, Interpolate};
-use super::sort::get_many_from_sorted_mut_unchecked;
 use crate::errors::QuantileError;
 use crate::errors::{EmptyInput, MinMaxError, MinMaxError::UndefinedOrder};
 use crate::{MaybeNan, MaybeNanExt};
+use indexmap::IndexMap;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis, Zip};
+use ndarray_slice::Slice1Ext;
 use noisy_float::types::N64;
 use std::cmp;
 
@@ -471,15 +472,20 @@ where
                     searched_indexes.push(higher_index(q, axis_len));
                 }
             }
-            searched_indexes.sort();
-            searched_indexes.dedup();
+            let mut indexes = Array1::from_vec(searched_indexes);
+            indexes.sort_unstable();
+            let (indexes, _duplicates) = indexes.partition_dedup();
 
             let mut results = Array::from_elem(results_shape, data.first().unwrap().clone());
             Zip::from(results.lanes_mut(axis))
                 .and(data.lanes_mut(axis))
                 .for_each(|mut results, mut data| {
-                    let index_map =
-                        get_many_from_sorted_mut_unchecked(&mut data, &searched_indexes);
+                    let (lower_values, _higher) = data.select_many_nth_unstable(&indexes);
+                    let index_map = indexes
+                        .iter()
+                        .copied()
+                        .zip(lower_values.iter().map(|(_lower, value)| (*value).clone()))
+                        .collect::<IndexMap<usize, A>>();
                     for (result, &q) in results.iter_mut().zip(qs) {
                         let lower = if I::needs_lower(q, axis_len) {
                             Some(index_map[&lower_index(q, axis_len)].clone())

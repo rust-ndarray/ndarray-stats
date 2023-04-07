@@ -35,7 +35,6 @@ pub use crate::entropy::EntropyExt;
 pub use crate::histogram::HistogramExt;
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
 pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
-pub use crate::sort::Sort1dExt;
 pub use crate::summary_statistics::SummaryStatisticsExt;
 
 #[cfg(test)]
@@ -105,5 +104,4 @@ pub mod errors;
 pub mod histogram;
 mod maybe_nan;
 mod quantile;
-mod sort;
 mod summary_statistics;
