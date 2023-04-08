@@ -2,12 +2,11 @@ use self::interpolate::{higher_index, lower_index, Interpolate};
 use crate::errors::QuantileError;
 use crate::errors::{EmptyInput, MinMaxError, MinMaxError::UndefinedOrder};
 use crate::{MaybeNan, MaybeNanExt};
-use indexmap::IndexMap;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis, Zip};
 use ndarray_slice::Slice1Ext;
 use noisy_float::types::N64;
-use std::cmp;
+use std::{cmp, collections::HashMap};
 
 /// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
@@ -480,20 +479,16 @@ where
             Zip::from(results.lanes_mut(axis))
                 .and(data.lanes_mut(axis))
                 .for_each(|mut results, mut data| {
-                    let (lower_values, _higher) = data.select_many_nth_unstable(&indexes);
-                    let index_map = indexes
-                        .iter()
-                        .copied()
-                        .zip(lower_values.iter().map(|(_lower, value)| (*value).clone()))
-                        .collect::<IndexMap<usize, A>>();
+                    let mut values = HashMap::new();
+                    data.select_many_nth_unstable(&indexes, &mut values);
                     for (result, &q) in results.iter_mut().zip(qs) {
                         let lower = if I::needs_lower(q, axis_len) {
-                            Some(index_map[&lower_index(q, axis_len)].clone())
+                            Some(values[&lower_index(q, axis_len)].clone())
                         } else {
                             None
                         };
                         let higher = if I::needs_higher(q, axis_len) {
-                            Some(index_map[&higher_index(q, axis_len)].clone())
+                            Some(values[&higher_index(q, axis_len)].clone())
                         } else {
                             None
                         };

@@ -169,6 +169,45 @@ fn test_max_skipnan_all_nan() {
 }
 
 #[test]
+fn test_quantile_mut_with_large_array_of_equal_floats() {
+    let mut array: Array1<N64> = Array1::ones(10_000_000);
+    array.quantile_mut(n64(0.5), &Linear).unwrap();
+}
+
+#[test]
+fn test_quantile_mut_with_large_array_of_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(0.0), n64(1e7), n64(1.0));
+    array.quantile_mut(n64(0.5), &Linear).unwrap();
+}
+
+#[test]
+fn test_quantile_mut_with_large_array_of_rev_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(1e7), n64(0.0), n64(-1.0));
+    array.quantile_mut(n64(0.5), &Linear).unwrap();
+}
+
+#[test]
+fn test_quantiles_mut_with_large_array_of_equal_floats() {
+    let mut array: Array1<N64> = Array1::ones(10_000_000);
+    let quantiles: Array1<N64> = Array1::range(n64(0.0), n64(1.0), n64(1e-5));
+    array.quantiles_mut(&quantiles, &Linear).unwrap();
+}
+
+#[test]
+fn test_quantiles_mut_with_large_array_of_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(0.0), n64(1e7), n64(1.0));
+    let quantiles: Array1<N64> = Array1::range(n64(0.0), n64(1.0), n64(1e-5));
+    array.quantiles_mut(&quantiles, &Linear).unwrap();
+}
+
+#[test]
+fn test_quantiles_mut_with_large_array_of_rev_sorted_floats() {
+    let mut array: Array1<N64> = Array1::range(n64(1e7), n64(0.0), n64(-1.0));
+    let quantiles: Array1<N64> = Array1::range(n64(0.0), n64(1.0), n64(1e-5));
+    array.quantiles_mut(&quantiles, &Linear).unwrap();
+}
+
+#[test]
 fn test_quantile_axis_mut_with_odd_axis_length() {
     let mut a = arr2(&[[1, 3, 2, 10], [2, 4, 3, 11], [3, 5, 6, 12]]);
     let p = a.quantile_axis_mut(Axis(0), n64(0.5), &Lower).unwrap();

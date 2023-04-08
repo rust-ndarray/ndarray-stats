@@ -42,7 +42,8 @@ fn get_many_from_sorted_mut(c: &mut Criterion) {
             b.iter_batched(
                 || Array1::from(data.clone()),
                 |mut arr| {
-                    black_box(arr.select_many_nth_unstable(&indices));
+                    let mut values = Vec::with_capacity(indices.len());
+                    black_box(arr.select_many_nth_unstable(&indices, &mut values));
                 },
                 BatchSize::SmallInput,
             )

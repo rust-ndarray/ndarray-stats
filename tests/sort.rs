@@ -1,6 +1,7 @@
 use ndarray::prelude::*;
 use ndarray_slice::Slice1Ext;
 use quickcheck_macros::quickcheck;
+use std::collections::HashMap;
 
 #[test]
 fn test_sorted_get_mut() {
@@ -28,18 +29,12 @@ fn test_sorted_get_many_mut(mut xs: Vec<i64>) -> bool {
         indexes.sort_unstable();
         let (indexes, _duplicates) = indexes.partition_dedup();
 
-        let mut sorted_v = Vec::with_capacity(n);
-        for value in v
-            .select_many_nth_unstable(&indexes)
-            .0
-            .into_iter()
-            .map(|(_, value)| *value)
-        {
-            sorted_v.push(value);
-        }
+        let mut map = HashMap::new();
+        v.select_many_nth_unstable(&indexes, &mut map);
+        let sorted_v = indexes.map(|index| *map[index]);
         xs.sort();
         println!("Sorted: {:?}. Truth: {:?}", sorted_v, xs);
-        xs == sorted_v
+        Array::from_vec(xs) == sorted_v
     }
 }
 

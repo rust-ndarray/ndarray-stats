@@ -17,13 +17,12 @@ categories = ["data-structures", "science"]
 
 [dependencies]
 ndarray = "0.15.0"
-ndarray-slice = "0.1.1"
+ndarray-slice = "0.2.0"
 noisy_float = "0.2.0"
 num-integer = "0.1"
 num-traits = "0.2"
 rand = "0.8.3"
 itertools = { version = "0.10.0", default-features = false }
-indexmap = "1.6.2"
 
 [dev-dependencies]
 ndarray = { version = "0.15.0", features = ["approx"] }
@@ -45,3 +44,6 @@ harness = false
 [[bench]]
 name = "deviation"
 harness = false
+
+[profile.test]
+opt-level = 2
