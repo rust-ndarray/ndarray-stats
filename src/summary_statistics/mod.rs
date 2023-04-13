@@ -48,7 +48,7 @@ where
     /// * `MultiInputError::EmptyInput` if `self` is empty
     /// * `MultiInputError::ShapeMismatch` if `self` and `weights` don't have the same shape
     ///
-    /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+    /// [`arithmetic weighted mean`]: https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
     fn weighted_mean(&self, weights: &Self) -> Result<A, MultiInputError>
     where
         A: Copy + Div<Output = A> + Mul<Output = A> + Zero;
@@ -89,7 +89,7 @@ where
     /// * `MultiInputError::EmptyInput` if `self` is empty
     /// * `MultiInputError::ShapeMismatch` if `self` length along axis is not equal to `weights` length
     ///
-    /// [`arithmetic weighted mean`] https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
+    /// [`arithmetic weighted mean`]: https://en.wikipedia.org/wiki/Weighted_arithmetic_mean
     fn weighted_mean_axis(
         &self,
         axis: Axis,

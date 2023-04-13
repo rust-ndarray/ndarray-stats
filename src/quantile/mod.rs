@@ -1,16 +1,17 @@
 use self::interpolate::{higher_index, lower_index, Interpolate};
-use super::sort::get_many_from_sorted_mut_unchecked;
 use crate::errors::QuantileError;
 use crate::errors::{EmptyInput, MinMaxError, MinMaxError::UndefinedOrder};
 use crate::{MaybeNan, MaybeNanExt};
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, RemoveAxis, Zip};
+use ndarray_slice::Slice1Ext;
 use noisy_float::types::N64;
-use std::cmp;
+use std::{cmp, collections::HashMap};
 
 /// Quantile methods for `ArrayBase`.
 pub trait QuantileExt<A, S, D>
 where
+    A: Send,
     S: Data<Elem = A>,
     D: Dimension,
 {
@@ -38,7 +39,7 @@ where
     /// ```
     fn argmin(&self) -> Result<D::Pattern, MinMaxError>
     where
-        A: PartialOrd;
+        A: PartialOrd + Send;
 
     /// Finds the index of the minimum value of the array skipping NaN values.
     ///
@@ -62,7 +63,7 @@ where
     fn argmin_skipnan(&self) -> Result<D::Pattern, EmptyInput>
     where
         A: MaybeNan,
-        A::NotNan: Ord;
+        A::NotNan: Ord + Send;
 
     /// Finds the elementwise minimum of the array.
     ///
@@ -77,7 +78,7 @@ where
     /// the memory layout of the array.)
     fn min(&self) -> Result<&A, MinMaxError>
     where
-        A: PartialOrd;
+        A: PartialOrd + Send;
 
     /// Finds the elementwise minimum of the array, skipping NaN values.
     ///
@@ -91,7 +92,7 @@ where
     fn min_skipnan(&self) -> &A
     where
         A: MaybeNan,
-        A::NotNan: Ord;
+        A::NotNan: Ord + Send;
 
     /// Finds the index of the maximum value of the array.
     ///
@@ -117,7 +118,7 @@ where
     /// ```
     fn argmax(&self) -> Result<D::Pattern, MinMaxError>
     where
-        A: PartialOrd;
+        A: PartialOrd + Send;
 
     /// Finds the index of the maximum value of the array skipping NaN values.
     ///
@@ -141,7 +142,7 @@ where
     fn argmax_skipnan(&self) -> Result<D::Pattern, EmptyInput>
     where
         A: MaybeNan,
-        A::NotNan: Ord;
+        A::NotNan: Ord + Send;
 
     /// Finds the elementwise maximum of the array.
     ///
@@ -156,7 +157,7 @@ where
     /// the memory layout of the array.)
     fn max(&self) -> Result<&A, MinMaxError>
     where
-        A: PartialOrd;
+        A: PartialOrd + Send;
 
     /// Finds the elementwise maximum of the array, skipping NaN values.
     ///
@@ -170,7 +171,7 @@ where
     fn max_skipnan(&self) -> &A
     where
         A: MaybeNan,
-        A::NotNan: Ord;
+        A::NotNan: Ord + Send;
 
     /// Return the qth quantile of the data along the specified axis.
     ///
@@ -213,7 +214,7 @@ where
     ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         I: Interpolate<A>;
 
@@ -257,7 +258,7 @@ where
     ) -> Result<Array<A, D>, QuantileError>
     where
         D: RemoveAxis,
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         S2: Data<Elem = N64>,
         I: Interpolate<A>;
@@ -274,7 +275,7 @@ where
     where
         D: RemoveAxis,
         A: MaybeNan,
-        A::NotNan: Clone + Ord,
+        A::NotNan: Clone + Ord + Send,
         S: DataMut,
         I: Interpolate<A::NotNan>;
 
@@ -283,12 +284,13 @@ where
 
 impl<A, S, D> QuantileExt<A, S, D> for ArrayBase<S, D>
 where
+    A: Send,
     S: Data<Elem = A>,
     D: Dimension,
 {
     fn argmin(&self) -> Result<D::Pattern, MinMaxError>
     where
-        A: PartialOrd,
+        A: PartialOrd + Send,
     {
         let mut current_min = self.first().ok_or(EmptyInput)?;
         let mut current_pattern_min = D::zeros(self.ndim()).into_pattern();
@@ -306,7 +308,7 @@ where
     fn argmin_skipnan(&self) -> Result<D::Pattern, EmptyInput>
     where
         A: MaybeNan,
-        A::NotNan: Ord,
+        A::NotNan: Ord + Send,
     {
         let mut pattern_min = D::zeros(self.ndim()).into_pattern();
         let min = self.indexed_fold_skipnan(None, |current_min, (pattern, elem)| {
@@ -327,7 +329,7 @@ where
 
     fn min(&self) -> Result<&A, MinMaxError>
     where
-        A: PartialOrd,
+        A: PartialOrd + Send,
     {
         let first = self.first().ok_or(EmptyInput)?;
         self.fold(Ok(first), |acc, elem| {
@@ -342,7 +344,7 @@ where
     fn min_skipnan(&self) -> &A
     where
         A: MaybeNan,
-        A::NotNan: Ord,
+        A::NotNan: Ord + Send,
     {
         let first = self.first().and_then(|v| v.try_as_not_nan());
         A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
@@ -355,7 +357,7 @@ where
 
     fn argmax(&self) -> Result<D::Pattern, MinMaxError>
     where
-        A: PartialOrd,
+        A: PartialOrd + Send,
     {
         let mut current_max = self.first().ok_or(EmptyInput)?;
         let mut current_pattern_max = D::zeros(self.ndim()).into_pattern();
@@ -373,7 +375,7 @@ where
     fn argmax_skipnan(&self) -> Result<D::Pattern, EmptyInput>
     where
         A: MaybeNan,
-        A::NotNan: Ord,
+        A::NotNan: Ord + Send,
     {
         let mut pattern_max = D::zeros(self.ndim()).into_pattern();
         let max = self.indexed_fold_skipnan(None, |current_max, (pattern, elem)| {
@@ -394,7 +396,7 @@ where
 
     fn max(&self) -> Result<&A, MinMaxError>
     where
-        A: PartialOrd,
+        A: PartialOrd + Send,
     {
         let first = self.first().ok_or(EmptyInput)?;
         self.fold(Ok(first), |acc, elem| {
@@ -409,7 +411,7 @@ where
     fn max_skipnan(&self) -> &A
     where
         A: MaybeNan,
-        A::NotNan: Ord,
+        A::NotNan: Ord + Send,
     {
         let first = self.first().and_then(|v| v.try_as_not_nan());
         A::from_not_nan_ref_opt(self.fold_skipnan(first, |acc, elem| {
@@ -428,7 +430,7 @@ where
     ) -> Result<Array<A, D>, QuantileError>
     where
         D: RemoveAxis,
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         S2: Data<Elem = N64>,
         I: Interpolate<A>,
@@ -442,7 +444,7 @@ where
         ) -> Result<Array<A, D>, QuantileError>
         where
             D: RemoveAxis,
-            A: Ord + Clone,
+            A: Ord + Send + Clone,
             I: Interpolate<A>,
         {
             for &q in qs {
@@ -471,23 +473,36 @@ where
                     searched_indexes.push(higher_index(q, axis_len));
                 }
             }
-            searched_indexes.sort();
-            searched_indexes.dedup();
+            let mut indexes = Array1::from_vec(searched_indexes);
+            indexes.sort_unstable();
+            let (indexes, _duplicates) = indexes.partition_dedup();
 
             let mut results = Array::from_elem(results_shape, data.first().unwrap().clone());
             Zip::from(results.lanes_mut(axis))
                 .and(data.lanes_mut(axis))
                 .for_each(|mut results, mut data| {
-                    let index_map =
-                        get_many_from_sorted_mut_unchecked(&mut data, &searched_indexes);
+                    #[cfg(feature = "rayon")]
+                    let values = {
+                        let mut values = Vec::new();
+                        data.par_select_many_nth_unstable(&indexes, &mut values);
+                        HashMap::<usize, &mut A>::from_iter(
+                            indexes.iter().copied().zip(values.into_iter()),
+                        )
+                    };
+                    #[cfg(not(feature = "rayon"))]
+                    let values = {
+                        let mut values = HashMap::new();
+                        data.select_many_nth_unstable(&indexes, &mut values);
+                        values
+                    };
                     for (result, &q) in results.iter_mut().zip(qs) {
                         let lower = if I::needs_lower(q, axis_len) {
-                            Some(index_map[&lower_index(q, axis_len)].clone())
+                            Some(values[&lower_index(q, axis_len)].clone())
                         } else {
                             None
                         };
                         let higher = if I::needs_higher(q, axis_len) {
-                            Some(index_map[&higher_index(q, axis_len)].clone())
+                            Some(values[&higher_index(q, axis_len)].clone())
                         } else {
                             None
                         };
@@ -508,7 +523,7 @@ where
     ) -> Result<Array<A, D::Smaller>, QuantileError>
     where
         D: RemoveAxis,
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
@@ -525,7 +540,7 @@ where
     where
         D: RemoveAxis,
         A: MaybeNan,
-        A::NotNan: Clone + Ord,
+        A::NotNan: Clone + Ord + Send,
         S: DataMut,
         I: Interpolate<A::NotNan>,
     {
@@ -559,6 +574,7 @@ where
 /// Quantile methods for 1-D arrays.
 pub trait Quantile1dExt<A, S>
 where
+    A: Send,
     S: Data<Elem = A>,
 {
     /// Return the qth quantile of the data.
@@ -592,7 +608,7 @@ where
     /// Returns `Err(InvalidQuantile(q))` if `q` is not between `0.` and `1.` (inclusive).
     fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, QuantileError>
     where
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         I: Interpolate<A>;
 
@@ -617,7 +633,7 @@ where
         interpolate: &I,
     ) -> Result<Array1<A>, QuantileError>
     where
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         S2: Data<Elem = N64>,
         I: Interpolate<A>;
@@ -627,11 +643,12 @@ where
 
 impl<A, S> Quantile1dExt<A, S> for ArrayBase<S, Ix1>
 where
+    A: Send,
     S: Data<Elem = A>,
 {
     fn quantile_mut<I>(&mut self, q: N64, interpolate: &I) -> Result<A, QuantileError>
     where
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         I: Interpolate<A>,
     {
@@ -646,7 +663,7 @@ where
         interpolate: &I,
     ) -> Result<Array1<A>, QuantileError>
     where
-        A: Ord + Clone,
+        A: Ord + Send + Clone,
         S: DataMut,
         S2: Data<Elem = N64>,
         I: Interpolate<A>,

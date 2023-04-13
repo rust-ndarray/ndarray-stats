@@ -88,11 +88,11 @@ use std::ops::Range;
 /// [`GridBuilder`]: struct.GridBuilder.html
 /// [`strategy`]: strategies/index.html
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Grid<A: Ord> {
+pub struct Grid<A: Ord + Send> {
     projections: Vec<Bins<A>>,
 }
 
-impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
+impl<A: Ord + Send> From<Vec<Bins<A>>> for Grid<A> {
     /// Converts a `Vec<Bins<A>>` into a `Grid<A>`, consuming the vector of bins.
     ///
     /// The `i`-th element in `Vec<Bins<A>>` represents the projection of the bin grid onto the
@@ -106,7 +106,7 @@ impl<A: Ord> From<Vec<Bins<A>>> for Grid<A> {
     }
 }
 
-impl<A: Ord> Grid<A> {
+impl<A: Ord + Send> Grid<A> {
     /// Returns the number of dimensions of the region partitioned by the grid.
     ///
     /// # Examples
@@ -220,7 +220,7 @@ impl<A: Ord> Grid<A> {
     }
 }
 
-impl<A: Ord + Clone> Grid<A> {
+impl<A: Ord + Send + Clone> Grid<A> {
     /// Given an `n`-dimensional index, `i = (i_0, ..., i_{n-1})`, returns an `n`-dimensional bin,
     /// `I_{i_0} x ... x I_{i_{n-1}}`, where `I_{i_j}` is the `i_j`-th interval on the `j`-th
     /// projection of the grid on the coordinate axes.
@@ -318,7 +318,7 @@ pub struct GridBuilder<B: BinsBuildingStrategy> {
 
 impl<A, B> GridBuilder<B>
 where
-    A: Ord,
+    A: Ord + Send,
     B: BinsBuildingStrategy<Elem = A>,
 {
     /// Returns a `GridBuilder` for building a [`Grid`] with a given [`strategy`] and some
