@@ -1,6 +1,7 @@
 [package]
 name = "ndarray-stats"
 version = "0.6.0"
+rust-version = "1.60"
 authors = ["Jim Turner <ndarray-stats@turner.link>", "LukeMathWalker <rust@lpalmieri.com>"]
 edition = "2018"
 
@@ -17,7 +18,7 @@ categories = ["data-structures", "science"]
 
 [dependencies]
 ndarray = "0.15.0"
-ndarray-slice = "0.2.0"
+ndarray-slice = "0.2.2"
 noisy_float = "0.2.0"
 num-integer = "0.1"
 num-traits = "0.2"
