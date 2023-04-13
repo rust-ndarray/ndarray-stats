@@ -65,7 +65,7 @@ use num_traits::{FromPrimitive, NumOps, Zero};
 /// [`Grid`]: ../struct.Grid.html
 pub trait BinsBuildingStrategy {
     #[allow(missing_docs)]
-    type Elem: Ord;
+    type Elem: Ord + Send;
     /// Returns a strategy that has learnt the required parameter fo building [`Bins`] for given
     /// 1-dimensional array, or an `Err` if it is not possible to infer the required parameter
     /// with the given data and specified strategy.
@@ -213,7 +213,7 @@ pub struct Auto<T> {
 
 impl<T> EquiSpaced<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     /// Returns `Err(BinsBuildError::Strategy)` if `bin_width<=0` or `min` >= `max`.
     /// Returns `Ok(Self)` otherwise.
@@ -256,7 +256,7 @@ where
 
 impl<T> BinsBuildingStrategy for Sqrt<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
@@ -292,7 +292,7 @@ where
 
 impl<T> Sqrt<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -302,7 +302,7 @@ where
 
 impl<T> BinsBuildingStrategy for Rice<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
@@ -338,7 +338,7 @@ where
 
 impl<T> Rice<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -348,7 +348,7 @@ where
 
 impl<T> BinsBuildingStrategy for Sturges<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
@@ -384,7 +384,7 @@ where
 
 impl<T> Sturges<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -394,7 +394,7 @@ where
 
 impl<T> BinsBuildingStrategy for FreedmanDiaconis<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
@@ -433,7 +433,7 @@ where
 
 impl<T> FreedmanDiaconis<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     fn compute_bin_width(n_bins: usize, iqr: T) -> T {
         // casting `n_bins: usize` to `f64` may casus off-by-one error here if `n_bins` > 2 ^ 53,
@@ -451,7 +451,7 @@ where
 
 impl<T> BinsBuildingStrategy for Auto<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     type Elem = T;
 
@@ -504,7 +504,7 @@ where
 
 impl<T> Auto<T>
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     /// The bin width (or bin length) according to the fitted strategy.
     pub fn bin_width(&self) -> T {
@@ -524,7 +524,7 @@ where
 /// **Panics** if `n_bins == 0` and division by 0 panics for `T`.
 fn compute_bin_width<T>(min: T, max: T, n_bins: usize) -> T
 where
-    T: Ord + Clone + FromPrimitive + NumOps + Zero,
+    T: Ord + Send + Clone + FromPrimitive + NumOps + Zero,
 {
     let range = max - min;
     range / T::from_usize(n_bins).unwrap()

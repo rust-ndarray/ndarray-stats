@@ -4,12 +4,12 @@ use ndarray::prelude::*;
 use ndarray::Data;
 
 /// Histogram data structure.
-pub struct Histogram<A: Ord> {
+pub struct Histogram<A: Ord + Send> {
     counts: ArrayD<usize>,
     grid: Grid<A>,
 }
 
-impl<A: Ord> Histogram<A> {
+impl<A: Ord + Send> Histogram<A> {
     /// Returns a new instance of Histogram given a [`Grid`].
     ///
     /// [`Grid`]: struct.Grid.html
@@ -43,7 +43,7 @@ impl<A: Ord> Histogram<A> {
     ///     [0, 1],
     /// ];
     /// assert_eq!(histogram_matrix, expected.into_dyn());
-    /// # Ok::<(), Box<std::error::Error>>(())
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
     /// ```
     pub fn add_observation<S>(&mut self, observation: &ArrayBase<S, Ix1>) -> Result<(), BinNotFound>
     where
@@ -136,7 +136,7 @@ where
     /// ```
     fn histogram(&self, grid: Grid<A>) -> Histogram<A>
     where
-        A: Ord;
+        A: Ord + Send;
 
     private_decl! {}
 }
@@ -144,7 +144,7 @@ where
 impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
 where
     S: Data<Elem = A>,
-    A: Ord,
+    A: Ord + Send,
 {
     fn histogram(&self, grid: Grid<A>) -> Histogram<A> {
         let mut histogram = Histogram::new(grid);

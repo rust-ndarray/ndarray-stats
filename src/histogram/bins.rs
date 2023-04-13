@@ -3,6 +3,9 @@
 use ndarray::prelude::*;
 use std::ops::{Index, Range};
 
+#[cfg(feature = "rayon")]
+use rayon::slice::ParallelSliceMut;
+
 /// A sorted collection of type `A` elements used to represent the boundaries of intervals, i.e.
 /// [`Bins`] on a 1-dimensional axis.
 ///
@@ -30,11 +33,11 @@ use std::ops::{Index, Range};
 ///
 /// [`Bins`]: struct.Bins.html
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Edges<A: Ord> {
+pub struct Edges<A: Ord + Send> {
     edges: Vec<A>,
 }
 
-impl<A: Ord> From<Vec<A>> for Edges<A> {
+impl<A: Ord + Send> From<Vec<A>> for Edges<A> {
     /// Converts a `Vec<A>` into an `Edges<A>`, consuming the edges.
     /// The vector will be sorted in increasing order using an unstable sorting algorithm, with
     /// duplicates removed.
@@ -65,6 +68,9 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
     /// [pdqsort]: https://github.com/orlp/pdqsort
     fn from(mut edges: Vec<A>) -> Self {
         // sort the array in-place
+        #[cfg(feature = "rayon")]
+        edges.par_sort_unstable();
+        #[cfg(not(feature = "rayon"))]
         edges.sort_unstable();
         // remove duplicates
         edges.dedup();
@@ -72,7 +78,7 @@ impl<A: Ord> From<Vec<A>> for Edges<A> {
     }
 }
 
-impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
+impl<A: Ord + Send + Clone> From<Array1<A>> for Edges<A> {
     /// Converts an `Array1<A>` into an `Edges<A>`, consuming the 1-dimensional array.
     /// The array will be sorted in increasing order using an unstable sorting algorithm, with
     /// duplicates removed.
@@ -106,7 +112,7 @@ impl<A: Ord + Clone> From<Array1<A>> for Edges<A> {
     }
 }
 
-impl<A: Ord> Index<usize> for Edges<A> {
+impl<A: Ord + Send> Index<usize> for Edges<A> {
     type Output = A;
 
     /// Returns a reference to the `i`-th edge in `self`.
@@ -131,7 +137,7 @@ impl<A: Ord> Index<usize> for Edges<A> {
     }
 }
 
-impl<A: Ord> Edges<A> {
+impl<A: Ord + Send> Edges<A> {
     /// Returns the number of edges in `self`.
     ///
     /// # Examples
@@ -258,11 +264,11 @@ impl<A: Ord> Edges<A> {
 /// );
 /// ```
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Bins<A: Ord> {
+pub struct Bins<A: Ord + Send> {
     edges: Edges<A>,
 }
 
-impl<A: Ord> Bins<A> {
+impl<A: Ord + Send> Bins<A> {
     /// Returns a `Bins` instance where each bin corresponds to two consecutive members of the given
     /// [`Edges`], consuming the edges.
     ///
