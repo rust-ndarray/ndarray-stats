@@ -164,7 +164,7 @@ fn test_with_array_of_floats() {
         epsilon = 1e-12
     );
 
-    let data = a.into_shape((2, 5, 5)).unwrap();
+    let data = a.into_shape_with_order((2, 5, 5)).unwrap();
     let weights = array![0.1, 0.5, 0.25, 0.15, 0.2];
     assert_abs_diff_eq!(
         data.weighted_mean_axis(Axis(1), &weights).unwrap(),
@@ -254,7 +254,9 @@ fn mean_axis_eq_if_uniform_weights() {
         let depth = a.len() / 12;
         a.truncate(depth * 3 * 4);
         let weights = Array1::from_elem(depth, 1.0 / depth as f64);
-        let a = Array1::from(a).into_shape((depth, 3, 4)).unwrap();
+        let a = Array1::from(a)
+            .into_shape_with_order((depth, 3, 4))
+            .unwrap();
         let ma = a.mean_axis(Axis(0)).unwrap();
         let wm = a.weighted_mean_axis(Axis(0), &weights).unwrap();
         let ws = a.weighted_sum_axis(Axis(0), &weights).unwrap();
@@ -288,7 +290,9 @@ fn weighted_var_algo_eq_simple_algo() {
         }
         let depth = a.len() / 12;
         a.truncate(depth * 3 * 4);
-        let a = Array1::from(a).into_shape((depth, 3, 4)).unwrap();
+        let a = Array1::from(a)
+            .into_shape_with_order((depth, 3, 4))
+            .unwrap();
         let mut success = true;
         for axis in 0..3 {
             let axis = Axis(axis);
