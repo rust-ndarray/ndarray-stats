@@ -22,12 +22,10 @@ jobs:
           - nightly
           - 1.64.0  # MSRV
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
       - name: Build
         run: cargo build --verbose
       - name: Run tests
@@ -48,13 +46,11 @@ jobs:
           - rust: stable
             target: i686-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
           target: ${{ matrix.target }}
-          override: true
       - name: Install cross
         run: cargo install cross -f
       - name: Build
@@ -86,12 +82,10 @@ jobs:
         rust:
           - nightly
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
       - name: Install tarpaulin
         run: cargo install cargo-tarpaulin -f
       - name: Generate code coverage
