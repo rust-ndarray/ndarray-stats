@@ -38,10 +38,7 @@ jobs:
         include:
           # 64-bit, big-endian
           - rust: stable
-            target: mips64-unknown-linux-gnuabi64
-          # 32-bit, big-endian
-          - rust: stable
-            target: mips-unknown-linux-gnu
+            target: s390x-unknown-linux-gnu
           # 32-bit, little-endian
           - rust: stable
             target: i686-unknown-linux-gnu
