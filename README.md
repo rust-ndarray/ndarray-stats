@@ -118,7 +118,7 @@ Please feel free to create issues and submit PRs.
 
 ## License
 
-Copyright 2018–2022 `ndarray-stats` developers
+Copyright 2018–2024 `ndarray-stats` developers
 
 Licensed under the [Apache License, Version 2.0](LICENSE-APACHE), or the [MIT
 license](LICENSE-MIT), at your option. You may not use this project except in
