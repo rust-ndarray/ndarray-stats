@@ -5,6 +5,7 @@
 //! - [order statistics] (minimum, maximum, median, quantiles, etc.);
 //! - [summary statistics] (mean, skewness, kurtosis, central moments, etc.)
 //! - [partitioning];
+//! - [sorting](SortExt);
 //! - [correlation analysis] (covariance, pearson correlation);
 //! - [measures from information theory] (entropy, KL divergence, etc.);
 //! - [measures of deviation] (count equal, L1, L2 distances, mean squared err etc.)
@@ -35,7 +36,7 @@ pub use crate::entropy::EntropyExt;
 pub use crate::histogram::HistogramExt;
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
 pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
-pub use crate::sort::Sort1dExt;
+pub use crate::sort::{Sort1dExt, SortExt};
 pub use crate::summary_statistics::SummaryStatisticsExt;
 
 #[cfg(test)]
