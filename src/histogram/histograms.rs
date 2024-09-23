@@ -58,6 +58,47 @@ impl<A: Ord> Histogram<A> {
         }
     }
 
+    /// Merges another histogram into this one.
+    ///
+    /// This method adds the counts from another `Histogram` to this histogram,
+    /// assuming both histograms share the same grid structure.
+    ///
+    /// **Panics** if the grids do not match.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::histogram::{Edges, Bins, Histogram, Grid};
+    /// use noisy_float::types::n64;
+    ///
+    /// let edges = Edges::from(vec![n64(-1.), n64(0.), n64(1.)]);
+    /// let bins = Bins::new(edges);
+    /// let grid = Grid::from(vec![bins.clone(), bins.clone()]);
+    ///
+    /// let mut histogram1 = Histogram::new(grid.clone());
+    /// let mut histogram2 = Histogram::new(grid);
+    ///
+    /// histogram1.add_observation(&array![n64(0.5), n64(0.6)])?;
+    /// histogram2.add_observation(&array![n64(-0.5), n64(0.6)])?;
+    ///
+    /// histogram1.merge(&histogram2)?;
+    ///
+    /// let expected = array![
+    ///     [0, 1],
+    ///     [0, 1],
+    /// ];
+    /// assert_eq!(histogram1.counts(), expected.into_dyn());
+    /// # Ok::<(), Box<dyn std::error::Error>>(())
+    /// ```
+    pub fn merge(&mut self, other: &Histogram<A>) -> Result<(), BinNotFound> {
+        if self.grid != other.grid {
+            return Err(BinNotFound);
+        }
+        self.counts += &other.counts;
+        Ok(())
+    }
+
     /// Returns the number of dimensions of the space the histogram is covering.
     pub fn ndim(&self) -> usize {
         debug_assert_eq!(self.counts.ndim(), self.grid.ndim());
