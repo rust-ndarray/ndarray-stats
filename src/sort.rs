@@ -1,8 +1,7 @@
 use indexmap::IndexMap;
 use ndarray::prelude::*;
 use ndarray::{Data, DataMut, Slice};
-use rand::prelude::*;
-use rand::thread_rng;
+use rand::{prelude::*, rng};
 
 /// Methods for sorting and partitioning 1-D arrays.
 pub trait Sort1dExt<A, S>
@@ -115,8 +114,8 @@ where
         if n == 1 {
             self[0].clone()
         } else {
-            let mut rng = thread_rng();
-            let pivot_index = rng.gen_range(0..n);
+            let mut rng = rng();
+            let pivot_index = rng.random_range(0..n);
             let partition_index = self.partition_mut(pivot_index);
             if i < partition_index {
                 self.slice_axis_mut(Axis(0), Slice::from(..partition_index))
@@ -250,8 +249,8 @@ fn _get_many_from_sorted_mut_unchecked<A>(
     }
 
     // We pick a random pivot index: the corresponding element is the pivot value
-    let mut rng = thread_rng();
-    let pivot_index = rng.gen_range(0..n);
+    let mut rng = rng();
+    let pivot_index = rng.random_range(0..n);
 
     // We partition the array with respect to the pivot value.
     // The pivot value moves to `array_partition_index`.
