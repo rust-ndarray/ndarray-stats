@@ -1,5 +1,5 @@
 use super::NotNone;
-use num_traits::{FromPrimitive, ToPrimitive};
+use num_traits::{Euclid, FromPrimitive, ToPrimitive};
 use std::cmp;
 use std::fmt;
 use std::ops::{Add, Deref, DerefMut, Div, Mul, Rem, Sub};
@@ -98,6 +98,19 @@ impl<T: Rem> Rem for NotNone<T> {
     #[inline]
     fn rem(self, rhs: Self) -> Self::Output {
         self.map(|v| v.rem(rhs.unwrap()))
+    }
+}
+
+impl<T: Euclid> Euclid for NotNone<T> {
+    #[inline]
+    fn div_euclid(&self, rhs: &Self) -> Self {
+        let result = self.deref().div_euclid(rhs.deref());
+        NotNone(Some(result))
+    }
+    #[inline]
+    fn rem_euclid(&self, rhs: &Self) -> Self {
+        let result = self.deref().rem_euclid(rhs.deref());
+        NotNone(Some(result))
     }
 }
 
