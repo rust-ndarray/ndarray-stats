@@ -1,5 +1,5 @@
 use ndarray::prelude::*;
-use ndarray::{s, Data, DataMut, RemoveAxis};
+use ndarray::{s, RemoveAxis};
 use noisy_float::types::{N32, N64};
 use std::mem;
 
@@ -261,10 +261,9 @@ impl<T> NotNone<T> {
 }
 
 /// Extension trait for `ArrayBase` providing NaN-related functionality.
-pub trait MaybeNanExt<A, S, D>
+pub trait MaybeNanExt<A, D>
 where
     A: MaybeNan,
-    S: Data<Elem = A>,
     D: Dimension,
 {
     /// Traverse the non-NaN array elements and apply a fold, returning the
@@ -321,17 +320,15 @@ where
     fn map_axis_skipnan_mut<'a, B, F>(&'a mut self, axis: Axis, mapping: F) -> Array<B, D::Smaller>
     where
         A: 'a,
-        S: DataMut,
         D: RemoveAxis,
         F: FnMut(ArrayViewMut1<'a, A::NotNan>) -> B;
 
     private_decl! {}
 }
 
-impl<A, S, D> MaybeNanExt<A, S, D> for ArrayBase<S, D>
+impl<A, D> MaybeNanExt<A, D> for ArrayRef<A, D>
 where
     A: MaybeNan,
-    S: Data<Elem = A>,
     D: Dimension,
 {
     fn fold_skipnan<'a, F, B>(&'a self, init: B, mut f: F) -> B
@@ -396,7 +393,6 @@ where
     ) -> Array<B, D::Smaller>
     where
         A: 'a,
-        S: DataMut,
         D: RemoveAxis,
         F: FnMut(ArrayViewMut1<'a, A::NotNan>) -> B,
     {

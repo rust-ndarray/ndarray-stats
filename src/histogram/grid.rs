@@ -2,7 +2,7 @@
 
 use super::{bins::Bins, errors::BinsBuildError, strategies::BinsBuildingStrategy};
 use itertools::izip;
-use ndarray::{ArrayBase, Axis, Data, Ix1, Ix2};
+use ndarray::{ArrayRef, Axis, Ix1, Ix2};
 use std::ops::Range;
 
 /// An orthogonal partition of a rectangular region in an *n*-dimensional space, e.g.
@@ -200,10 +200,7 @@ impl<A: Ord> Grid<A> {
     ///     Some(vec![1, 0, 1]),
     /// );
     /// ```
-    pub fn index_of<S>(&self, point: &ArrayBase<S, Ix1>) -> Option<Vec<usize>>
-    where
-        S: Data<Elem = A>,
-    {
+    pub fn index_of(&self, point: &ArrayRef<A, Ix1>) -> Option<Vec<usize>> {
         assert_eq!(
             point.len(),
             self.ndim(),
@@ -337,10 +334,7 @@ where
     /// [`strategy`]: strategies/index.html
     /// [`BinsBuildError`]: errors/enum.BinsBuildError.html
     /// [Trait-level examples]: struct.GridBuilder.html#examples
-    pub fn from_array<S>(array: &ArrayBase<S, Ix2>) -> Result<Self, BinsBuildError>
-    where
-        S: Data<Elem = A>,
-    {
+    pub fn from_array(array: &ArrayRef<A, Ix2>) -> Result<Self, BinsBuildError> {
         let bin_builders = array
             .axis_iter(Axis(1))
             .map(|data| B::from_array(&data))

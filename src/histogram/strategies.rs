@@ -50,7 +50,7 @@ use crate::{
     histogram::{errors::BinsBuildError, Bins, Edges},
     quantile::{interpolate::Nearest, Quantile1dExt, QuantileExt},
 };
-use ndarray::{prelude::*, Data};
+use ndarray::prelude::*;
 use noisy_float::types::n64;
 use num_traits::{FromPrimitive, NumOps, Zero};
 
@@ -75,9 +75,8 @@ pub trait BinsBuildingStrategy {
     /// See each of the struct-level documentation for details on errors an implementor may return.
     ///
     /// [`Bins`]: ../struct.Bins.html
-    fn from_array<S>(array: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
+    fn from_array(array: &ArrayRef<Self::Elem, Ix1>) -> Result<Self, BinsBuildError>
     where
-        S: Data<Elem = Self::Elem>,
         Self: std::marker::Sized;
 
     /// Returns a [`Bins`] instance, according to parameters inferred from observations.
@@ -263,10 +262,7 @@ where
     /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
     /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
-    where
-        S: Data<Elem = Self::Elem>,
-    {
+    fn from_array(a: &ArrayRef<T, Ix1>) -> Result<Self, BinsBuildError> {
         let n_elems = a.len();
         // casting `n_elems: usize` to `f64` may casus off-by-one error here if `n_elems` > 2 ^ 53,
         // but it's not relevant here
@@ -309,10 +305,7 @@ where
     /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
     /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
-    where
-        S: Data<Elem = Self::Elem>,
-    {
+    fn from_array(a: &ArrayRef<T, Ix1>) -> Result<Self, BinsBuildError> {
         let n_elems = a.len();
         // casting `n_elems: usize` to `f64` may casus off-by-one error here if `n_elems` > 2 ^ 53,
         // but it's not relevant here
@@ -355,10 +348,7 @@ where
     /// Returns `Err(BinsBuildError::Strategy)` if the array is constant.
     /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
-    where
-        S: Data<Elem = Self::Elem>,
-    {
+    fn from_array(a: &ArrayRef<T, Ix1>) -> Result<Self, BinsBuildError> {
         let n_elems = a.len();
         // casting `n_elems: usize` to `f64` may casus off-by-one error here if `n_elems` > 2 ^ 53,
         // but it's not relevant here
@@ -401,10 +391,7 @@ where
     /// Returns `Err(BinsBuildError::Strategy)` if `IQR==0`.
     /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
-    where
-        S: Data<Elem = Self::Elem>,
-    {
+    fn from_array(a: &ArrayRef<T, Ix1>) -> Result<Self, BinsBuildError> {
         let n_points = a.len();
         if n_points == 0 {
             return Err(BinsBuildError::EmptyInput);
@@ -458,10 +445,7 @@ where
     /// Returns `Err(BinsBuildError::Strategy)` if `IQR==0`.
     /// Returns `Err(BinsBuildError::EmptyInput)` if `a.len()==0`.
     /// Returns `Ok(Self)` otherwise.
-    fn from_array<S>(a: &ArrayBase<S, Ix1>) -> Result<Self, BinsBuildError>
-    where
-        S: Data<Elem = Self::Elem>,
-    {
+    fn from_array(a: &ArrayRef<T, Ix1>) -> Result<Self, BinsBuildError> {
         let fd_builder = FreedmanDiaconis::from_array(&a);
         let sturges_builder = Sturges::from_array(&a);
         match (fd_builder, sturges_builder) {

@@ -1,14 +1,13 @@
 //! Summary statistics (e.g. mean, variance, etc.).
 use crate::errors::{EmptyInput, MultiInputError};
-use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
+use ndarray::{Array, ArrayRef, Axis, Dimension, Ix1, RemoveAxis};
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, AddAssign, Div, Mul};
 
 /// Extension trait for `ArrayBase` providing methods
 /// to compute several summary statistics (e.g. mean, variance, etc.).
-pub trait SummaryStatisticsExt<A, S, D>
+pub trait SummaryStatisticsExt<A, D>
 where
-    S: Data<Elem = A>,
     D: Dimension,
 {
     /// Returns the [`arithmetic mean`] x̅ of all elements in the array:
@@ -93,7 +92,7 @@ where
     fn weighted_mean_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
         A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
@@ -116,7 +115,7 @@ where
     fn weighted_sum_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
         A: Copy + Mul<Output = A> + Zero,
@@ -203,7 +202,7 @@ where
     fn weighted_var_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
         ddof: A,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
@@ -225,7 +224,7 @@ where
     fn weighted_std_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
         ddof: A,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where

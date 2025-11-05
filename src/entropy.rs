@@ -1,14 +1,13 @@
 //! Information theory (e.g. entropy, KL divergence, etc.).
 use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
-use ndarray::{Array, ArrayBase, Data, Dimension, Zip};
+use ndarray::{Array, ArrayRef, Dimension, Zip};
 use num_traits::Float;
 
-/// Extension trait for `ArrayBase` providing methods
+/// Extension trait for `ndarray` providing methods
 /// to compute information theory quantities
 /// (e.g. entropy, Kullback–Leibler divergence, etc.).
-pub trait EntropyExt<A, S, D>
+pub trait EntropyExt<A, D>
 where
-    S: Data<Elem = A>,
     D: Dimension,
 {
     /// Computes the [entropy] *S* of the array values, defined as
@@ -74,9 +73,8 @@ where
     ///
     /// [Kullback-Leibler divergence]: https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
-    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Result<A, MultiInputError>
+    fn kl_divergence(&self, q: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
-        S2: Data<Elem = A>,
         A: Float;
 
     /// Computes the [cross entropy] *H(p,q)* between two arrays,
@@ -116,17 +114,15 @@ where
     /// [Information Theory]: https://en.wikipedia.org/wiki/Information_theory
     /// [optimization problems]: https://en.wikipedia.org/wiki/Cross-entropy_method
     /// [machine learning]: https://en.wikipedia.org/wiki/Cross_entropy#Cross-entropy_error_function_and_logistic_regression
-    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Result<A, MultiInputError>
+    fn cross_entropy(&self, q: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
-        S2: Data<Elem = A>,
         A: Float;
 
     private_decl! {}
 }
 
-impl<A, S, D> EntropyExt<A, S, D> for ArrayBase<S, D>
+impl<A, D> EntropyExt<A, D> for ArrayRef<A, D>
 where
-    S: Data<Elem = A>,
     D: Dimension,
 {
     fn entropy(&self) -> Result<A, EmptyInput>
@@ -149,10 +145,9 @@ where
         }
     }
 
-    fn kl_divergence<S2>(&self, q: &ArrayBase<S2, D>) -> Result<A, MultiInputError>
+    fn kl_divergence(&self, q: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
         A: Float,
-        S2: Data<Elem = A>,
     {
         if self.is_empty() {
             return Err(MultiInputError::EmptyInput);
@@ -182,9 +177,8 @@ where
         Ok(kl_divergence)
     }
 
-    fn cross_entropy<S2>(&self, q: &ArrayBase<S2, D>) -> Result<A, MultiInputError>
+    fn cross_entropy(&self, q: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
-        S2: Data<Elem = A>,
         A: Float,
     {
         if self.is_empty() {
