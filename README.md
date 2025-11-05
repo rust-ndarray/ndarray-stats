@@ -5,16 +5,17 @@
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
 [![Documentation](https://docs.rs/ndarray-stats/badge.svg)](https://docs.rs/ndarray-stats)
 
-This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type.
+This crate provides statistical methods for [`ndarray`]'s `ArrayRef` type.
 
 Currently available routines include:
-- order statistics (minimum, maximum, median, quantiles, etc.);
-- summary statistics (mean, skewness, kurtosis, central moments, etc.)
-- partitioning;
-- correlation analysis (covariance, pearson correlation);
-- measures from information theory (entropy, KL divergence, etc.);
-- deviation functions (distances, counts, errors, etc.);
-- histogram computation.
+
+-   order statistics (minimum, maximum, median, quantiles, etc.);
+-   summary statistics (mean, skewness, kurtosis, central moments, etc.)
+-   partitioning;
+-   correlation analysis (covariance, pearson correlation);
+-   measures from information theory (entropy, KL divergence, etc.);
+-   deviation functions (distances, counts, errors, etc.);
+-   histogram computation.
 
 See the [documentation](https://docs.rs/ndarray-stats) for more information.
 
@@ -32,98 +33,102 @@ ndarray-stats = "0.6.0"
 
 ## Releases
 
-* **0.6.0**
+-   **0.6.0**
 
-  * Breaking changes
-    * Minimum supported Rust version: `1.64.0`
-    * Updated to `ndarray:v0.16.0`
-    * Updated to `approx:v0.5.0`
+    -   Breaking changes
 
-  * Updated to `ndarray-rand:v0.15.0`
-  * Updated to `indexmap:v2.4`
-  * Updated to `itertools:v0.13`
+        -   Minimum supported Rust version: `1.64.0`
+        -   Updated to `ndarray:v0.16.0`
+        -   Updated to `approx:v0.5.0`
 
-  *Contributors*: [@bluss](https://github.com/bluss)
+    -   Updated to `ndarray-rand:v0.15.0`
+    -   Updated to `indexmap:v2.4`
+    -   Updated to `itertools:v0.13`
 
-* **0.5.1**
-  * Fixed bug in implementation of `MaybeNaN::remove_nan_mut` for `f32` and
-    `f64` for views with non-standard layouts. Before this fix, the bug could
-    cause incorrect results, buffer overflows, etc., in this method and others
-    which use it. Thanks to [@JacekCzupyt](https://github.com/JacekCzupyt) for
-    reporting the issue (#89).
-  * Minor docs improvements.
+    _Contributors_: [@bluss](https://github.com/bluss)
 
-  *Contributors*: [@jturner314](https://github.com/jturner314), [@BenMoon](https://github.com/BenMoon)
+-   **0.5.1**
 
-* **0.5.0**
-  * Breaking changes
-    * Minimum supported Rust version: `1.49.0`
-    * Updated to `ndarray:v0.15.0`
+    -   Fixed bug in implementation of `MaybeNaN::remove_nan_mut` for `f32` and
+        `f64` for views with non-standard layouts. Before this fix, the bug could
+        cause incorrect results, buffer overflows, etc., in this method and others
+        which use it. Thanks to [@JacekCzupyt](https://github.com/JacekCzupyt) for
+        reporting the issue (#89).
+    -   Minor docs improvements.
 
-  *Contributors*: [@Armavica](https://github.com/armavica), [@cassiersg](https://github.com/cassiersg)
+    _Contributors_: [@jturner314](https://github.com/jturner314), [@BenMoon](https://github.com/BenMoon)
 
-* **0.4.0**
-  * Breaking changes
-    * Minimum supported Rust version: `1.42.0`
-  * New functionality:
-    * Summary statistics:
-      * Weighted variance
-      * Weighted standard deviation
-  * Improvements / breaking changes:
-    * Documentation improvements for Histograms
-    * Updated to `ndarray:v0.14.0`
- 
-  *Contributors*: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@LukeMathWalker](https://github.com/LukeMathWalker), [@lebensterben](https://github.com/lebensterben), [@xd009642](https://github.com/xd009642)
+-   **0.5.0**
 
-* **0.3.0**
+    -   Breaking changes
+        -   Minimum supported Rust version: `1.49.0`
+        -   Updated to `ndarray:v0.15.0`
 
-  * Breaking changes
-    * Minimum supported Rust version: `1.37`
-  * New functionality:
-    * Deviation functions:
-      * Counts equal/unequal
-      * `l1`, `l2`, `linf` distances
-      * (Root) mean squared error
-      * Peak signal-to-noise ratio
-    * Summary statistics:
-      * Weighted sum
-      * Weighted mean
-  * Improvements / breaking changes:
-    * Updated to `ndarray:v0.13.0`
-  
-  *Contributors*: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker)
+    _Contributors_: [@Armavica](https://github.com/armavica), [@cassiersg](https://github.com/cassiersg)
 
-* **0.2.0**
+-   **0.4.0**
 
-  * Breaking changes
-    * All `ndarray-stats`' extension traits are now impossible to implement by
-      users of the library (see [#34])
-    * Redesigned error handling across the whole crate, standardising on `Result`
-  * New functionality:
-    * Summary statistics:
-      * Harmonic mean
-      * Geometric mean
-      * Central moments
-      * Kurtosis
-      * Skewness
-    * Information theory:
-      * Entropy
-      * Cross-entropy
-      * Kullback-Leibler divergence
-    * Quantiles and order statistics:
-      * `argmin` / `argmin_skipnan`
-      * `argmax` / `argmax_skipnan`
-      * Optimized bulk quantile computation (`quantiles_mut`, `quantiles_axis_mut`)
-  * Fixes:
-    * Reduced occurrences of overflow for `interpolate::midpoint`
+    -   Breaking changes
+        -   Minimum supported Rust version: `1.42.0`
+    -   New functionality:
+        -   Summary statistics:
+            -   Weighted variance
+            -   Weighted standard deviation
+    -   Improvements / breaking changes:
+        -   Documentation improvements for Histograms
+        -   Updated to `ndarray:v0.14.0`
 
-  *Contributors*: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
+    _Contributors_: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@LukeMathWalker](https://github.com/LukeMathWalker), [@lebensterben](https://github.com/lebensterben), [@xd009642](https://github.com/xd009642)
 
-  [#34]: https://github.com/rust-ndarray/ndarray-stats/issues/34
+-   **0.3.0**
 
-* **0.1.0**
+    -   Breaking changes
+        -   Minimum supported Rust version: `1.37`
+    -   New functionality:
+        -   Deviation functions:
+            -   Counts equal/unequal
+            -   `l1`, `l2`, `linf` distances
+            -   (Root) mean squared error
+            -   Peak signal-to-noise ratio
+        -   Summary statistics:
+            -   Weighted sum
+            -   Weighted mean
+    -   Improvements / breaking changes:
+        -   Updated to `ndarray:v0.13.0`
 
-  * Initial release by @LukeMathWalker and @jturner314.
+    _Contributors_: [@munckymagik](https://github.com/munckymagik), [@nilgoyette](https://github.com/nilgoyette), [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker)
+
+-   **0.2.0**
+
+    -   Breaking changes
+        -   All `ndarray-stats`' extension traits are now impossible to implement by
+            users of the library (see [#34])
+        -   Redesigned error handling across the whole crate, standardising on `Result`
+    -   New functionality:
+        -   Summary statistics:
+            -   Harmonic mean
+            -   Geometric mean
+            -   Central moments
+            -   Kurtosis
+            -   Skewness
+        -   Information theory:
+            -   Entropy
+            -   Cross-entropy
+            -   Kullback-Leibler divergence
+        -   Quantiles and order statistics:
+            -   `argmin` / `argmin_skipnan`
+            -   `argmax` / `argmax_skipnan`
+            -   Optimized bulk quantile computation (`quantiles_mut`, `quantiles_axis_mut`)
+    -   Fixes:
+        -   Reduced occurrences of overflow for `interpolate::midpoint`
+
+    _Contributors_: [@jturner314](https://github.com/jturner314), [@LukeMathWalker](https://github.com/LukeMathWalker), [@phungleson](https://github.com/phungleson), [@munckymagik](https://github.com/munckymagik)
+
+    [#34]: https://github.com/rust-ndarray/ndarray-stats/issues/34
+
+-   **0.1.0**
+
+    -   Initial release by @LukeMathWalker and @jturner314.
 
 ## Contributing
 

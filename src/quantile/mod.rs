@@ -8,7 +8,7 @@ use ndarray::{RemoveAxis, Zip};
 use noisy_float::types::N64;
 use std::cmp;
 
-/// Quantile methods for `ArrayBase`.
+/// Quantile methods for `ArrayRef`.
 pub trait QuantileExt<A, D>
 where
     D: Dimension,

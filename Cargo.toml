@@ -14,7 +14,7 @@ repository = "https://github.com/rust-ndarray/ndarray-stats"
 documentation = "https://docs.rs/ndarray-stats/"
 readme = "README.md"
 
-description = "Statistical routines for ArrayBase, the n-dimensional array data structure provided by ndarray."
+description = "Statistical routines for the n-dimensional array data structures provided by ndarray."
 
 keywords = ["array", "multidimensional", "statistics", "matrix", "ndarray"]
 categories = ["data-structures", "science"]

@@ -4,7 +4,7 @@ use ndarray::{Array, ArrayRef, Axis, Dimension, Ix1, RemoveAxis};
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, AddAssign, Div, Mul};
 
-/// Extension trait for `ArrayBase` providing methods
+/// Extension trait for `ArrayRef` providing methods
 /// to compute several summary statistics (e.g. mean, variance, etc.).
 pub trait SummaryStatisticsExt<A, D>
 where

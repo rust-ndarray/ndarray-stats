@@ -71,7 +71,7 @@ impl<A: Ord> Histogram<A> {
     }
 }
 
-/// Extension trait for `ArrayBase` providing methods to compute histograms.
+/// Extension trait for `ArrayRef` providing methods to compute histograms.
 pub trait HistogramExt<A> {
     /// Returns the [histogram](https://en.wikipedia.org/wiki/Histogram)
     /// for a 2-dimensional array of points `M`.

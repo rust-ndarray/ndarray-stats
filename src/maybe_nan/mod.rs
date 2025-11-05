@@ -260,7 +260,7 @@ impl<T> NotNone<T> {
     }
 }
 
-/// Extension trait for `ArrayBase` providing NaN-related functionality.
+/// Extension trait for `ArrayRef` providing NaN-related functionality.
 pub trait MaybeNanExt<A, D>
 where
     A: MaybeNan,
