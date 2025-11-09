@@ -14,13 +14,13 @@ repository = "https://github.com/rust-ndarray/ndarray-stats"
 documentation = "https://docs.rs/ndarray-stats/"
 readme = "README.md"
 
-description = "Statistical routines for ArrayBase, the n-dimensional array data structure provided by ndarray."
+description = "Statistical routines for the n-dimensional array data structures provided by ndarray."
 
 keywords = ["array", "multidimensional", "statistics", "matrix", "ndarray"]
 categories = ["data-structures", "science"]
 
 [dependencies]
-ndarray = "0.16.0"
+ndarray = "0.17.1"
 noisy_float = "0.2.0"
 num-integer = "0.1"
 num-traits = "0.2"
@@ -29,10 +29,10 @@ itertools = { version = "0.13", default-features = false }
 indexmap = "2.4"
 
 [dev-dependencies]
-ndarray = { version = "0.16.1", features = ["approx"] }
+ndarray = { version = "0.17.1", features = ["approx"] }
 criterion = "0.5.1"
 quickcheck = { version = "0.9.2", default-features = false }
-ndarray-rand = "0.15.0"
+ndarray-rand = "0.16.0"
 approx = "0.5"
 quickcheck_macros = "1.0.0"
 num-bigint = "0.4.0"

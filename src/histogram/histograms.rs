@@ -1,7 +1,6 @@
 use super::errors::BinNotFound;
 use super::grid::Grid;
 use ndarray::prelude::*;
-use ndarray::Data;
 
 /// Histogram data structure.
 pub struct Histogram<A: Ord> {
@@ -45,10 +44,7 @@ impl<A: Ord> Histogram<A> {
     /// assert_eq!(histogram_matrix, expected.into_dyn());
     /// # Ok::<(), Box<std::error::Error>>(())
     /// ```
-    pub fn add_observation<S>(&mut self, observation: &ArrayBase<S, Ix1>) -> Result<(), BinNotFound>
-    where
-        S: Data<Elem = A>,
-    {
+    pub fn add_observation(&mut self, observation: &ArrayRef<A, Ix1>) -> Result<(), BinNotFound> {
         match self.grid.index_of(observation) {
             Some(bin_index) => {
                 self.counts[&*bin_index] += 1;
@@ -75,11 +71,8 @@ impl<A: Ord> Histogram<A> {
     }
 }
 
-/// Extension trait for `ArrayBase` providing methods to compute histograms.
-pub trait HistogramExt<A, S>
-where
-    S: Data<Elem = A>,
-{
+/// Extension trait for `ArrayRef` providing methods to compute histograms.
+pub trait HistogramExt<A> {
     /// Returns the [histogram](https://en.wikipedia.org/wiki/Histogram)
     /// for a 2-dimensional array of points `M`.
     ///
@@ -141,9 +134,8 @@ where
     private_decl! {}
 }
 
-impl<A, S> HistogramExt<A, S> for ArrayBase<S, Ix2>
+impl<A> HistogramExt<A> for ArrayRef<A, Ix2>
 where
-    S: Data<Elem = A>,
     A: Ord,
 {
     fn histogram(&self, grid: Grid<A>) -> Histogram<A> {

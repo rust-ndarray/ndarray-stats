@@ -5,7 +5,7 @@
 [![Crate](https://img.shields.io/crates/v/ndarray-stats.svg)](https://crates.io/crates/ndarray-stats)
 [![Documentation](https://docs.rs/ndarray-stats/badge.svg)](https://docs.rs/ndarray-stats)
 
-This crate provides statistical methods for [`ndarray`]'s `ArrayBase` type.
+This crate provides statistical methods for [`ndarray`]'s `ArrayRef` type.
 
 Currently available routines include:
 - order statistics (minimum, maximum, median, quantiles, etc.);

@@ -1,14 +1,11 @@
 use indexmap::IndexMap;
 use ndarray::prelude::*;
-use ndarray::{Data, DataMut, Slice};
+use ndarray::Slice;
 use rand::prelude::*;
 use rand::thread_rng;
 
 /// Methods for sorting and partitioning 1-D arrays.
-pub trait Sort1dExt<A, S>
-where
-    S: Data<Elem = A>,
-{
+pub trait Sort1dExt<A> {
     /// Return the element that would occupy the `i`-th position if
     /// the array were sorted in increasing order.
     ///
@@ -30,8 +27,7 @@ where
     /// **Panics** if `i` is greater than or equal to `n`.
     fn get_from_sorted_mut(&mut self, i: usize) -> A
     where
-        A: Ord + Clone,
-        S: DataMut;
+        A: Ord + Clone;
 
     /// A bulk version of [`get_from_sorted_mut`], optimized to retrieve multiple
     /// indexes at once.
@@ -44,11 +40,9 @@ where
     /// where `n` is the length of the array..
     ///
     /// [`get_from_sorted_mut`]: #tymethod.get_from_sorted_mut
-    fn get_many_from_sorted_mut<S2>(&mut self, indexes: &ArrayBase<S2, Ix1>) -> IndexMap<usize, A>
+    fn get_many_from_sorted_mut(&mut self, indexes: &ArrayRef1<usize>) -> IndexMap<usize, A>
     where
-        A: Ord + Clone,
-        S: DataMut,
-        S2: Data<Elem = usize>;
+        A: Ord + Clone;
 
     /// Partitions the array in increasing order based on the value initially
     /// located at `pivot_index` and returns the new index of the value.
@@ -96,20 +90,15 @@ where
     /// ```
     fn partition_mut(&mut self, pivot_index: usize) -> usize
     where
-        A: Ord + Clone,
-        S: DataMut;
+        A: Ord + Clone;
 
     private_decl! {}
 }
 
-impl<A, S> Sort1dExt<A, S> for ArrayBase<S, Ix1>
-where
-    S: Data<Elem = A>,
-{
+impl<A> Sort1dExt<A> for ArrayRef<A, Ix1> {
     fn get_from_sorted_mut(&mut self, i: usize) -> A
     where
         A: Ord + Clone,
-        S: DataMut,
     {
         let n = self.len();
         if n == 1 {
@@ -130,11 +119,9 @@ where
         }
     }
 
-    fn get_many_from_sorted_mut<S2>(&mut self, indexes: &ArrayBase<S2, Ix1>) -> IndexMap<usize, A>
+    fn get_many_from_sorted_mut(&mut self, indexes: &ArrayRef1<usize>) -> IndexMap<usize, A>
     where
         A: Ord + Clone,
-        S: DataMut,
-        S2: Data<Elem = usize>,
     {
         let mut deduped_indexes: Vec<usize> = indexes.to_vec();
         deduped_indexes.sort_unstable();
@@ -146,7 +133,6 @@ where
     fn partition_mut(&mut self, pivot_index: usize) -> usize
     where
         A: Ord + Clone,
-        S: DataMut,
     {
         let pivot_value = self[pivot_index].clone();
         self.swap(pivot_index, 0);
@@ -195,13 +181,12 @@ where
 /// using the same indexes.
 ///
 /// [get_many_from_sorted_mut]: ../trait.Sort1dExt.html#tymethod.get_many_from_sorted_mut
-pub(crate) fn get_many_from_sorted_mut_unchecked<A, S>(
-    array: &mut ArrayBase<S, Ix1>,
+pub(crate) fn get_many_from_sorted_mut_unchecked<A>(
+    array: &mut ArrayRef1<A>,
     indexes: &[usize],
 ) -> IndexMap<usize, A>
 where
     A: Ord + Clone,
-    S: DataMut<Elem = A>,
 {
     if indexes.is_empty() {
         return IndexMap::new();

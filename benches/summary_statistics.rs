@@ -12,8 +12,8 @@ fn weighted_std(c: &mut Criterion) {
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
         group.bench_with_input(format!("{}", len), len, |b, &len| {
-            let data = Array::random(len, Uniform::new(0.0, 1.0));
-            let mut weights = Array::random(len, Uniform::new(0.0, 1.0));
+            let data = Array::random(len, Uniform::new(0.0, 1.0).unwrap());
+            let mut weights = Array::random(len, Uniform::new(0.0, 1.0).unwrap());
             weights /= weights.sum();
             b.iter_batched(
                 || data.clone(),

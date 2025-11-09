@@ -1,14 +1,10 @@
 use crate::errors::EmptyInput;
 use ndarray::prelude::*;
-use ndarray::Data;
 use num_traits::{Float, FromPrimitive};
 
-/// Extension trait for `ArrayBase` providing functions
+/// Extension trait for `ndarray` providing functions
 /// to compute different correlation measures.
-pub trait CorrelationExt<A, S>
-where
-    S: Data<Elem = A>,
-{
+pub trait CorrelationExt<A> {
     /// Return the covariance matrix `C` for a 2-dimensional
     /// array of observations `M`.
     ///
@@ -125,10 +121,7 @@ where
     private_decl! {}
 }
 
-impl<A: 'static, S> CorrelationExt<A, S> for ArrayBase<S, Ix2>
-where
-    S: Data<Elem = A>,
-{
+impl<A: 'static> CorrelationExt<A> for ArrayRef2<A> {
     fn cov(&self, ddof: A) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive,
@@ -147,7 +140,7 @@ where
         let mean = self.mean_axis(observation_axis);
         match mean {
             Some(mean) => {
-                let denoised = self - &mean.insert_axis(observation_axis);
+                let denoised = self - mean.insert_axis(observation_axis);
                 let covariance = denoised.dot(&denoised.t());
                 Ok(covariance.mapv_into(|x| x / dof))
             }
@@ -208,7 +201,7 @@ mod cov_tests {
         let n_observations = 4;
         let a = Array::random(
             (n_random_variables, n_observations),
-            Uniform::new(-bound.abs(), bound.abs()),
+            Uniform::new(-bound.abs(), bound.abs()).unwrap(),
         );
         let covariance = a.cov(1.).unwrap();
         abs_diff_eq!(covariance, &covariance.t(), epsilon = 1e-8)
@@ -219,7 +212,10 @@ mod cov_tests {
     fn test_invalid_ddof() {
         let n_random_variables = 3;
         let n_observations = 4;
-        let a = Array::random((n_random_variables, n_observations), Uniform::new(0., 10.));
+        let a = Array::random(
+            (n_random_variables, n_observations),
+            Uniform::new(0., 10.).unwrap(),
+        );
         let invalid_ddof = (n_observations as f64) + rand::random::<f64>().abs();
         let _ = a.cov(invalid_ddof);
     }
@@ -299,7 +295,7 @@ mod pearson_correlation_tests {
         let n_observations = 4;
         let a = Array::random(
             (n_random_variables, n_observations),
-            Uniform::new(-bound.abs(), bound.abs()),
+            Uniform::new(-bound.abs(), bound.abs()).unwrap(),
         );
         let pearson_correlation = a.pearson_correlation().unwrap();
         abs_diff_eq!(
