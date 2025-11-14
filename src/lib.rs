@@ -33,6 +33,27 @@ pub use crate::correlation::CorrelationExt;
 pub use crate::deviation::DeviationExt;
 pub use crate::entropy::EntropyExt;
 pub use crate::histogram::HistogramExt;
+pub use crate::kernel_weights::{
+    epanechnikov,
+    gaussian,
+    quartic,
+    triangular,
+    // functions
+    tricube,
+    Epanechnikov,
+    Gaussian,
+    // trait and types (zero-sized kernels)
+    KernelFn,
+    Quartic,
+    Triangular,
+    Tricube,
+    EPANECHNIKOV,
+    GAUSSIAN,
+    QUARTIC,
+    TRIANGULAR,
+    // convenience const instances
+    TRICUBE,
+};
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
 pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
 pub use crate::sort::Sort1dExt;
@@ -103,6 +124,7 @@ mod deviation;
 mod entropy;
 pub mod errors;
 pub mod histogram;
+pub mod kernel_weights;
 mod maybe_nan;
 mod quantile;
 mod sort;
