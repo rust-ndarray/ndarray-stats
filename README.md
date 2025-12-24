@@ -35,6 +35,7 @@ ndarray-stats = "0.6.0"
 * **0.7.0**
 
   * Breaking changes
+    * Minimum supported Rust version: `1.65.0`
     * Updated to `ndarray:v0.17.1`
 
 * **0.6.0**

@@ -16,7 +16,7 @@ env:
   CARGO_TERM_COLOR: always
   HOST: x86_64-unknown-linux-gnu
   RUSTFLAGS: "-D warnings"
-  MSRV: 1.64.0
+  MSRV: 1.65.0
 
 jobs:
   latest_deps_stable:
