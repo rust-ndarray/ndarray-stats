@@ -32,6 +32,11 @@ ndarray-stats = "0.6.0"
 
 ## Releases
 
+* **0.7.0**
+
+  * Breaking changes
+    * Updated to `ndarray:v0.17.1`
+
 * **0.6.0**
 
   * Breaking changes
