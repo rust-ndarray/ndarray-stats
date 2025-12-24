@@ -1,13 +1,12 @@
 use super::SummaryStatisticsExt;
 use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
-use ndarray::{Array, ArrayBase, Axis, Data, Dimension, Ix1, RemoveAxis};
+use ndarray::{Array, ArrayBase, ArrayRef, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, AddAssign, Div, Mul};
 
-impl<A, S, D> SummaryStatisticsExt<A, S, D> for ArrayBase<S, D>
+impl<A, D> SummaryStatisticsExt<A, D> for ArrayRef<A, D>
 where
-    S: Data<Elem = A>,
     D: Dimension,
 {
     fn mean(&self) -> Result<A, EmptyInput>
@@ -33,7 +32,7 @@ where
         Ok(weighted_sum / weights.sum())
     }
 
-    fn weighted_sum(&self, weights: &ArrayBase<S, D>) -> Result<A, MultiInputError>
+    fn weighted_sum(&self, weights: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
         A: Copy + Mul<Output = A> + Zero,
     {
@@ -47,7 +46,7 @@ where
     fn weighted_mean_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
         A: Copy + Div<Output = A> + Mul<Output = A> + Zero,
@@ -63,7 +62,7 @@ where
     fn weighted_sum_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
         A: Copy + Mul<Output = A> + Zero,
@@ -130,7 +129,7 @@ where
     fn weighted_var_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
         ddof: A,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
@@ -161,7 +160,7 @@ where
     fn weighted_std_axis(
         &self,
         axis: Axis,
-        weights: &ArrayBase<S, Ix1>,
+        weights: &ArrayRef<A, Ix1>,
         ddof: A,
     ) -> Result<Array<A, D::Smaller>, MultiInputError>
     where
@@ -245,14 +244,13 @@ where
 }
 
 /// Private function for `weighted_var` without conditions and asserts.
-fn inner_weighted_var<A, S, D>(
-    arr: &ArrayBase<S, D>,
-    weights: &ArrayBase<S, D>,
+fn inner_weighted_var<A, D>(
+    arr: &ArrayRef<A, D>,
+    weights: &ArrayRef<A, D>,
     ddof: A,
     zero: A,
 ) -> Result<A, MultiInputError>
 where
-    S: Data<Elem = A>,
     A: AddAssign + Float + FromPrimitive,
     D: Dimension,
 {

@@ -1,4 +1,4 @@
-//! The [`ndarray-stats`] crate exposes statistical routines for `ArrayBase`,
+//! The [`ndarray-stats`] crate exposes statistical routines for `ArrayRef`,
 //! the *n*-dimensional array data structure provided by [`ndarray`].
 //!
 //! Currently available routines include:

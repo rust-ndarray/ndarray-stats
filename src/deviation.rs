@@ -1,15 +1,14 @@
-use ndarray::{ArrayBase, Data, Dimension, Zip};
+use ndarray::{ArrayRef, Dimension, Zip};
 use num_traits::{Signed, ToPrimitive};
 use std::convert::Into;
 use std::ops::AddAssign;
 
 use crate::errors::MultiInputError;
 
-/// An extension trait for `ArrayBase` providing functions
+/// An extension trait for `ndarray` providing functions
 /// to compute different deviation measures.
-pub trait DeviationExt<A, S, D>
+pub trait DeviationExt<A, D>
 where
-    S: Data<Elem = A>,
     D: Dimension,
 {
     /// Counts the number of indices at which the elements of the arrays `self`
@@ -19,10 +18,9 @@ where
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
     /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
-    fn count_eq<T>(&self, other: &ArrayBase<T, D>) -> Result<usize, MultiInputError>
+    fn count_eq(&self, other: &ArrayRef<A, D>) -> Result<usize, MultiInputError>
     where
-        A: PartialEq,
-        T: Data<Elem = A>;
+        A: PartialEq;
 
     /// Counts the number of indices at which the elements of the arrays `self`
     /// and `other` are not equal.
@@ -31,10 +29,9 @@ where
     ///
     /// * `MultiInputError::EmptyInput` if `self` is empty
     /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
-    fn count_neq<T>(&self, other: &ArrayBase<T, D>) -> Result<usize, MultiInputError>
+    fn count_neq(&self, other: &ArrayRef<A, D>) -> Result<usize, MultiInputError>
     where
-        A: PartialEq,
-        T: Data<Elem = A>;
+        A: PartialEq;
 
     /// Computes the [squared L2 distance] between `self` and `other`.
     ///
@@ -52,10 +49,9 @@ where
     /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// [squared L2 distance]: https://en.wikipedia.org/wiki/Euclidean_distance#Squared_Euclidean_distance
-    fn sq_l2_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<A, MultiInputError>
+    fn sq_l2_dist(&self, other: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
-        A: AddAssign + Clone + Signed,
-        T: Data<Elem = A>;
+        A: AddAssign + Clone + Signed;
 
     /// Computes the [L2 distance] between `self` and `other`.
     ///
@@ -75,10 +71,9 @@ where
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
     /// [L2 distance]: https://en.wikipedia.org/wiki/Euclidean_distance
-    fn l2_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn l2_dist(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
-        A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>;
+        A: AddAssign + Clone + Signed + ToPrimitive;
 
     /// Computes the [L1 distance] between `self` and `other`.
     ///
@@ -96,10 +91,9 @@ where
     /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// [L1 distance]: https://en.wikipedia.org/wiki/Taxicab_geometry
-    fn l1_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<A, MultiInputError>
+    fn l1_dist(&self, other: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
-        A: AddAssign + Clone + Signed,
-        T: Data<Elem = A>;
+        A: AddAssign + Clone + Signed;
 
     /// Computes the [L∞ distance] between `self` and `other`.
     ///
@@ -116,10 +110,9 @@ where
     /// * `MultiInputError::ShapeMismatch` if `self` and `other` don't have the same shape
     ///
     /// [L∞ distance]: https://en.wikipedia.org/wiki/Chebyshev_distance
-    fn linf_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<A, MultiInputError>
+    fn linf_dist(&self, other: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
-        A: Clone + PartialOrd + Signed,
-        T: Data<Elem = A>;
+        A: Clone + PartialOrd + Signed;
 
     /// Computes the [mean absolute error] between `self` and `other`.
     ///
@@ -139,10 +132,9 @@ where
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
     /// [mean absolute error]: https://en.wikipedia.org/wiki/Mean_absolute_error
-    fn mean_abs_err<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn mean_abs_err(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
-        A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>;
+        A: AddAssign + Clone + Signed + ToPrimitive;
 
     /// Computes the [mean squared error] between `self` and `other`.
     ///
@@ -162,10 +154,9 @@ where
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
     /// [mean squared error]: https://en.wikipedia.org/wiki/Mean_squared_error
-    fn mean_sq_err<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn mean_sq_err(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
-        A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>;
+        A: AddAssign + Clone + Signed + ToPrimitive;
 
     /// Computes the unnormalized [root-mean-square error] between `self` and `other`.
     ///
@@ -183,10 +174,9 @@ where
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
     /// [root-mean-square error]: https://en.wikipedia.org/wiki/Root-mean-square_deviation
-    fn root_mean_sq_err<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn root_mean_sq_err(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
-        A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>;
+        A: AddAssign + Clone + Signed + ToPrimitive;
 
     /// Computes the [peak signal-to-noise ratio] between `self` and `other`.
     ///
@@ -205,27 +195,24 @@ where
     /// **Panics** if the type cast from `A` to `f64` fails.
     ///
     /// [peak signal-to-noise ratio]: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
-    fn peak_signal_to_noise_ratio<T>(
+    fn peak_signal_to_noise_ratio(
         &self,
-        other: &ArrayBase<T, D>,
+        other: &ArrayRef<A, D>,
         maxv: A,
     ) -> Result<f64, MultiInputError>
     where
-        A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>;
+        A: AddAssign + Clone + Signed + ToPrimitive;
 
     private_decl! {}
 }
 
-impl<A, S, D> DeviationExt<A, S, D> for ArrayBase<S, D>
+impl<A, D> DeviationExt<A, D> for ArrayRef<A, D>
 where
-    S: Data<Elem = A>,
     D: Dimension,
 {
-    fn count_eq<T>(&self, other: &ArrayBase<T, D>) -> Result<usize, MultiInputError>
+    fn count_eq(&self, other: &ArrayRef<A, D>) -> Result<usize, MultiInputError>
     where
         A: PartialEq,
-        T: Data<Elem = A>,
     {
         return_err_if_empty!(self);
         return_err_unless_same_shape!(self, other);
@@ -241,18 +228,16 @@ where
         Ok(count)
     }
 
-    fn count_neq<T>(&self, other: &ArrayBase<T, D>) -> Result<usize, MultiInputError>
+    fn count_neq(&self, other: &ArrayRef<A, D>) -> Result<usize, MultiInputError>
     where
         A: PartialEq,
-        T: Data<Elem = A>,
     {
         self.count_eq(other).map(|n_eq| self.len() - n_eq)
     }
 
-    fn sq_l2_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<A, MultiInputError>
+    fn sq_l2_dist(&self, other: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
         A: AddAssign + Clone + Signed,
-        T: Data<Elem = A>,
     {
         return_err_if_empty!(self);
         return_err_unless_same_shape!(self, other);
@@ -268,10 +253,9 @@ where
         Ok(result)
     }
 
-    fn l2_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn l2_dist(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
         A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>,
     {
         let sq_l2_dist = self
             .sq_l2_dist(other)?
@@ -281,10 +265,9 @@ where
         Ok(sq_l2_dist.sqrt())
     }
 
-    fn l1_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<A, MultiInputError>
+    fn l1_dist(&self, other: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
         A: AddAssign + Clone + Signed,
-        T: Data<Elem = A>,
     {
         return_err_if_empty!(self);
         return_err_unless_same_shape!(self, other);
@@ -299,10 +282,9 @@ where
         Ok(result)
     }
 
-    fn linf_dist<T>(&self, other: &ArrayBase<T, D>) -> Result<A, MultiInputError>
+    fn linf_dist(&self, other: &ArrayRef<A, D>) -> Result<A, MultiInputError>
     where
         A: Clone + PartialOrd + Signed,
-        T: Data<Elem = A>,
     {
         return_err_if_empty!(self);
         return_err_unless_same_shape!(self, other);
@@ -320,10 +302,9 @@ where
         Ok(max)
     }
 
-    fn mean_abs_err<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn mean_abs_err(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
         A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>,
     {
         let l1_dist = self
             .l1_dist(other)?
@@ -334,10 +315,9 @@ where
         Ok(l1_dist / n)
     }
 
-    fn mean_sq_err<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn mean_sq_err(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
         A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>,
     {
         let sq_l2_dist = self
             .sq_l2_dist(other)?
@@ -348,23 +328,21 @@ where
         Ok(sq_l2_dist / n)
     }
 
-    fn root_mean_sq_err<T>(&self, other: &ArrayBase<T, D>) -> Result<f64, MultiInputError>
+    fn root_mean_sq_err(&self, other: &ArrayRef<A, D>) -> Result<f64, MultiInputError>
     where
         A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>,
     {
         let msd = self.mean_sq_err(other)?;
         Ok(msd.sqrt())
     }
 
-    fn peak_signal_to_noise_ratio<T>(
+    fn peak_signal_to_noise_ratio(
         &self,
-        other: &ArrayBase<T, D>,
+        other: &ArrayRef<A, D>,
         maxv: A,
     ) -> Result<f64, MultiInputError>
     where
         A: AddAssign + Clone + Signed + ToPrimitive,
-        T: Data<Elem = A>,
     {
         let maxv_f = maxv.to_f64().expect("failed cast from type A to f64");
         let msd = self.mean_sq_err(&other)?;

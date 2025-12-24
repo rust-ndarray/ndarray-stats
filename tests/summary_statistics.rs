@@ -297,7 +297,7 @@ fn weighted_var_algo_eq_simple_algo() {
         for axis in 0..3 {
             let axis = Axis(axis);
 
-            let weights = Array::random(a.len_of(axis), Uniform::new(0.0, 1.0));
+            let weights = Array::random(a.len_of(axis), Uniform::new(0.0, 1.0).unwrap());
             let mean = a
                 .weighted_mean_axis(axis, &weights)
                 .unwrap()
@@ -327,7 +327,7 @@ fn test_central_moment_with_empty_array_of_floats() {
 fn test_zeroth_central_moment_is_one() {
     let n = 50;
     let bound: f64 = 200.;
-    let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()));
+    let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()).unwrap());
     assert_eq!(a.central_moment(0).unwrap(), 1.);
 }
 
@@ -335,7 +335,7 @@ fn test_zeroth_central_moment_is_one() {
 fn test_first_central_moment_is_zero() {
     let n = 50;
     let bound: f64 = 200.;
-    let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()));
+    let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()).unwrap());
     assert_eq!(a.central_moment(1).unwrap(), 0.);
 }
 
@@ -374,7 +374,7 @@ fn test_bulk_central_moments() {
     // Test that the bulk method is coherent with the non-bulk method
     let n = 50;
     let bound: f64 = 200.;
-    let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()));
+    let a = Array::random(n, Uniform::new(-bound.abs(), bound.abs()).unwrap());
     let order = 10;
     let central_moments = a.central_moments(order).unwrap();
     for i in 0..=order {
