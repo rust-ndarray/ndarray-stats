@@ -26,8 +26,8 @@ Please feel free to contribute new functionality! A roadmap can be found [here](
 
 ```toml
 [dependencies]
-ndarray = "0.16"
-ndarray-stats = "0.6.0"
+ndarray = "0.17.1"
+ndarray-stats = "0.7.0"
 ```
 
 ## Releases
