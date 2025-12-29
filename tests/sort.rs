@@ -1,5 +1,7 @@
 use ndarray::prelude::*;
-use ndarray_stats::Sort1dExt;
+use ndarray_rand::rand_distr::Uniform;
+use ndarray_rand::RandomExt;
+use ndarray_stats::{Sort1dExt, SortExt};
 use quickcheck_macros::quickcheck;
 
 #[test]
@@ -83,4 +85,88 @@ fn test_sorted_get_mut_as_sorting_algorithm(mut xs: Vec<i64>) -> bool {
         xs.sort();
         xs == sorted_v
     }
+}
+
+#[test]
+fn argsort_1d() {
+    let a = array![5, 2, 0, 7, 3, 2, 8, 9];
+    let correct = array![2, 1, 5, 4, 0, 3, 6, 7];
+    assert_eq!(a.argsort_axis(Axis(0)), &correct);
+    assert_eq!(a.argsort_axis_by(Axis(0), |a, b| a.cmp(b)), &correct);
+    assert_eq!(a.argsort_axis_by_key(Axis(0), |&x| x), &correct);
+}
+
+#[test]
+fn argsort_2d() {
+    let a = array![[3, 5, 1, 2], [2, 0, 1, 3], [9, 4, 6, 1]];
+    for (axis, correct) in [
+        (Axis(0), array![[1, 1, 0, 2], [0, 2, 1, 0], [2, 0, 2, 1]]),
+        (Axis(1), array![[2, 3, 0, 1], [1, 2, 0, 3], [3, 1, 2, 0]]),
+    ] {
+        assert_eq!(a.argsort_axis(axis), &correct);
+        assert_eq!(a.argsort_axis_by(axis, |a, b| a.cmp(b)), &correct);
+        assert_eq!(a.argsort_axis_by_key(axis, |&x| x), &correct);
+    }
+}
+
+#[test]
+fn argsort_3d() {
+    let a = array![
+        [[3, 5, 1, 2], [9, 7, 6, 8]],
+        [[2, 0, 1, 3], [1, 2, 3, 4]],
+        [[9, 4, 6, 1], [8, 5, 3, 2]],
+    ];
+    for (axis, correct) in [
+        (
+            Axis(0),
+            array![
+                [[1, 1, 0, 2], [1, 1, 1, 2]],
+                [[0, 2, 1, 0], [2, 2, 2, 1]],
+                [[2, 0, 2, 1], [0, 0, 0, 0]],
+            ],
+        ),
+        (
+            Axis(1),
+            array![
+                [[0, 0, 0, 0], [1, 1, 1, 1]],
+                [[1, 0, 0, 0], [0, 1, 1, 1]],
+                [[1, 0, 1, 0], [0, 1, 0, 1]],
+            ],
+        ),
+        (
+            Axis(2),
+            array![
+                [[2, 3, 0, 1], [2, 1, 3, 0]],
+                [[1, 2, 0, 3], [0, 1, 2, 3]],
+                [[3, 1, 2, 0], [3, 2, 1, 0]],
+            ],
+        ),
+    ] {
+        assert_eq!(a.argsort_axis(axis), &correct);
+        assert_eq!(a.argsort_axis_by(axis, |a, b| a.cmp(b)), &correct);
+        assert_eq!(a.argsort_axis_by_key(axis, |&x| x), &correct);
+    }
+}
+
+#[test]
+fn argsort_len_0_or_1_axis() {
+    fn test_shape(base_shape: impl ndarray::IntoDimension) {
+        let base_shape = base_shape.into_dimension();
+        for ax in 0..base_shape.ndim() {
+            for axis_len in [0, 1] {
+                let mut shape = base_shape.clone();
+                shape[ax] = axis_len;
+                let a = Array::random(shape.clone(), Uniform::new(0, 100));
+                let axis = Axis(ax);
+                let correct = Array::zeros(shape);
+                assert_eq!(a.argsort_axis(axis), &correct);
+                assert_eq!(a.argsort_axis_by(axis, |a, b| a.cmp(b)), &correct);
+                assert_eq!(a.argsort_axis_by_key(axis, |&x| x), &correct);
+            }
+        }
+    }
+    test_shape([1]);
+    test_shape([2, 3]);
+    test_shape([3, 2, 4]);
+    test_shape([2, 4, 3, 2]);
 }

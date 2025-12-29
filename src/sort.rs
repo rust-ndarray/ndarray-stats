@@ -3,6 +3,7 @@ use ndarray::prelude::*;
 use ndarray::Slice;
 use rand::prelude::*;
 use rand::thread_rng;
+use std::cmp::Ordering;
 
 /// Methods for sorting and partitioning 1-D arrays.
 pub trait Sort1dExt<A> {
@@ -280,4 +281,119 @@ fn _get_many_from_sorted_mut_unchecked<A>(
         bigger_indexes,
         bigger_values,
     );
+}
+
+/// Methods for sorting n-D arrays.
+pub trait SortExt<A, S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    /// Returns the indices which would sort the array along the specified
+    /// axis.
+    ///
+    /// Each lane of the array is sorted separately. The sort is stable.
+    ///
+    /// **Panics** if `axis` is out-of-bounds.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use ndarray::{array, Axis};
+    /// use ndarray_stats::SortExt;
+    ///
+    /// let a = array![
+    ///     [0, 5, 2],
+    ///     [3, 3, 1],
+    /// ];
+    /// assert_eq!(
+    ///     a.argsort_axis(Axis(0)),
+    ///     array![
+    ///         [0, 1, 1],
+    ///         [1, 0, 0],
+    ///     ],
+    /// );
+    /// assert_eq!(
+    ///     a.argsort_axis(Axis(1)),
+    ///     array![
+    ///         [0, 2, 1],
+    ///         [2, 0, 1],
+    ///     ],
+    /// );
+    /// ```
+    fn argsort_axis(&self, axis: Axis) -> Array<usize, D>
+    where
+        A: Ord;
+
+    /// Returns the indices which would sort the array along the specified
+    /// axis, using the specified comparator function.
+    ///
+    /// Each lane of the array is sorted separately. The sort is stable.
+    ///
+    /// **Panics** if `axis` is out-of-bounds.
+    fn argsort_axis_by<F>(&self, axis: Axis, compare: F) -> Array<usize, D>
+    where
+        F: FnMut(&A, &A) -> Ordering;
+
+    /// Returns the indices which would sort the array along the specified
+    /// axis, using the specified key function.
+    ///
+    /// Each lane of the array is sorted separately. The sort is stable.
+    ///
+    /// **Panics** if `axis` is out-of-bounds.
+    fn argsort_axis_by_key<K, F>(&self, axis: Axis, f: F) -> Array<usize, D>
+    where
+        F: FnMut(&A) -> K,
+        K: Ord;
+}
+
+impl<A, S, D> SortExt<A, S, D> for ArrayBase<S, D>
+where
+    S: Data<Elem = A>,
+    D: Dimension,
+{
+    fn argsort_axis(&self, axis: Axis) -> Array<usize, D>
+    where
+        A: Ord,
+    {
+        self.view().argsort_axis_by(axis, Ord::cmp)
+    }
+
+    fn argsort_axis_by<F>(&self, axis: Axis, mut compare: F) -> Array<usize, D>
+    where
+        F: FnMut(&A, &A) -> Ordering,
+    {
+        // Construct an array with the same shape as `self` and with strides such
+        // that `axis` is contiguous.
+        let mut indices: Array<usize, D> = {
+            let ax = axis.index();
+            let ndim = self.ndim();
+            let mut shape = self.raw_dim();
+            shape.as_array_view_mut().swap(ax, ndim - 1);
+            let mut tmp = Array::zeros(shape);
+            tmp.swap_axes(ax, ndim - 1);
+            tmp
+        };
+        debug_assert_eq!(self.shape(), indices.shape());
+        debug_assert!(indices.len_of(axis) <= 1 || indices.stride_of(axis) == 1);
+
+        // Fill in the array with the sorted indices.
+        azip!((input_lane in self.lanes(axis), mut indices_lane in indices.lanes_mut(axis)) {
+            // This unwrap won't panic because we constructed `indices` so that
+            // `axis` is contiguous.
+            let indices_lane = indices_lane.as_slice_mut().unwrap();
+            indices_lane.iter_mut().enumerate().for_each(|(i, x)| *x = i);
+            indices_lane.sort_by(|&i, &j| compare(&input_lane[i], &input_lane[j]));
+        });
+
+        indices
+    }
+
+    fn argsort_axis_by_key<K, F>(&self, axis: Axis, mut f: F) -> Array<usize, D>
+    where
+        F: FnMut(&A) -> K,
+        K: Ord,
+    {
+        self.view().argsort_axis_by(axis, |a, b| f(a).cmp(&f(b)))
+    }
 }
