@@ -268,12 +268,22 @@ fn test_quantile_axis_skipnan_mut_linear_opt_i32() {
 }
 
 #[test]
-fn test_midpoint_overflow() {
+fn test_midpoint_overflow_unsigned() {
     // Regression test
     // This triggered an overflow panic with a naive Midpoint implementation: (a+b)/2
     let mut a: Array1<u8> = array![129, 130, 130, 131];
     let median = a.quantile_mut(n64(0.5), &Midpoint).unwrap();
     let expected_median = 130;
+    assert_eq!(median, expected_median);
+}
+
+#[test]
+fn test_midpoint_overflow_signed() {
+    // Regression test
+    // This triggered an overflow panic with a naive Midpoint implementation: b+(a-b)/2
+    let mut a: Array1<i64> = array![i64::MIN, i64::MAX];
+    let median = a.quantile_mut(n64(0.5), &Midpoint).unwrap();
+    let expected_median = -1;
     assert_eq!(median, expected_median);
 }
 
