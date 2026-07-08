@@ -277,6 +277,14 @@ fn test_midpoint_overflow() {
     assert_eq!(median, expected_median);
 }
 
+#[test]
+fn quantile_mut_on_large_constant_array_does_not_overflow_stack() {
+    // Regression test for https://github.com/rust-ndarray/ndarray-stats/issues/86
+    let mut array: Array1<N64> = Array1::ones(100_000);
+    let median = array.quantile_mut(n64(0.5), &Linear).unwrap();
+    assert_eq!(median, n64(1.));
+}
+
 #[quickcheck]
 fn test_quantiles_mut(xs: Vec<i64>) -> bool {
     let v = Array::from(xs.clone());

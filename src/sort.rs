@@ -96,25 +96,31 @@ pub trait Sort1dExt<A> {
 }
 
 impl<A> Sort1dExt<A> for ArrayRef<A, Ix1> {
-    fn get_from_sorted_mut(&mut self, i: usize) -> A
+    fn get_from_sorted_mut(&mut self, mut i: usize) -> A
     where
         A: Ord + Clone,
     {
-        let n = self.len();
-        if n == 1 {
-            self[0].clone()
-        } else {
+        // We narrow the view in place instead of recursing, so that the stack
+        // depth stays constant regardless of the number of partition steps.
+        // This matters for pathological inputs (e.g. large constant arrays),
+        // where each partition step only peels off a single element and the
+        // recursive formulation would use O(n) stack frames.
+        let mut array = self.view_mut();
+        loop {
+            let n = array.len();
+            if n == 1 {
+                return array[0].clone();
+            }
             let mut rng = thread_rng();
             let pivot_index = rng.gen_range(0..n);
-            let partition_index = self.partition_mut(pivot_index);
+            let partition_index = array.partition_mut(pivot_index);
             if i < partition_index {
-                self.slice_axis_mut(Axis(0), Slice::from(..partition_index))
-                    .get_from_sorted_mut(i)
+                array.slice_axis_inplace(Axis(0), Slice::from(..partition_index));
             } else if i == partition_index {
-                self[i].clone()
+                return array[i].clone();
             } else {
-                self.slice_axis_mut(Axis(0), Slice::from(partition_index + 1..))
-                    .get_from_sorted_mut(i - (partition_index + 1))
+                array.slice_axis_inplace(Axis(0), Slice::from(partition_index + 1..));
+                i -= partition_index + 1;
             }
         }
     }
@@ -211,73 +217,86 @@ where
 /// initial element values are ignored.
 fn _get_many_from_sorted_mut_unchecked<A>(
     mut array: ArrayViewMut1<'_, A>,
-    indexes: &mut [usize],
-    values: &mut [A],
+    mut indexes: &mut [usize],
+    mut values: &mut [A],
 ) where
     A: Ord + Clone,
 {
-    let n = array.len();
-    debug_assert!(n >= indexes.len()); // because indexes must be unique and in-bounds
-    debug_assert_eq!(indexes.len(), values.len());
+    // After each partition step we recurse into the sub-problem with *fewer*
+    // array elements and iterate (in this `loop`) on the larger one. This is
+    // the standard technique for bounding quickselect's stack depth to
+    // O(log n): without it, pathological inputs such as large constant arrays
+    // (where each partition step only peels off a single element) would use
+    // O(n) stack frames and overflow the stack.
+    loop {
+        let n = array.len();
+        debug_assert!(n >= indexes.len()); // because indexes must be unique and in-bounds
+        debug_assert_eq!(indexes.len(), values.len());
 
-    if indexes.is_empty() {
-        // Nothing to do in this case.
-        return;
+        if indexes.is_empty() {
+            // Nothing to do in this case.
+            return;
+        }
+
+        // At this point, `n >= 1` since `indexes.len() >= 1`.
+        if n == 1 {
+            // We can only reach this point if `indexes.len() == 1`, so we only
+            // need to assign the single value, and then we're done.
+            debug_assert_eq!(indexes.len(), 1);
+            values[0] = array[0].clone();
+            return;
+        }
+
+        // We pick a random pivot index: the corresponding element is the pivot value
+        let mut rng = thread_rng();
+        let pivot_index = rng.gen_range(0..n);
+
+        // We partition the array with respect to the pivot value.
+        // The pivot value moves to `array_partition_index`.
+        // Elements strictly smaller than the pivot value have indexes < `array_partition_index`.
+        // Elements greater or equal to the pivot value have indexes > `array_partition_index`.
+        let array_partition_index = array.partition_mut(pivot_index);
+
+        // We use a divide-and-conquer strategy, splitting the indexes we are
+        // searching for (`indexes`) and the corresponding portions of the output
+        // slice (`values`) into pieces with respect to `array_partition_index`.
+        let (found_exact, index_split) = match indexes.binary_search(&array_partition_index) {
+            Ok(index) => (true, index),
+            Err(index) => (false, index),
+        };
+        let (smaller_indexes, other_indexes) = indexes.split_at_mut(index_split);
+        let (smaller_values, other_values) = values.split_at_mut(index_split);
+        let (bigger_indexes, bigger_values) = if found_exact {
+            other_values[0] = array[array_partition_index].clone(); // Write exactly found value.
+            (&mut other_indexes[1..], &mut other_values[1..])
+        } else {
+            (other_indexes, other_values)
+        };
+
+        // The indexes to the right of the pivot need to be shifted by the length
+        // of the removed portion (the smaller part plus the pivot itself).
+        bigger_indexes
+            .iter_mut()
+            .for_each(|x| *x -= array_partition_index + 1);
+
+        // We split the array into the two disjoint sub-views, dropping the pivot
+        // (which is already in its final sorted position and, if requested, has
+        // already been written to `bigger_values`/`other_values` above).
+        let (smaller_array, rest) = array.split_at(Axis(0), array_partition_index);
+        let bigger_array = rest.slice_axis_move(Axis(0), Slice::from(1..));
+
+        // Recurse into the sub-problem with fewer array elements and continue
+        // iterating on the larger one, so the recursion depth stays O(log n).
+        if smaller_array.len() <= bigger_array.len() {
+            _get_many_from_sorted_mut_unchecked(smaller_array, smaller_indexes, smaller_values);
+            array = bigger_array;
+            indexes = bigger_indexes;
+            values = bigger_values;
+        } else {
+            _get_many_from_sorted_mut_unchecked(bigger_array, bigger_indexes, bigger_values);
+            array = smaller_array;
+            indexes = smaller_indexes;
+            values = smaller_values;
+        }
     }
-
-    // At this point, `n >= 1` since `indexes.len() >= 1`.
-    if n == 1 {
-        // We can only reach this point if `indexes.len() == 1`, so we only
-        // need to assign the single value, and then we're done.
-        debug_assert_eq!(indexes.len(), 1);
-        values[0] = array[0].clone();
-        return;
-    }
-
-    // We pick a random pivot index: the corresponding element is the pivot value
-    let mut rng = thread_rng();
-    let pivot_index = rng.gen_range(0..n);
-
-    // We partition the array with respect to the pivot value.
-    // The pivot value moves to `array_partition_index`.
-    // Elements strictly smaller than the pivot value have indexes < `array_partition_index`.
-    // Elements greater or equal to the pivot value have indexes > `array_partition_index`.
-    let array_partition_index = array.partition_mut(pivot_index);
-
-    // We use a divide-and-conquer strategy, splitting the indexes we are
-    // searching for (`indexes`) and the corresponding portions of the output
-    // slice (`values`) into pieces with respect to `array_partition_index`.
-    let (found_exact, index_split) = match indexes.binary_search(&array_partition_index) {
-        Ok(index) => (true, index),
-        Err(index) => (false, index),
-    };
-    let (smaller_indexes, other_indexes) = indexes.split_at_mut(index_split);
-    let (smaller_values, other_values) = values.split_at_mut(index_split);
-    let (bigger_indexes, bigger_values) = if found_exact {
-        other_values[0] = array[array_partition_index].clone(); // Write exactly found value.
-        (&mut other_indexes[1..], &mut other_values[1..])
-    } else {
-        (other_indexes, other_values)
-    };
-
-    // We search recursively for the values corresponding to strictly smaller
-    // indexes to the left of `partition_index`.
-    _get_many_from_sorted_mut_unchecked(
-        array.slice_axis_mut(Axis(0), Slice::from(..array_partition_index)),
-        smaller_indexes,
-        smaller_values,
-    );
-
-    // We search recursively for the values corresponding to strictly bigger
-    // indexes to the right of `partition_index`. Since only the right portion
-    // of the array is passed in, the indexes need to be shifted by length of
-    // the removed portion.
-    bigger_indexes
-        .iter_mut()
-        .for_each(|x| *x -= array_partition_index + 1);
-    _get_many_from_sorted_mut_unchecked(
-        array.slice_axis_mut(Axis(0), Slice::from(array_partition_index + 1..)),
-        bigger_indexes,
-        bigger_values,
-    );
 }
