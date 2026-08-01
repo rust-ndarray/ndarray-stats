@@ -1,6 +1,7 @@
 use crate::errors::EmptyInput;
 use ndarray::prelude::*;
 use num_traits::{Float, FromPrimitive};
+use std::cmp::Ordering;
 
 /// Extension trait for `ndarray` providing functions
 /// to compute different correlation measures.
@@ -11,7 +12,7 @@ pub trait CorrelationExt<A> {
     /// Let `(r, o)` be the shape of `M`:
     /// - `r` is the number of random variables;
     /// - `o` is the number of observations we have collected
-    /// for each random variable.
+    ///   for each random variable.
     ///
     /// Every column in `M` is an experiment: a single observation for each
     /// random variable.
@@ -67,7 +68,7 @@ pub trait CorrelationExt<A> {
     /// Let `(r, o)` be the shape of `M`:
     /// - `r` is the number of random variables;
     /// - `o` is the number of observations we have collected
-    /// for each random variable.
+    ///   for each random variable.
     ///
     /// Every column in `M` is an experiment: a single observation for each
     /// random variable.
@@ -115,6 +116,46 @@ pub trait CorrelationExt<A> {
     /// );
     /// ```
     fn pearson_correlation(&self) -> Result<Array2<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive;
+
+    /// Return the [Spearman rank-order correlation coefficients](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient)
+    /// for a 2-dimensional array of observations `M`.
+    ///
+    /// The input has the same variables-by-observations layout as
+    /// [`pearson_correlation`](Self::pearson_correlation). Each row is ranked
+    /// independently, with tied observations receiving their average rank,
+    /// and Pearson correlation is then computed over the rank matrix.
+    ///
+    /// If `M` is empty (either zero observations or zero random variables), it
+    /// returns `Err(EmptyInput)`. A constant row has an undefined rank
+    /// correlation and produces `NaN` in its corresponding row and column.
+    /// `NaN` observations are propagated in the same way.
+    fn spearman_correlation(&self) -> Result<Array2<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive;
+
+    /// Return the tie-corrected Kendall tau-b coefficients for a 2-dimensional
+    /// array of ordinal observations `M`.
+    ///
+    /// The input has the same variables-by-observations layout as
+    /// [`pearson_correlation`](Self::pearson_correlation). For each pair of
+    /// rows, the coefficient is computed as
+    ///
+    /// ```text
+    /// tau_b = (P - Q) / sqrt((P + Q + T) * (P + Q + U))
+    /// ```
+    ///
+    /// where `P` and `Q` are the numbers of concordant and discordant pairs,
+    /// and `T` and `U` are the numbers of pairs tied only in the first and
+    /// second row, respectively. Ties in both rows are excluded from `T` and
+    /// `U`.
+    ///
+    /// If `M` is empty (either zero observations or zero random variables), it
+    /// returns `Err(EmptyInput)`. Constant rows, inputs with fewer than two
+    /// observations, and zero tau-b denominators produce `NaN`. `NaN`
+    /// observations are propagated for pairs involving the affected row.
+    fn kendall_tau(&self) -> Result<Array2<A>, EmptyInput>
     where
         A: Float + FromPrimitive;
 
@@ -171,7 +212,197 @@ impl<A: 'static> CorrelationExt<A> for ArrayRef2<A> {
         }
     }
 
+    fn spearman_correlation(&self) -> Result<Array2<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive,
+    {
+        let ranks = rank_rows(self)?;
+        ranks.pearson_correlation()
+    }
+
+    fn kendall_tau(&self) -> Result<Array2<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive,
+    {
+        let (n_variables, n_observations) = self.dim();
+        if n_variables == 0 || n_observations == 0 {
+            return Err(EmptyInput);
+        }
+
+        let mut result = Array2::from_elem((n_variables, n_variables), A::nan());
+        for first in 0..n_variables {
+            for second in first..n_variables {
+                let tau = kendall_tau_pair(self.row(first), self.row(second));
+                result[[first, second]] = tau;
+                result[[second, first]] = tau;
+            }
+        }
+
+        Ok(result)
+    }
+
     private_impl! {}
+}
+
+/// Compute average one-based ranks for every row without modifying the input.
+fn rank_rows<A>(data: &ArrayRef2<A>) -> Result<Array2<A>, EmptyInput>
+where
+    A: Float + FromPrimitive,
+{
+    let (n_variables, n_observations) = data.dim();
+    if n_variables == 0 || n_observations == 0 {
+        return Err(EmptyInput);
+    }
+
+    let mut ranks = Array2::zeros((n_variables, n_observations));
+    for (row_index, row) in data.axis_iter(Axis(0)).enumerate() {
+        let mut ordered: Vec<(A, usize)> = row
+            .iter()
+            .copied()
+            .enumerate()
+            .map(|(observation_index, value)| (value, observation_index))
+            .collect();
+
+        if ordered.iter().any(|(value, _)| value.is_nan()) {
+            ranks.row_mut(row_index).fill(A::nan());
+            continue;
+        }
+
+        ordered.sort_unstable_by(|left, right| {
+            left.0.partial_cmp(&right.0).unwrap_or(Ordering::Equal)
+        });
+
+        let mut start = 0;
+        while start < ordered.len() {
+            let mut end = start + 1;
+            while end < ordered.len() && ordered[end].0 == ordered[start].0 {
+                end += 1;
+            }
+
+            let first_rank = A::from_usize(start + 1).unwrap();
+            let last_rank = A::from_usize(end).unwrap();
+            let average_rank = (first_rank + last_rank) / A::from_usize(2).unwrap();
+            for (_, observation_index) in &ordered[start..end] {
+                ranks[[row_index, *observation_index]] = average_rank;
+            }
+            start = end;
+        }
+    }
+
+    Ok(ranks)
+}
+
+/// Compute Kendall's tau-b for two rows.
+fn kendall_tau_pair<A>(first: ArrayView1<'_, A>, second: ArrayView1<'_, A>) -> A
+where
+    A: Float + FromPrimitive,
+{
+    if first.iter().any(|value| value.is_nan()) || second.iter().any(|value| value.is_nan()) {
+        return A::nan();
+    }
+
+    let mut pairs: Vec<(A, A)> = first.iter().copied().zip(second.iter().copied()).collect();
+    pairs.sort_unstable_by(|left, right| {
+        left.0
+            .partial_cmp(&right.0)
+            .unwrap_or(Ordering::Equal)
+            .then_with(|| left.1.partial_cmp(&right.1).unwrap_or(Ordering::Equal))
+    });
+
+    let mut first_values: Vec<A> = pairs.iter().map(|(first, _)| *first).collect();
+    first_values.sort_unstable_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
+
+    let mut second_values: Vec<A> = pairs.iter().map(|(_, second)| *second).collect();
+    second_values
+        .sort_unstable_by(|left, right| left.partial_cmp(right).unwrap_or(Ordering::Equal));
+    let mut unique_second_values = second_values.clone();
+    unique_second_values.dedup_by(|left, right| *left == *right);
+
+    let total_pairs = choose_two(pairs.len());
+    let first_ties = count_tied_pairs(&first_values, |left, right| left == right);
+    let second_ties = count_tied_pairs(&second_values, |left, right| left == right);
+    let both_ties = count_tied_pairs(&pairs, |left, right| left.0 == right.0 && left.1 == right.1);
+
+    let mut fenwick = FenwickTree::new(unique_second_values.len());
+    let mut discordant = 0_u128;
+    for (seen, (_, value)) in pairs.iter().enumerate() {
+        let seen = seen as u128;
+        let rank = unique_second_values
+            .binary_search_by(|probe| probe.partial_cmp(value).unwrap_or(Ordering::Equal))
+            .unwrap();
+        let less_than_or_equal = fenwick.prefix_sum(rank + 1);
+        discordant += seen - less_than_or_equal;
+        fenwick.add(rank);
+    }
+
+    let tied_union = first_ties + second_ties - both_ties;
+    let pairs_without_ties = total_pairs - tied_union;
+    let concordant = pairs_without_ties - discordant;
+    let numerator = A::from_u128(concordant).unwrap() - A::from_u128(discordant).unwrap();
+    let denominator_left = A::from_u128(total_pairs - first_ties).unwrap();
+    let denominator_right = A::from_u128(total_pairs - second_ties).unwrap();
+    let denominator = (denominator_left * denominator_right).sqrt();
+
+    if denominator == A::zero() {
+        A::nan()
+    } else {
+        numerator / denominator
+    }
+}
+
+fn choose_two(value: usize) -> u128 {
+    let value = value as u128;
+    value * value.saturating_sub(1) / 2
+}
+
+fn count_tied_pairs<T, F>(values: &[T], mut equal: F) -> u128
+where
+    F: FnMut(&T, &T) -> bool,
+{
+    if values.is_empty() {
+        return 0;
+    }
+
+    let mut tied_pairs = 0;
+    let mut run_length = 1;
+    for index in 1..values.len() {
+        if equal(&values[index - 1], &values[index]) {
+            run_length += 1;
+        } else {
+            tied_pairs += choose_two(run_length);
+            run_length = 1;
+        }
+    }
+    tied_pairs + choose_two(run_length)
+}
+
+struct FenwickTree {
+    counts: Vec<u128>,
+}
+
+impl FenwickTree {
+    fn new(length: usize) -> Self {
+        Self {
+            counts: vec![0; length + 1],
+        }
+    }
+
+    fn add(&mut self, index: usize) {
+        let mut index = index + 1;
+        while index < self.counts.len() {
+            self.counts[index] += 1;
+            index += index & (!index + 1);
+        }
+    }
+
+    fn prefix_sum(&self, mut end: usize) -> u128 {
+        let mut sum = 0;
+        while end > 0 {
+            sum += self.counts[end];
+            end &= end - 1;
+        }
+        sum
+    }
 }
 
 #[cfg(test)]

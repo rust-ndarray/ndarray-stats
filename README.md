@@ -11,7 +11,7 @@ Currently available routines include:
 - order statistics (minimum, maximum, median, quantiles, etc.);
 - summary statistics (mean, mode, raw/central/standardized moments, skewness, kurtosis, etc.)
 - partitioning;
-- correlation analysis (covariance, pearson correlation);
+- correlation analysis (covariance, Pearson, Spearman, and Kendall tau correlations);
 - measures from information theory (entropy, KL divergence, etc.);
 - deviation functions (distances, counts, errors, etc.);
 - histogram computation.

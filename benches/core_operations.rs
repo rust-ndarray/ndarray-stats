@@ -5,10 +5,7 @@ use ndarray::{Array, Array1, Array2};
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use ndarray_stats::histogram::{strategies::Auto, GridBuilder, HistogramExt};
-use ndarray_stats::{
-    interpolate::Linear, CorrelationExt, DeviationExt, EntropyExt, Quantile1dExt,
-    SummaryStatisticsExt,
-};
+use ndarray_stats::{interpolate::Linear, CorrelationExt, DeviationExt, EntropyExt, Quantile1dExt};
 use noisy_float::types::n64;
 
 fn mean(c: &mut Criterion) {
@@ -19,7 +16,7 @@ fn mean(c: &mut Criterion) {
         let data = Array::random(*len, Uniform::new(-1.0, 1.0).unwrap());
         let data_view = data.view();
         group.bench_with_input(format!("{}", len), len, |b, _| {
-            b.iter(|| black_box(SummaryStatisticsExt::mean(&*data_view).unwrap()))
+            b.iter(|| black_box(data_view.mean().unwrap()))
         });
     }
     group.finish();
@@ -56,6 +53,36 @@ fn pearson_correlation(c: &mut Criterion) {
         let data = Array::random((3, *len), Uniform::new(-1.0, 1.0).unwrap());
         group.bench_with_input(format!("{}", len), len, |b, _| {
             b.iter(|| black_box(data.pearson_correlation().unwrap()))
+        });
+    }
+    group.finish();
+}
+
+fn spearman_correlation(c: &mut Criterion) {
+    let lens = vec![10, 100, 1000, 10000];
+    let mut group = c.benchmark_group("spearman_correlation");
+    group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
+    for len in &lens {
+        let data = Array::from_shape_fn((3, *len), |(row, column)| {
+            ((row * 7 + column % 32) % 32) as f64
+        });
+        group.bench_with_input(format!("{}", len), len, |b, _| {
+            b.iter(|| black_box(data.spearman_correlation().unwrap()))
+        });
+    }
+    group.finish();
+}
+
+fn kendall_tau(c: &mut Criterion) {
+    let lens = vec![10, 100, 1000, 10000];
+    let mut group = c.benchmark_group("kendall_tau");
+    group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
+    for len in &lens {
+        let data = Array::from_shape_fn((3, *len), |(row, column)| {
+            ((row * 11 + column % 32) % 32) as f64
+        });
+        group.bench_with_input(format!("{}", len), len, |b, _| {
+            b.iter(|| black_box(data.kendall_tau().unwrap()))
         });
     }
     group.finish();
@@ -112,6 +139,6 @@ fn l1_dist(c: &mut Criterion) {
 criterion_group! {
     name = benches;
     config = Criterion::default();
-    targets = mean, quantiles_mut, pearson_correlation, entropy, histogram, l1_dist
+    targets = mean, quantiles_mut, pearson_correlation, spearman_correlation, kendall_tau, entropy, histogram, l1_dist
 }
 criterion_main!(benches);
