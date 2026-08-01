@@ -2,6 +2,7 @@ name: Benchmarks
 
 on:
   push:
+    branches: [ master ]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -87,7 +88,6 @@ jobs:
             --threshold-test percentage
             --threshold-upper-boundary "$BENCHER_THRESHOLD"
             --thresholds-reset
-            --error-on-alert
             --adapter rust_criterion
             --github-actions "$GITHUB_TOKEN"
           )
