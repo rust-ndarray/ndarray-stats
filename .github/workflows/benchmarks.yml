@@ -1,0 +1,152 @@
+name: Benchmarks
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+env:
+  CARGO_TERM_COLOR: always
+  # Ten percent is a useful default for noisy shared CI runners. Adjust this
+  # repository-level value if the project needs a stricter or looser boundary.
+  BENCHER_THRESHOLD: "0.10"
+  CARGO_TARGET_DIR: ${{ runner.temp }}/ndarray-stats-target
+
+jobs:
+  benchmark:
+    name: Test and benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run functionality tests
+        run: cargo test --locked
+
+      # Bencher Cloud requires a project and API key. Keeping the check in a
+      # step makes forked pull requests safely fall back to artifacts because
+      # GitHub does not expose repository secrets to them.
+      - name: Detect Bencher configuration
+        id: bencher
+        shell: bash
+        env:
+          BENCHER_API_KEY: ${{ secrets.BENCHER_API_KEY }}
+          BENCHER_PROJECT: ${{ vars.BENCHER_PROJECT }}
+        run: |
+          if [[ -n "$BENCHER_API_KEY" && -n "$BENCHER_PROJECT" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Bencher CLI
+        if: steps.bencher.outputs.enabled == 'true'
+        uses: bencherdev/bencher@main
+
+      - name: Track Criterion benchmarks with Bencher
+        if: steps.bencher.outputs.enabled == 'true'
+        shell: bash
+        env:
+          BENCHER_API_KEY: ${{ secrets.BENCHER_API_KEY }}
+          BENCHER_PROJECT: ${{ vars.BENCHER_PROJECT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            branch="$GITHUB_HEAD_REF"
+          else
+            branch="$GITHUB_REF_NAME"
+          fi
+
+          bencher_args=(
+            run
+            --project "$BENCHER_PROJECT"
+            --key "$BENCHER_API_KEY"
+            --branch "$branch"
+            --testbed ubuntu-latest
+            --threshold-measure latency
+            --threshold-test percentage
+            --threshold-upper-boundary "$BENCHER_THRESHOLD"
+            --thresholds-reset
+            --error-on-alert
+            --adapter rust_criterion
+            --github-actions "$GITHUB_TOKEN"
+          )
+
+          # A master push seeds/updates the base-branch history. All other
+          # runs compare their branch with the latest master results.
+          if [[ "$GITHUB_EVENT_NAME" != "push" || "$GITHUB_REF_NAME" != "master" ]]; then
+            bencher_args+=(
+              --start-point master
+              --start-point-reset
+              --start-point-clone-thresholds
+            )
+          fi
+
+          # Do not expose the Bencher key to the benchmarked crate.
+          env -u BENCHER_API_KEY bencher "${bencher_args[@]}" \
+            'for bench in sort summary_statistics deviation; do cargo bench --locked --bench "$bench"; done'
+
+      - name: Fetch master for local Criterion comparison
+        if: steps.bencher.outputs.enabled != 'true' && (github.event_name != 'push' || github.ref_name != 'master')
+        run: git fetch origin master --depth=1
+
+      - name: Benchmark master baseline with Criterion
+        if: steps.bencher.outputs.enabled != 'true' && (github.event_name != 'push' || github.ref_name != 'master')
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          master_worktree="$RUNNER_TEMP/ndarray-stats-master"
+          git worktree add --detach "$master_worktree" origin/master
+          for bench in sort summary_statistics deviation; do
+            cargo bench --manifest-path "$master_worktree/Cargo.toml" \
+              --locked --bench "$bench" -- --save-baseline master
+          done
+          git worktree remove --force "$master_worktree"
+
+      - name: Run local Criterion comparison
+        if: steps.bencher.outputs.enabled != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" != "push" || "$GITHUB_REF_NAME" != "master" ]]; then
+            for bench in sort summary_statistics deviation; do
+              cargo bench --locked --bench "$bench" -- --baseline master 2>&1 | \
+                tee -a "$RUNNER_TEMP/criterion-summary.txt"
+            done
+          else
+            for bench in sort summary_statistics deviation; do
+              cargo bench --locked --bench "$bench" 2>&1 | \
+                tee -a "$RUNNER_TEMP/criterion-summary.txt"
+            done
+          fi
+
+      - name: Upload Criterion reports
+        if: always() && steps.bencher.outputs.enabled != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/criterion-summary.txt
+            ${{ runner.temp }}/ndarray-stats-target/criterion
+          if-no-files-found: warn
+          retention-days: 14
