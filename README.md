@@ -9,7 +9,7 @@ This crate provides statistical methods for [`ndarray`]'s `ArrayRef` type.
 
 Currently available routines include:
 - order statistics (minimum, maximum, median, quantiles, etc.);
-- summary statistics (mean, skewness, kurtosis, central moments, etc.)
+- summary statistics (mean, mode, raw/central/standardized moments, skewness, kurtosis, etc.)
 - partitioning;
 - correlation analysis (covariance, pearson correlation);
 - measures from information theory (entropy, KL divergence, etc.);
