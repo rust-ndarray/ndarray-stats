@@ -90,8 +90,6 @@ jobs:
             --error-on-alert
             --adapter rust_criterion
             --github-actions "$GITHUB_TOKEN"
-            --format human
-            --quiet
           )
 
           # A master push seeds/updates the base-branch history. All other
@@ -106,24 +104,7 @@ jobs:
 
           # Do not expose the Bencher key to the benchmarked crate.
           env -u BENCHER_API_KEY bencher "${bencher_args[@]}" \
-            'for bench in sort summary_statistics deviation; do cargo bench --locked --bench "$bench"; done' \
-            2>&1 | tee "$RUNNER_TEMP/bencher-report.txt"
-
-      - name: Add Bencher report to job summary
-        if: always() && steps.bencher.outputs.enabled == 'true'
-        shell: bash
-        run: |
-          {
-            echo "## Bencher benchmark report"
-            echo
-            echo '```text'
-            if [[ -s "$RUNNER_TEMP/bencher-report.txt" ]]; then
-              cat "$RUNNER_TEMP/bencher-report.txt"
-            else
-              echo "Bencher did not produce a report."
-            fi
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+            'for bench in sort summary_statistics deviation; do cargo bench --locked --bench "$bench"; done'
 
       - name: Fetch master for local Criterion comparison
         if: steps.bencher.outputs.enabled != 'true' && (github.event_name != 'push' || github.ref_name != 'master')
@@ -161,21 +142,159 @@ jobs:
             done
           fi
 
-      - name: Add Criterion report to job summary
-        if: always() && steps.bencher.outputs.enabled != 'true'
+      - name: Create custom benchmark summary
+        if: always()
         shell: bash
+        env:
+          BENCHER_ENABLED: ${{ steps.bencher.outputs.enabled }}
+          BENCHER_PROJECT: ${{ vars.BENCHER_PROJECT }}
         run: |
-          {
-            echo "## Criterion benchmark report"
-            echo
-            echo '```text'
-            if [[ -s "$RUNNER_TEMP/criterion-summary.txt" ]]; then
-              cat "$RUNNER_TEMP/criterion-summary.txt"
+          set -euo pipefail
+
+          format_ns() {
+            local value="$1"
+            if [[ -z "$value" || "$value" == "null" ]]; then
+              printf "n/a"
             else
-              echo "Criterion did not produce a report."
+              awk -v ns="$value" 'BEGIN {
+                if (ns >= 1000000000) printf "%.3f s", ns / 1000000000
+                else if (ns >= 1000000) printf "%.3f ms", ns / 1000000
+                else if (ns >= 1000) printf "%.3f us", ns / 1000
+                else printf "%.3f ns", ns
+              }'
             fi
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          }
+
+          format_pct() {
+            local current="$1"
+            local baseline="$2"
+            if [[ -z "$current" || -z "$baseline" || "$baseline" == "0" ]]; then
+              printf "n/a"
+            else
+              awk -v current="$current" -v baseline="$baseline" \
+                'BEGIN { printf "%+.2f%%", (current / baseline - 1) * 100 }'
+            fi
+          }
+
+          escape_markdown() {
+            local value="$1"
+            value="${value//|/\\|}"
+            value="${value//$'\n'/ }"
+            printf "%s" "$value"
+          }
+
+          context_row() {
+            printf '| %s | %s |\n' "$1" "$(escape_markdown "$2")"
+          }
+
+          package=$(cargo metadata --no-deps --format-version 1 | jq -r \
+            '.packages[0] | "\(.name) v\(.version)"')
+          rust_version=$(rustc --version)
+          commit="${GITHUB_SHA:0:12}"
+
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            branch="$GITHUB_HEAD_REF"
+          else
+            branch="$GITHUB_REF_NAME"
+          fi
+
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF_NAME" == "master" ]]; then
+            comparison="master branch history"
+          else
+            comparison="master baseline"
+          fi
+
+          if [[ "$BENCHER_ENABLED" == "true" ]]; then
+            backend="Bencher (rust_criterion)"
+            baseline_info="Bencher comparison against $comparison"
+          else
+            backend="Criterion artifact fallback"
+            baseline_info="Local Criterion comparison against $comparison"
+          fi
+
+          summary_file="$RUNNER_TEMP/custom-benchmark-summary.md"
+          {
+            echo "## Custom benchmark summary"
+            echo
+            echo "The table below is generated from Criterion estimates. Inputs are the benchmark IDs registered by each Criterion group."
+            echo
+            echo "| Benchmark | Input | Mean | Median | Std. dev. | 95% mean CI | Mean change |"
+            echo "|---|---:|---:|---:|---:|---:|---:|"
+
+            benchmark_count=0
+            if [[ -d target/criterion ]]; then
+              while IFS= read -r -d '' estimate; do
+                relative="${estimate#target/criterion/}"
+                benchmark_path="${relative%/new/estimates.json}"
+                input="${benchmark_path##*/}"
+                if [[ "$benchmark_path" == "$input" ]]; then
+                  benchmark_name="$benchmark_path"
+                  input="n/a"
+                else
+                  benchmark_name="${benchmark_path%/$input}"
+                fi
+
+                mean=$(jq -r '.mean.point_estimate // empty' "$estimate")
+                median=$(jq -r '.median.point_estimate // empty' "$estimate")
+                std_dev=$(jq -r '.std_dev.point_estimate // empty' "$estimate")
+                ci_lower=$(jq -r '.mean.confidence_interval.lower_bound // empty' "$estimate")
+                ci_upper=$(jq -r '.mean.confidence_interval.upper_bound // empty' "$estimate")
+                mean_change="n/a"
+
+                base_estimate="${estimate%/new/estimates.json}/base/estimates.json"
+                if [[ "$BENCHER_ENABLED" != "true" && "$comparison" == "master baseline" && -f "$base_estimate" ]]; then
+                  base_mean=$(jq -r '.mean.point_estimate // empty' "$base_estimate")
+                  mean_change=$(format_pct "$mean" "$base_mean")
+                elif [[ "$BENCHER_ENABLED" == "true" ]]; then
+                  if [[ "$comparison" == "master baseline" ]]; then
+                    mean_change="see Bencher alert"
+                  else
+                    mean_change="tracked by Bencher"
+                  fi
+                fi
+
+                printf '| %s | %s | %s | %s | %s | %s-%s | %s |\n' \
+                  "$(escape_markdown "$benchmark_name")" \
+                  "$(escape_markdown "$input")" \
+                  "$(format_ns "$mean")" \
+                  "$(format_ns "$median")" \
+                  "$(format_ns "$std_dev")" \
+                  "$(format_ns "$ci_lower")" \
+                  "$(format_ns "$ci_upper")" \
+                  "$mean_change"
+                benchmark_count=$((benchmark_count + 1))
+              done < <(find target/criterion -type f -path '*/new/estimates.json' -print0 | sort -z)
+            fi
+
+            if (( benchmark_count == 0 )); then
+              echo "| _No Criterion estimates were produced._ | | | | | | |"
+            fi
+
+            echo
+            echo "### Benchmark context"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            context_row "Package" "$package"
+            context_row "Commit" "$commit"
+            context_row "Event" "$GITHUB_EVENT_NAME"
+            context_row "Branch" "$branch"
+            context_row "Workflow run" "$GITHUB_RUN_ID"
+            context_row "Runner" "$RUNNER_OS / ubuntu-latest"
+            context_row "Rust" "$rust_version"
+            context_row "Features" "default"
+            context_row "Benchmark targets" "sort, summary_statistics, deviation"
+            context_row "Backend" "$backend"
+            context_row "Comparison" "$baseline_info"
+            context_row "Bencher project" "${BENCHER_PROJECT:-not configured}"
+            if [[ "$BENCHER_ENABLED" == "true" ]]; then
+              context_row "Threshold" "10% upper boundary"
+            else
+              context_row "Threshold" "not enforced by artifact fallback"
+            fi
+          } > "$summary_file"
+
+          cat "$summary_file" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Criterion reports
         if: always() && steps.bencher.outputs.enabled != 'true'
@@ -184,6 +303,7 @@ jobs:
           name: criterion-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/criterion-summary.txt
+            ${{ runner.temp }}/custom-benchmark-summary.md
             target/criterion
           if-no-files-found: warn
           retention-days: 14

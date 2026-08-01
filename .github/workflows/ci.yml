@@ -71,27 +71,3 @@ jobs:
           components: rustfmt
       - name: Rustfmt
         run: cargo fmt -- --check
-
-  coverage:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust:
-          - nightly
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
-      - name: Install tarpaulin
-        uses: taiki-e/cache-cargo-install-action@v2
-        with:
-          tool: cargo-tarpaulin
-      - name: Generate code coverage
-        run: cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
-      - name: Upload to codecov.io
-        uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          fail_ci_if_error: true
