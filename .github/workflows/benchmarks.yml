@@ -16,7 +16,9 @@ env:
   # Ten percent is a useful default for noisy shared CI runners. Adjust this
   # repository-level value if the project needs a stricter or looser boundary.
   BENCHER_THRESHOLD: "0.10"
-  CARGO_TARGET_DIR: ${{ runner.temp }}/ndarray-stats-target
+  # A relative path is valid from the checkout and is available at workflow
+  # parse time, unlike the runner context used by the previous configuration.
+  CARGO_TARGET_DIR: target
 
 jobs:
   benchmark:
@@ -147,6 +149,6 @@ jobs:
           name: criterion-${{ github.run_id }}
           path: |
             ${{ runner.temp }}/criterion-summary.txt
-            ${{ runner.temp }}/ndarray-stats-target/criterion
+            target/criterion
           if-no-files-found: warn
           retention-days: 14
