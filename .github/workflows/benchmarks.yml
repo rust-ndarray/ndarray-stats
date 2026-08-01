@@ -90,6 +90,8 @@ jobs:
             --error-on-alert
             --adapter rust_criterion
             --github-actions "$GITHUB_TOKEN"
+            --format human
+            --quiet
           )
 
           # A master push seeds/updates the base-branch history. All other
@@ -104,7 +106,24 @@ jobs:
 
           # Do not expose the Bencher key to the benchmarked crate.
           env -u BENCHER_API_KEY bencher "${bencher_args[@]}" \
-            'for bench in sort summary_statistics deviation; do cargo bench --locked --bench "$bench"; done'
+            'for bench in sort summary_statistics deviation; do cargo bench --locked --bench "$bench"; done' \
+            2>&1 | tee "$RUNNER_TEMP/bencher-report.txt"
+
+      - name: Add Bencher report to job summary
+        if: always() && steps.bencher.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Bencher benchmark report"
+            echo
+            echo '```text'
+            if [[ -s "$RUNNER_TEMP/bencher-report.txt" ]]; then
+              cat "$RUNNER_TEMP/bencher-report.txt"
+            else
+              echo "Bencher did not produce a report."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fetch master for local Criterion comparison
         if: steps.bencher.outputs.enabled != 'true' && (github.event_name != 'push' || github.ref_name != 'master')
@@ -141,6 +160,22 @@ jobs:
                 tee -a "$RUNNER_TEMP/criterion-summary.txt"
             done
           fi
+
+      - name: Add Criterion report to job summary
+        if: always() && steps.bencher.outputs.enabled != 'true'
+        shell: bash
+        run: |
+          {
+            echo "## Criterion benchmark report"
+            echo
+            echo '```text'
+            if [[ -s "$RUNNER_TEMP/criterion-summary.txt" ]]; then
+              cat "$RUNNER_TEMP/criterion-summary.txt"
+            else
+              echo "Criterion did not produce a report."
+            fi
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload Criterion reports
         if: always() && steps.bencher.outputs.enabled != 'true'
