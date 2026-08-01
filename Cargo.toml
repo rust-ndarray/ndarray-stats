@@ -48,3 +48,7 @@ harness = false
 [[bench]]
 name = "deviation"
 harness = false
+
+[[bench]]
+name = "core_operations"
+harness = false

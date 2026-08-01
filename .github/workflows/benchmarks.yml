@@ -104,7 +104,7 @@ jobs:
 
           # Do not expose the Bencher key to the benchmarked crate.
           env -u BENCHER_API_KEY bencher "${bencher_args[@]}" \
-            'for bench in sort summary_statistics deviation; do cargo bench --locked --bench "$bench"; done'
+            'for bench in sort summary_statistics deviation core_operations; do cargo bench --locked --bench "$bench"; done'
 
       - name: Fetch master for local Criterion comparison
         if: steps.bencher.outputs.enabled != 'true' && (github.event_name != 'push' || github.ref_name != 'master')
@@ -117,10 +117,17 @@ jobs:
           set -euo pipefail
 
           master_worktree="$RUNNER_TEMP/ndarray-stats-master"
+          baseline_targets="$RUNNER_TEMP/criterion-baseline-targets"
+          : > "$baseline_targets"
           git worktree add --detach "$master_worktree" origin/master
-          for bench in sort summary_statistics deviation; do
-            cargo bench --manifest-path "$master_worktree/Cargo.toml" \
-              --locked --bench "$bench" -- --save-baseline master
+          for bench in sort summary_statistics deviation core_operations; do
+            if grep -q "name = \"$bench\"" "$master_worktree/Cargo.toml"; then
+              cargo bench --manifest-path "$master_worktree/Cargo.toml" \
+                --locked --bench "$bench" -- --save-baseline master
+              echo "$bench" >> "$baseline_targets"
+            else
+              echo "Skipping $bench: it is not present on master yet."
+            fi
           done
           git worktree remove --force "$master_worktree"
 
@@ -131,12 +138,19 @@ jobs:
           set -euo pipefail
 
           if [[ "$GITHUB_EVENT_NAME" != "push" || "$GITHUB_REF_NAME" != "master" ]]; then
-            for bench in sort summary_statistics deviation; do
-              cargo bench --locked --bench "$bench" -- --baseline master 2>&1 | \
-                tee -a "$RUNNER_TEMP/criterion-summary.txt"
+            for bench in sort summary_statistics deviation core_operations; do
+              if grep -Fxq "$bench" "$RUNNER_TEMP/criterion-baseline-targets"; then
+                cargo bench --locked --bench "$bench" -- --baseline master 2>&1 | \
+                  tee -a "$RUNNER_TEMP/criterion-summary.txt"
+              else
+                echo "No master baseline for $bench; measuring without comparison." | \
+                  tee -a "$RUNNER_TEMP/criterion-summary.txt"
+                cargo bench --locked --bench "$bench" 2>&1 | \
+                  tee -a "$RUNNER_TEMP/criterion-summary.txt"
+              fi
             done
           else
-            for bench in sort summary_statistics deviation; do
+            for bench in sort summary_statistics deviation core_operations; do
               cargo bench --locked --bench "$bench" 2>&1 | \
                 tee -a "$RUNNER_TEMP/criterion-summary.txt"
             done
@@ -283,7 +297,8 @@ jobs:
             context_row "Runner" "$RUNNER_OS / ubuntu-latest"
             context_row "Rust" "$rust_version"
             context_row "Features" "default"
-            context_row "Benchmark targets" "sort, summary_statistics, deviation"
+            context_row "Benchmark targets" "sort, summary_statistics, deviation, core_operations"
+            context_row "Input shapes" "1-D n; correlation 3 x n; histogram n x 2"
             context_row "Backend" "$backend"
             context_row "Comparison" "$baseline_info"
             context_row "Bencher project" "${BENCHER_PROJECT:-not configured}"
