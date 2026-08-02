@@ -3,12 +3,152 @@ use ndarray::{arr0, array, Array, Array1, Array2, Axis};
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use ndarray_stats::{
-    errors::{EmptyInput, MultiInputError, ShapeMismatch},
+    errors::{EmptyInput, MultiInputError, ShapeMismatch, SummaryStatisticsError},
     SummaryStatisticsExt,
 };
 use noisy_float::types::N64;
 use quickcheck::{quickcheck, TestResult};
 use std::f64;
+
+#[test]
+fn descriptive_statistics_known_values() {
+    let a = array![1.0, 2.0, 2.0, 3.0];
+    let summary = a.descriptive_statistics().unwrap();
+
+    assert_eq!(summary.count(), 4);
+    assert_eq!(summary.min(), 1.0);
+    assert_eq!(summary.max(), 3.0);
+    assert_abs_diff_eq!(summary.mean(), 2.0, epsilon = 1e-12);
+    assert_abs_diff_eq!(summary.population_variance(), 0.5, epsilon = 1e-12);
+    assert_abs_diff_eq!(summary.sample_variance(), 2.0 / 3.0, epsilon = 1e-12);
+    assert_abs_diff_eq!(summary.population_std(), 0.5_f64.sqrt(), epsilon = 1e-12);
+    assert_abs_diff_eq!(
+        summary.sample_std(),
+        (2.0_f64 / 3.0).sqrt(),
+        epsilon = 1e-12
+    );
+}
+
+#[test]
+fn descriptive_statistics_supports_f32() {
+    let summary = array![1.0_f32, 2.0, 3.0].descriptive_statistics().unwrap();
+
+    assert_eq!(summary.count(), 3);
+    assert_abs_diff_eq!(summary.mean(), 2.0_f32, epsilon = 1e-6);
+    assert_abs_diff_eq!(summary.population_variance(), 2.0_f32 / 3.0, epsilon = 1e-6);
+    assert_abs_diff_eq!(summary.sample_variance(), 1.0_f32, epsilon = 1e-6);
+}
+
+#[test]
+fn descriptive_statistics_reports_empty_input() {
+    let a: Array1<f64> = array![];
+
+    assert_eq!(
+        a.descriptive_statistics(),
+        Err(SummaryStatisticsError::EmptyInput)
+    );
+    assert_eq!(
+        a.descriptive_statistics_axis(Axis(0)),
+        Err(SummaryStatisticsError::EmptyInput)
+    );
+}
+
+#[test]
+fn descriptive_statistics_preserves_undefined_order_behavior() {
+    let a = array![1.0, f64::NAN];
+    assert_eq!(
+        a.descriptive_statistics(),
+        Err(SummaryStatisticsError::UndefinedOrder)
+    );
+    assert_eq!(
+        a.descriptive_statistics_axis(Axis(0)),
+        Err(SummaryStatisticsError::UndefinedOrder)
+    );
+
+    let singleton = array![f64::NAN];
+    let summary = singleton.descriptive_statistics().unwrap();
+    assert!(summary.mean().is_nan());
+    assert!(summary.min().is_nan());
+    assert!(summary.max().is_nan());
+}
+
+#[test]
+fn descriptive_statistics_sample_one_observation_uses_float_semantics() {
+    let summary = array![42.0_f64].descriptive_statistics().unwrap();
+
+    assert_eq!(summary.population_variance(), 0.0);
+    assert_eq!(summary.population_std(), 0.0);
+    assert!(summary.sample_variance().is_nan());
+    assert!(summary.sample_std().is_nan());
+}
+
+#[test]
+fn descriptive_statistics_axis_preserves_shape_and_values() {
+    let a = array![[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]];
+
+    let columns = a.descriptive_statistics_axis(Axis(0)).unwrap();
+    assert_eq!(columns.shape(), &[3]);
+    for (summary, (mean, min, max)) in
+        columns
+            .iter()
+            .zip([(2.5, 1.0, 4.0), (3.5, 2.0, 5.0), (4.5, 3.0, 6.0)])
+    {
+        assert_eq!(summary.count(), 2);
+        assert_abs_diff_eq!(summary.mean(), mean, epsilon = 1e-12);
+        assert_abs_diff_eq!(summary.min(), min, epsilon = 1e-12);
+        assert_abs_diff_eq!(summary.max(), max, epsilon = 1e-12);
+        assert_abs_diff_eq!(summary.population_variance(), 2.25, epsilon = 1e-12);
+        assert_abs_diff_eq!(summary.sample_variance(), 4.5, epsilon = 1e-12);
+    }
+
+    let rows = a.descriptive_statistics_axis(Axis(1)).unwrap();
+    assert_eq!(rows.shape(), &[2]);
+    assert_abs_diff_eq!(rows[0].mean(), 2.0, epsilon = 1e-12);
+    assert_abs_diff_eq!(rows[1].mean(), 5.0, epsilon = 1e-12);
+    assert_eq!(rows[0].min(), 1.0);
+    assert_eq!(rows[1].max(), 6.0);
+}
+
+#[test]
+fn descriptive_statistics_matches_reference_for_finite_values() {
+    fn prop(values: Vec<f64>) -> TestResult {
+        if values.is_empty() {
+            return TestResult::discard();
+        }
+
+        let values: Vec<f64> = values.into_iter().map(|value| value % 100.0).collect();
+        let array = Array1::from(values.clone());
+        let summary = array.descriptive_statistics().unwrap();
+        let count = values.len() as f64;
+        let mean = values.iter().sum::<f64>() / count;
+        let sum_squared = values
+            .iter()
+            .map(|value| (value - mean).powi(2))
+            .sum::<f64>();
+        let min = values.iter().copied().fold(f64::INFINITY, f64::min);
+        let max = values.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+
+        TestResult::from_bool(
+            summary.count() == values.len()
+                && abs_diff_eq!(summary.mean(), mean, epsilon = 1e-10)
+                && abs_diff_eq!(
+                    summary.population_variance(),
+                    sum_squared / count,
+                    epsilon = 1e-8
+                )
+                && (summary.sample_variance().is_nan()
+                    || abs_diff_eq!(
+                        summary.sample_variance(),
+                        sum_squared / (count - 1.0),
+                        epsilon = 1e-8
+                    ))
+                && summary.min() == min
+                && summary.max() == max,
+        )
+    }
+
+    quickcheck(prop as fn(Vec<f64>) -> TestResult);
+}
 
 #[test]
 fn test_with_nan_values() {

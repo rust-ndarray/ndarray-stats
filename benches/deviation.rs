@@ -6,8 +6,10 @@ use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use ndarray_stats::DeviationExt;
 
+mod common;
+
 fn sq_l2_dist(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("sq_l2_dist");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {

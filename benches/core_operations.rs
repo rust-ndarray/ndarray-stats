@@ -8,8 +8,10 @@ use ndarray_stats::histogram::{strategies::Auto, GridBuilder, HistogramExt};
 use ndarray_stats::{interpolate::Linear, CorrelationExt, DeviationExt, EntropyExt, Quantile1dExt};
 use noisy_float::types::n64;
 
+mod common;
+
 fn mean(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("mean");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
@@ -23,7 +25,7 @@ fn mean(c: &mut Criterion) {
 }
 
 fn quantiles_mut(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let quantile_indexes = Array1::from_vec(vec![n64(0.25), n64(0.5), n64(0.75)]);
     let mut group = c.benchmark_group("quantiles_mut");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
@@ -46,7 +48,7 @@ fn quantiles_mut(c: &mut Criterion) {
 }
 
 fn pearson_correlation(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("pearson_correlation");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
@@ -59,7 +61,7 @@ fn pearson_correlation(c: &mut Criterion) {
 }
 
 fn spearman_correlation(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("spearman_correlation");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
@@ -74,7 +76,7 @@ fn spearman_correlation(c: &mut Criterion) {
 }
 
 fn kendall_tau(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("kendall_tau");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
@@ -89,7 +91,7 @@ fn kendall_tau(c: &mut Criterion) {
 }
 
 fn entropy(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("entropy");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
@@ -103,7 +105,7 @@ fn entropy(c: &mut Criterion) {
 }
 
 fn histogram(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("histogram");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
@@ -123,7 +125,7 @@ fn histogram(c: &mut Criterion) {
 }
 
 fn l1_dist(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("l1_dist");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {

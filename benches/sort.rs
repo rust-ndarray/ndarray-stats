@@ -5,8 +5,10 @@ use ndarray::prelude::*;
 use ndarray_stats::Sort1dExt;
 use rand::prelude::*;
 
+mod common;
+
 fn get_from_sorted_mut(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("get_from_sorted_mut");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {
@@ -30,7 +32,7 @@ fn get_from_sorted_mut(c: &mut Criterion) {
 }
 
 fn get_many_from_sorted_mut(c: &mut Criterion) {
-    let lens = vec![10, 100, 1000, 10000];
+    let lens = common::benchmark_lengths();
     let mut group = c.benchmark_group("get_many_from_sorted_mut");
     group.plot_config(PlotConfiguration::default().summary_scale(AxisScale::Logarithmic));
     for len in &lens {

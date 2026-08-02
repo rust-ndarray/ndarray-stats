@@ -36,7 +36,7 @@ pub use crate::histogram::HistogramExt;
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
 pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
 pub use crate::sort::Sort1dExt;
-pub use crate::summary_statistics::SummaryStatisticsExt;
+pub use crate::summary_statistics::{DescriptiveStatistics, SummaryStatisticsExt};
 
 #[cfg(test)]
 #[macro_use]

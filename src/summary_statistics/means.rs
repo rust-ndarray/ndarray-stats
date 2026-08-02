@@ -1,5 +1,6 @@
+use super::DescriptiveStatistics;
 use super::SummaryStatisticsExt;
-use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch};
+use crate::errors::{EmptyInput, MultiInputError, ShapeMismatch, SummaryStatisticsError};
 use ndarray::{Array, ArrayBase, ArrayRef, Axis, Data, Dimension, Ix1, RemoveAxis};
 use num_integer::IterBinomial;
 use num_traits::{Float, FromPrimitive, Zero};
@@ -9,6 +10,36 @@ impl<A, D> SummaryStatisticsExt<A, D> for ArrayRef<A, D>
 where
     D: Dimension,
 {
+    fn descriptive_statistics(&self) -> Result<DescriptiveStatistics<A>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive,
+    {
+        DescriptiveStatistics::from_iter(self.iter().copied())
+    }
+
+    fn descriptive_statistics_axis(
+        &self,
+        axis: Axis,
+    ) -> Result<Array<DescriptiveStatistics<A>, D::Smaller>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive,
+        D: RemoveAxis,
+    {
+        if self.is_empty() {
+            return Err(SummaryStatisticsError::EmptyInput);
+        }
+
+        let shape = self.raw_dim().remove_axis(axis);
+        let summaries = self
+            .lanes(axis)
+            .into_iter()
+            .map(|lane| DescriptiveStatistics::from_iter(lane.iter().copied()))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Array::from_shape_vec(shape, summaries)
+            .expect("descriptive-statistics lanes must match the output shape"))
+    }
+
     fn mean(&self) -> Result<A, EmptyInput>
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero,

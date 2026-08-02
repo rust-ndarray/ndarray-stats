@@ -15,6 +15,34 @@ impl fmt::Display for EmptyInput {
 
 impl Error for EmptyInput {}
 
+/// An error returned when computing a descriptive-statistics summary.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SummaryStatisticsError {
+    /// The input array, or one of its summary lanes, was empty.
+    EmptyInput,
+    /// A pairwise ordering required for the minimum or maximum was undefined.
+    UndefinedOrder,
+}
+
+impl fmt::Display for SummaryStatisticsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SummaryStatisticsError::EmptyInput => write!(f, "Empty input."),
+            SummaryStatisticsError::UndefinedOrder => {
+                write!(f, "Undefined ordering between a tested pair of values.")
+            }
+        }
+    }
+}
+
+impl Error for SummaryStatisticsError {}
+
+impl From<EmptyInput> for SummaryStatisticsError {
+    fn from(_: EmptyInput) -> Self {
+        SummaryStatisticsError::EmptyInput
+    }
+}
+
 /// An error computing a minimum/maximum value.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum MinMaxError {

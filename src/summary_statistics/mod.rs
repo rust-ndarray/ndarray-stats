@@ -1,8 +1,12 @@
 //! Summary statistics (e.g. mean, variance, etc.).
-use crate::errors::{EmptyInput, MultiInputError};
+use crate::errors::{EmptyInput, MultiInputError, SummaryStatisticsError};
 use ndarray::{Array, ArrayRef, Axis, Dimension, Ix1, RemoveAxis};
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, AddAssign, Div, Mul};
+
+mod descriptive;
+
+pub use self::descriptive::DescriptiveStatistics;
 
 /// Extension trait for `ArrayRef` providing methods
 /// to compute several summary statistics (e.g. mean, variance, etc.).
@@ -10,6 +14,28 @@ pub trait SummaryStatisticsExt<A, D>
 where
     D: Dimension,
 {
+    /// Returns a fused descriptive-statistics summary of all elements in the array.
+    ///
+    /// If the array is empty, `SummaryStatisticsError::EmptyInput` is returned.
+    /// If a required minimum or maximum comparison has undefined ordering,
+    /// `SummaryStatisticsError::UndefinedOrder` is returned.
+    fn descriptive_statistics(&self) -> Result<DescriptiveStatistics<A>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive;
+
+    /// Returns a descriptive-statistics summary for every lane along `axis`.
+    ///
+    /// The returned array has the input shape with `axis` removed. The method
+    /// panics if `axis` is out of bounds and returns the first summary error
+    /// encountered while processing the lanes.
+    fn descriptive_statistics_axis(
+        &self,
+        axis: Axis,
+    ) -> Result<Array<DescriptiveStatistics<A>, D::Smaller>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive,
+        D: RemoveAxis;
+
     /// Returns the [`arithmetic mean`] x̅ of all elements in the array:
     ///
     /// ```text
