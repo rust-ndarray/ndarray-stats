@@ -15,6 +15,28 @@ impl fmt::Display for EmptyInput {
 
 impl Error for EmptyInput {}
 
+/// Identifies a non-finite floating-point value rejected by a numeric policy.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum NonFiniteValue {
+    /// Not-a-number, used as the missing-value sentinel for floating-point
+    /// arrays.
+    Nan,
+    /// Positive infinity.
+    PositiveInfinity,
+    /// Negative infinity.
+    NegativeInfinity,
+}
+
+impl fmt::Display for NonFiniteValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            NonFiniteValue::Nan => write!(f, "NaN"),
+            NonFiniteValue::PositiveInfinity => write!(f, "+infinity"),
+            NonFiniteValue::NegativeInfinity => write!(f, "-infinity"),
+        }
+    }
+}
+
 /// An error returned when computing a descriptive-statistics summary.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SummaryStatisticsError {
@@ -22,6 +44,14 @@ pub enum SummaryStatisticsError {
     EmptyInput,
     /// A pairwise ordering required for the minimum or maximum was undefined.
     UndefinedOrder,
+    /// A policy rejected a non-finite value. The index is relative to the
+    /// input iterator, or to the summary lane for an axis operation.
+    NonFiniteValue {
+        /// Position of the rejected value.
+        index: usize,
+        /// Kind of non-finite value encountered.
+        value: NonFiniteValue,
+    },
 }
 
 impl fmt::Display for SummaryStatisticsError {
@@ -30,6 +60,13 @@ impl fmt::Display for SummaryStatisticsError {
             SummaryStatisticsError::EmptyInput => write!(f, "Empty input."),
             SummaryStatisticsError::UndefinedOrder => {
                 write!(f, "Undefined ordering between a tested pair of values.")
+            }
+            SummaryStatisticsError::NonFiniteValue { index, value } => {
+                write!(
+                    f,
+                    "{} at index {} is not permitted by the numeric policy.",
+                    value, index
+                )
             }
         }
     }

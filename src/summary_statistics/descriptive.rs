@@ -1,4 +1,6 @@
+use crate::errors::NonFiniteValue;
 use crate::errors::SummaryStatisticsError;
+use crate::policies::{InfinityPolicy, MissingDataPolicy, NumericPolicy};
 use num_traits::{Float, FromPrimitive};
 use std::cmp::Ordering;
 
@@ -74,21 +76,51 @@ where
     where
         I: IntoIterator<Item = A>,
     {
-        let mut values = values.into_iter();
-        let first = values.next().ok_or(SummaryStatisticsError::EmptyInput)?;
-        let mut accumulator = Accumulator {
-            count: 1,
-            mean: first,
-            m2: A::zero(),
-            min: first,
-            max: first,
-        };
+        Self::from_iter_with_policy(values, NumericPolicy::propagate())
+    }
 
-        for value in values {
-            accumulator.update(value)?;
+    pub(super) fn from_iter_with_policy<I>(
+        values: I,
+        policy: NumericPolicy,
+    ) -> Result<Self, SummaryStatisticsError>
+    where
+        I: IntoIterator<Item = A>,
+    {
+        let mut accumulator: Option<Accumulator<A>> = None;
+
+        for (index, value) in values.into_iter().enumerate() {
+            if value.is_nan() {
+                match policy.missing_data() {
+                    MissingDataPolicy::Propagate => {}
+                    MissingDataPolicy::Omit => continue,
+                    MissingDataPolicy::Reject => {
+                        return Err(SummaryStatisticsError::NonFiniteValue {
+                            index,
+                            value: NonFiniteValue::Nan,
+                        });
+                    }
+                }
+            } else if value.is_infinite() && policy.infinity() == InfinityPolicy::Reject {
+                return Err(SummaryStatisticsError::NonFiniteValue {
+                    index,
+                    value: if value > A::zero() {
+                        NonFiniteValue::PositiveInfinity
+                    } else {
+                        NonFiniteValue::NegativeInfinity
+                    },
+                });
+            }
+
+            if let Some(ref mut accumulator) = accumulator {
+                accumulator.update(value)?;
+            } else {
+                accumulator = Some(Accumulator::new(value));
+            }
         }
 
-        Ok(accumulator.finish())
+        accumulator
+            .map(Accumulator::finish)
+            .ok_or(SummaryStatisticsError::EmptyInput)
     }
 
     fn from_usize(value: usize) -> A {
@@ -108,6 +140,16 @@ impl<A> Accumulator<A>
 where
     A: Float + FromPrimitive,
 {
+    fn new(value: A) -> Self {
+        Self {
+            count: 1,
+            mean: value,
+            m2: A::zero(),
+            min: value,
+            max: value,
+        }
+    }
+
     fn update(&mut self, value: A) -> Result<(), SummaryStatisticsError> {
         self.count += 1;
         let count = DescriptiveStatistics::<A>::from_usize(self.count);

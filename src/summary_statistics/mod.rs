@@ -1,5 +1,6 @@
 //! Summary statistics (e.g. mean, variance, etc.).
 use crate::errors::{EmptyInput, MultiInputError, SummaryStatisticsError};
+use crate::policies::NumericPolicy;
 use ndarray::{Array, ArrayRef, Axis, Dimension, Ix1, RemoveAxis};
 use num_traits::{Float, FromPrimitive, Zero};
 use std::ops::{Add, AddAssign, Div, Mul};
@@ -31,6 +32,51 @@ where
     fn descriptive_statistics_axis(
         &self,
         axis: Axis,
+    ) -> Result<Array<DescriptiveStatistics<A>, D::Smaller>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive,
+        D: RemoveAxis;
+
+    /// Returns a fused descriptive-statistics summary using an explicit
+    /// missing-data and infinity policy.
+    ///
+    /// [`NumericPolicy::propagate`] preserves the behavior of
+    /// [`descriptive_statistics`](Self::descriptive_statistics). Use
+    /// [`NumericPolicy::omit_missing`] to omit NaN values. Infinity is not
+    /// treated as missing: it is propagated by that policy and can instead be
+    /// rejected with [`NumericPolicy::reject_non_finite`]. If omission removes
+    /// every value, `SummaryStatisticsError::EmptyInput` is returned.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use ndarray::array;
+    /// use ndarray_stats::{NumericPolicy, SummaryStatisticsExt};
+    ///
+    /// let summary = array![1.0, f64::NAN, 3.0]
+    ///     .descriptive_statistics_with_policy(NumericPolicy::omit_missing())
+    ///     .unwrap();
+    /// assert_eq!(summary.count(), 2);
+    /// assert_eq!(summary.mean(), 2.0);
+    /// ```
+    fn descriptive_statistics_with_policy(
+        &self,
+        policy: NumericPolicy,
+    ) -> Result<DescriptiveStatistics<A>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive;
+
+    /// Returns a descriptive-statistics summary for every lane along `axis`
+    /// using an explicit missing-data and infinity policy.
+    ///
+    /// The returned array has the input shape with `axis` removed. Omission is
+    /// applied independently to each lane. If any lane is empty after
+    /// omission, `SummaryStatisticsError::EmptyInput` is returned because the
+    /// current summary result type cannot represent an absent lane.
+    fn descriptive_statistics_axis_with_policy(
+        &self,
+        axis: Axis,
+        policy: NumericPolicy,
     ) -> Result<Array<DescriptiveStatistics<A>, D::Smaller>, SummaryStatisticsError>
     where
         A: Float + FromPrimitive,

@@ -40,6 +40,40 @@ where
             .expect("descriptive-statistics lanes must match the output shape"))
     }
 
+    fn descriptive_statistics_with_policy(
+        &self,
+        policy: crate::policies::NumericPolicy,
+    ) -> Result<DescriptiveStatistics<A>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive,
+    {
+        DescriptiveStatistics::from_iter_with_policy(self.iter().copied(), policy)
+    }
+
+    fn descriptive_statistics_axis_with_policy(
+        &self,
+        axis: ndarray::Axis,
+        policy: crate::policies::NumericPolicy,
+    ) -> Result<Array<DescriptiveStatistics<A>, D::Smaller>, SummaryStatisticsError>
+    where
+        A: Float + FromPrimitive,
+        D: RemoveAxis,
+    {
+        if self.is_empty() {
+            return Err(SummaryStatisticsError::EmptyInput);
+        }
+
+        let shape = self.raw_dim().remove_axis(axis);
+        let summaries = self
+            .lanes(axis)
+            .into_iter()
+            .map(|lane| DescriptiveStatistics::from_iter_with_policy(lane.iter().copied(), policy))
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(Array::from_shape_vec(shape, summaries)
+            .expect("descriptive-statistics lanes must match the output shape"))
+    }
+
     fn mean(&self) -> Result<A, EmptyInput>
     where
         A: Clone + FromPrimitive + Add<Output = A> + Div<Output = A> + Zero,

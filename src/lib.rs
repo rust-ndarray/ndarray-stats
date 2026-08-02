@@ -10,6 +10,11 @@
 //! - [measures of deviation] (count equal, L1, L2 distances, mean squared err etc.)
 //! - [histogram computation].
 //!
+//! Numeric policy-aware summary methods are available through
+//! [`MissingDataPolicy`], [`InfinityPolicy`], and [`NumericPolicy`]. Existing
+//! methods preserve their compatibility behavior, while omission can be
+//! requested explicitly with `NumericPolicy::omit_missing()`.
+//!
 //! Please feel free to contribute new functionality! A roadmap can be found [here].
 //!
 //! Our work is inspired by other existing statistical packages such as
@@ -34,6 +39,7 @@ pub use crate::deviation::DeviationExt;
 pub use crate::entropy::EntropyExt;
 pub use crate::histogram::HistogramExt;
 pub use crate::maybe_nan::{MaybeNan, MaybeNanExt};
+pub use crate::policies::{InfinityPolicy, MissingDataPolicy, NumericPolicy};
 pub use crate::quantile::{interpolate, Quantile1dExt, QuantileExt};
 pub use crate::sort::Sort1dExt;
 pub use crate::summary_statistics::{DescriptiveStatistics, SummaryStatisticsExt};
@@ -104,6 +110,7 @@ mod entropy;
 pub mod errors;
 pub mod histogram;
 mod maybe_nan;
+pub mod policies;
 mod quantile;
 mod sort;
 mod summary_statistics;
