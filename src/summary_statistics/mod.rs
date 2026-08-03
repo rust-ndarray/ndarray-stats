@@ -155,6 +155,90 @@ where
     where
         A: Float + FromPrimitive;
 
+    /// Returns the mode of all elements in the array.
+    ///
+    /// If several values have the same greatest frequency, the value whose
+    /// first occurrence is earliest in the array is returned. Values are
+    /// compared with `PartialEq`, so this method also supports floating-point
+    /// arrays without requiring `Eq` or `Hash`. In particular, NaN values do
+    /// not compare equal to one another.
+    ///
+    /// If the array is empty, `Err(EmptyInput)` is returned.
+    fn mode(&self) -> Result<A, EmptyInput>
+    where
+        A: Clone + PartialEq;
+
+    /// Returns all modes of the array, ordered by their first occurrence.
+    ///
+    /// If several values have the same greatest frequency, all of them are
+    /// returned. Values are compared with `PartialEq`; see [`mode`] for the
+    /// implications for floating-point NaN values.
+    ///
+    /// If the array is empty, `Err(EmptyInput)` is returned.
+    ///
+    /// [`mode`]: #tymethod.mode
+    fn modes(&self) -> Result<Vec<A>, EmptyInput>
+    where
+        A: Clone + PartialEq;
+
+    /// Returns the mode along `axis` for every one-dimensional lane.
+    ///
+    /// Ties are resolved by first occurrence within each lane. If the array
+    /// is empty, `Err(EmptyInput)` is returned. As with other axis methods,
+    /// this method panics if `axis` is out of bounds.
+    fn mode_axis(&self, axis: Axis) -> Result<Array<A, D::Smaller>, EmptyInput>
+    where
+        A: Clone + PartialEq,
+        D: RemoveAxis;
+
+    /// Returns the *p*-th raw moment of all elements in the array:
+    ///
+    /// ```text
+    ///      1  n
+    /// mₚ =  ─  ∑ xᵢᵖ
+    ///      n i=1
+    /// ```
+    ///
+    /// The zeroth raw moment is one and the first raw moment is the arithmetic
+    /// mean. If the array is empty, `Err(EmptyInput)` is returned.
+    fn raw_moment(&self, order: u16) -> Result<A, EmptyInput>
+    where
+        A: Float + FromPrimitive;
+
+    /// Returns all raw moments from order zero through `order`.
+    ///
+    /// The returned vector is indexed by moment order. If the array is empty,
+    /// `Err(EmptyInput)` is returned.
+    fn raw_moments(&self, order: u16) -> Result<Vec<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive;
+
+    /// Returns the *p*-th standardized moment:
+    ///
+    /// ```text
+    ///      μₚ
+    /// ηₚ = ────
+    ///      σᵖ
+    /// ```
+    ///
+    /// The zeroth and first standardized moments are one and zero,
+    /// respectively. The third and fourth standardized moments are skewness
+    /// and Pearson's kurtosis. For a zero-variance input, moments of order two
+    /// or greater follow floating-point division semantics and are generally
+    /// NaN.
+    ///
+    /// If the array is empty, `Err(EmptyInput)` is returned.
+    fn standardized_moment(&self, order: u16) -> Result<A, EmptyInput>
+    where
+        A: Float + FromPrimitive;
+
+    /// Returns all standardized moments from order zero through `order`.
+    ///
+    /// If the array is empty, `Err(EmptyInput)` is returned.
+    fn standardized_moments(&self, order: u16) -> Result<Vec<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive;
+
     /// Return weighted variance of all elements in the array.
     ///
     /// The weighted variance is computed using the [`West, D. H. D.`] incremental algorithm.

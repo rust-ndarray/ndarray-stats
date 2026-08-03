@@ -412,3 +412,61 @@ fn test_kurtosis_and_skewness() {
     assert_abs_diff_eq!(kurtosis, expected_kurtosis, epsilon = 1e-12);
     assert_abs_diff_eq!(skewness, expected_skewness, epsilon = 1e-8);
 }
+
+#[test]
+fn test_mode_and_modes() {
+    let a = array![3.0, 1.0, 3.0, 2.0, 2.0, 4.0];
+
+    // 3 and 2 are tied; mode() resolves ties by first occurrence.
+    assert_eq!(a.mode().unwrap(), 3.0);
+    assert_eq!(a.modes().unwrap(), vec![3.0, 2.0]);
+}
+
+#[test]
+fn test_mode_axis() {
+    let a = array![[1, 2, 2, 3], [4, 5, 4, 5]];
+
+    assert_eq!(a.mode_axis(Axis(0)).unwrap(), array![1, 2, 2, 3]);
+    assert_eq!(a.mode_axis(Axis(1)).unwrap(), array![2, 4]);
+}
+
+#[test]
+fn test_mode_and_moments_with_empty_array() {
+    let a: Array1<f64> = array![];
+
+    assert_eq!(a.mode(), Err(EmptyInput));
+    assert_eq!(a.modes(), Err(EmptyInput));
+    assert_eq!(a.mode_axis(Axis(0)), Err(EmptyInput));
+    assert_eq!(a.raw_moment(2), Err(EmptyInput));
+    assert_eq!(a.raw_moments(2), Err(EmptyInput));
+    assert_eq!(a.standardized_moment(2), Err(EmptyInput));
+    assert_eq!(a.standardized_moments(2), Err(EmptyInput));
+}
+
+#[test]
+fn test_raw_and_standardized_moments() {
+    let a = array![1.0, 2.0, 2.0, 3.0];
+
+    assert_abs_diff_eq!(a.raw_moment(0).unwrap(), 1.0, epsilon = 1e-12);
+    assert_abs_diff_eq!(a.raw_moment(1).unwrap(), 2.0, epsilon = 1e-12);
+    assert_abs_diff_eq!(a.raw_moment(2).unwrap(), 4.5, epsilon = 1e-12);
+    assert_abs_diff_eq!(a.raw_moment(3).unwrap(), 11.0, epsilon = 1e-12);
+    for (actual, expected) in a
+        .raw_moments(4)
+        .unwrap()
+        .into_iter()
+        .zip([1.0, 2.0, 4.5, 11.0, 28.5])
+    {
+        assert_abs_diff_eq!(actual, expected, epsilon = 1e-12);
+    }
+
+    for (actual, expected) in a
+        .standardized_moments(4)
+        .unwrap()
+        .into_iter()
+        .zip([1.0, 0.0, 1.0, 0.0, 2.0])
+    {
+        assert_abs_diff_eq!(actual, expected, epsilon = 1e-12);
+    }
+    assert_abs_diff_eq!(a.standardized_moment(3).unwrap(), 0.0, epsilon = 1e-12);
+}

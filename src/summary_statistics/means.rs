@@ -104,6 +104,89 @@ where
             .ok_or(EmptyInput)
     }
 
+    fn mode(&self) -> Result<A, EmptyInput>
+    where
+        A: Clone + PartialEq,
+    {
+        self.modes()?.into_iter().next().ok_or(EmptyInput)
+    }
+
+    fn modes(&self) -> Result<Vec<A>, EmptyInput>
+    where
+        A: Clone + PartialEq,
+    {
+        if self.is_empty() {
+            return Err(EmptyInput);
+        }
+        Ok(modes(self.iter().cloned()))
+    }
+
+    fn mode_axis(&self, axis: Axis) -> Result<Array<A, D::Smaller>, EmptyInput>
+    where
+        A: Clone + PartialEq,
+        D: RemoveAxis,
+    {
+        if self.is_empty() {
+            return Err(EmptyInput);
+        }
+
+        Ok(self.map_axis(axis, |lane| {
+            modes(lane.iter().cloned())
+                .into_iter()
+                .next()
+                .expect("non-empty lanes must have a mode")
+        }))
+    }
+
+    fn raw_moment(&self, order: u16) -> Result<A, EmptyInput>
+    where
+        A: Float + FromPrimitive,
+    {
+        self.raw_moments(order)
+            .map(|moments| moments[usize::from(order)])
+    }
+
+    fn raw_moments(&self, order: u16) -> Result<Vec<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive,
+    {
+        if self.is_empty() {
+            return Err(EmptyInput);
+        }
+        Ok(moments(self.view(), order))
+    }
+
+    fn standardized_moment(&self, order: u16) -> Result<A, EmptyInput>
+    where
+        A: Float + FromPrimitive,
+    {
+        self.standardized_moments(order)
+            .map(|moments| moments[usize::from(order)])
+    }
+
+    fn standardized_moments(&self, order: u16) -> Result<Vec<A>, EmptyInput>
+    where
+        A: Float + FromPrimitive,
+    {
+        let central_moments = self.central_moments(order)?;
+        if order < 2 {
+            return Ok(central_moments);
+        }
+
+        let standard_deviation = central_moments[2].sqrt();
+        Ok(central_moments
+            .into_iter()
+            .enumerate()
+            .map(|(order, moment)| {
+                if order < 2 {
+                    moment
+                } else {
+                    moment / standard_deviation.powi(order as i32)
+                }
+            })
+            .collect())
+    }
+
     fn weighted_var(&self, weights: &Self, ddof: A) -> Result<A, MultiInputError>
     where
         A: AddAssign + Float + FromPrimitive,
@@ -264,6 +347,35 @@ where
         s += w * x_minus_mean * (x - mean);
     }
     Ok(s / (weight_sum - ddof))
+}
+
+/// Returns all values with the greatest frequency, preserving first
+/// occurrence order. This deliberately uses `PartialEq` instead of `Hash` so
+/// that ordinary floating-point arrays can use the mode API.
+fn modes<A, I>(values: I) -> Vec<A>
+where
+    A: Clone + PartialEq,
+    I: IntoIterator<Item = A>,
+{
+    let mut counts: Vec<(A, usize)> = Vec::new();
+    for value in values {
+        if let Some(index) = counts.iter().position(|(candidate, _)| candidate == &value) {
+            counts[index].1 += 1;
+        } else {
+            counts.push((value, 1));
+        }
+    }
+
+    let greatest_frequency = counts
+        .iter()
+        .map(|(_, frequency)| *frequency)
+        .max()
+        .unwrap_or(0);
+    counts
+        .into_iter()
+        .filter(|(_, frequency)| *frequency == greatest_frequency)
+        .map(|(value, _)| value)
+        .collect()
 }
 
 /// Returns a vector containing all moments of the array elements up to
